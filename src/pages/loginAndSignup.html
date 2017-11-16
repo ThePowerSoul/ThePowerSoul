@@ -1,0 +1,81 @@
+<style type="text/css">
+	.labelSelected {
+		color: #03a9f4;
+		position: relative;
+		height: 32px;
+		outline: none;
+	}
+	.labelSelected:after {
+		content: ' ';
+	    position: absolute;
+	    bottom: 4px;
+	    left: -3px;
+	    height: 2px;
+	    width: calc(100% + 4px);
+	    background-color: #03a9f4;
+	}
+	.signupLabel, .loginPanel {
+		cursor: pointer;
+		font-size: 20px;
+		outline: none;
+	}
+	.loginPanel {
+		margin-left: 16px;
+	}
+	.dialog-content-container {
+		min-width: 500px !important;
+		height: 500px !important;
+		padding: 24px;
+	}
+	.panel-content {
+		background-color: rgb(255,255,255) !important;
+		overflow-x: hidden !important;
+	}
+	.dialog-content-container > .label-container {
+		width: 100%;
+	}
+
+</style>
+<md-dialog class="dialog-content-container" layout="column">
+    <div class="label-container" layout="row" layout-align="center">
+    	<span class="signupLabel" ng-class="{'labelSelected': flag}" ng-click="changePanel('signup')">注册</span>
+    	<span class="loginPanel" ng-class="{'labelSelected': !flag}" ng-click="changePanel('login')">登录</span>
+    </div>
+    <div class="signupPanel" ng-show="flag" flex>
+    	<md-content class="md-no-momentum panel-content">
+    		<form name="signupForm">
+    			<md-input-container class="md-icon-float md-block">
+			      	<input md-maxlength="5" ng-model="newUser.Name" type="text" placeholder="姓名">
+		    	</md-input-container>
+
+			    <md-input-container md-no-float class="md-block">
+			      	<input md-maxlength="5" ng-model="newUser.DisplayName" type="text" placeholder="昵称">
+			    </md-input-container>
+
+			    <md-input-container md-no-float class="md-block">
+			      	<input ng-model="newUser.Email" type="text" placeholder="邮箱">
+			    </md-input-container>
+
+			    <md-input-container md-no-float class="md-block">
+			      	<input ng-model="newUser.Password" type="text" placeholder="密码">
+			    </md-input-container>
+
+			    <md-input-container md-no-float class="md-block">
+			      	<input ng-model="newUser.ConfirmPassword" type="text" placeholder="确认密码">
+			    </md-input-container>
+    		</form>
+    	</md-content>
+    </div>
+    <div class="loginPanel" ng-show="!flag" flex>
+    	<md-content class="md-no-momentum panel-content">
+	    	<md-input-container class="md-icon-float md-block">
+		      	<input ng-model="user.Email" type="text" placeholder="邮箱">
+	    	</md-input-container>
+	    	<md-input-container md-no-float class="md-block">
+		      	<input ng-model="user.Password" type="text" placeholder="密码">
+		    </md-input-container>
+	    </md-content>
+    </div>
+    <md-button class="md-raised md-primary" ng-show="!flag" ng-disabled="disableLoginButtonOrNot()" ng-click="login()">{{loginButtonText}}</md-button>
+    <md-button class="md-raised md-primary" ng-show="flag" ng-disabled="disableSignupButtonOrNot()" ng-click="signup()">{{signupButtonText}}</md-button>
+</md-dialog>
