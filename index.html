@@ -2,6 +2,7 @@
 <head>
 	<meta charset="UTF-8">
 	<link rel="stylesheet" href="http://cdn.bootcss.com/angular-material/1.1.0/angular-material.css">
+	<link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.css">
 	<title>The Power Soul</title>
 </head>
 <style type="text/css">
@@ -9,17 +10,22 @@
 		height: 100%;
 	}
 </style>
-<body ng-app="The.Power.Soul" ng-controller="mainCtrl">
+<body class="ng-cloak" ng-app="The.Power.Soul" ng-controller="mainCtrl">
 	<md-toolbar>
       	<div class="md-toolbar-tools">
 	        <md-button ng-click="goToIntroduction()" aria-label="介绍">
 	          	内容介绍
 	        </md-button>
 	        <md-button ng-click="goToCaculator()" aria-label="计划">
-	          	训练计划
+	          	训练计划生成
 	        </md-button>
 	        <md-button ng-click="goToBBS()" aria-label="论坛">
 	          	论坛
+	        </md-button>
+	        <div flex></div>
+	        <span ng-show="loggedIn">{{'你好，xxx'}}</span>
+	        <md-button ng-show="!loggedIn" ng-click="openLoginOrSignupPanel($event)" aria-label="论坛">
+	          	登录/注册
 	        </md-button>
       	</div>
     </md-toolbar>

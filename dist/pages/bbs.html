@@ -1,1 +1,65 @@
-<h1>这里是论坛页面</h1><md-button class="md-raised md-primary" ng-click=addNewTopic($event)>发帖</md-button>
+<style type=text/css>
+	.bbs-container {
+		width: 1208px;
+		margin: 0 auto;
+	}
+	.bbs-widget-container {
+		padding-left: 24px;
+		padding-right: 24px;
+	}
+	.bbs-widget-container .search-input {
+		width: 280px;
+	}
+	.bbs-widget-container .search-icon-button {
+		margin-left: 8px;
+	}
+	.bbs-widget-container .selector-container {
+		margin-left: 16px;
+	}
+	.bbs-widget-container .selector-widget {
+		width: 150px;
+	}
+	.bbs-widget-container .search-input-container {
+		margin-left: 24px;
+	}
+	.topic-card {
+		min-height: 150px;
+		max-height: 200px;
+	}
+	.topic-card .topic-title-container {
+		max-height: 32px;
+	}
+	.topic-card .topic-title {
+		width: 200px;
+		overflow: hidden;
+    	text-overflow: ellipsis;
+		cursor: pointer;
+		outline: none;
+		margin-right: 24px;
+	}
+	.topic-card .topic-title:hover {
+		color: rgba(0, 0, 0, 0.54);
+	}
+	.topic-card .like-number {
+		margin-right: 8px;
+	}
+	.topic-card .topic-author {
+		margin-right: 24px;
+	}
+	.topic-card .topic-submit-time {
+		margin-left: 24px;
+	}
+	.topic-content-container .topic-content {
+		overflow:hidden; 
+		text-overflow:ellipsis;
+		display:-webkit-box; 
+		-webkit-box-orient:vertical;
+		-webkit-line-clamp:3; 
+		cursor: pointer;
+		line-height: 1.6;
+		outline: none;
+	}
+	.topic-content-container .topic-content:hover {
+		color: rgba(0, 0, 0, 0.54);
+	}
+</style><div class=bbs-container><div class=bbs-widget-container layout=row layout-align="start center"><md-input-container><md-button class="md-raised md-primary" ng-click=addNewTopic($event)>发帖</md-button></md-input-container><div class=selector-container><md-select class=selector-widget ng-model=selectedItem ng-change=getSelectedCategory()><md-option ng-value=item.Value ng-repeat="item in selectorItems">{{item.Title}}</md-option></md-select></div><div flex></div><div class=search-input-container layout=row layout-align="start center"><input class=search-input placeholder=请输入搜索关键字 ng-keypress=searchTopicKeyboard($event) ng-model=user.firstName> <i class="fa fa-search search-icon-button" aria-hidden=true ng-click=searchTopic()></i></div></div><md-card class=topic-card ng-repeat="topic in topicList"><md-card-title class=topic-title-container><md-card-title-text layout=row layout-align="start center"><span class="md-headline topic-title" ng-click=goTopicDetail(topic)>{{topic.Title}}</span><div layout=row layout-align="start center"><span class=topic-author>{{'作者：Joey'}}</span></div><div layout=row layout-align="start center"><i class="fa fa-thumbs-o-up" aria-hidden=true></i> <span class=like-number>11</span></div><div layout=row layout-align="start center"><i class="fa fa-thumbs-o-down" aria-hidden=true></i> <span>11</span></div><div class=topic-submit-time layout=row><span>{{'发表于：2018-2-2'}}</span></div></md-card-title-text></md-card-title><md-card-content class=topic-content-container><span class=topic-content ng-click=goTopicDetail(topic)>{{topic.Content}}</span></md-card-content></md-card></div>
