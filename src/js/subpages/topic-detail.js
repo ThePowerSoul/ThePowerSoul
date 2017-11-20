@@ -8,10 +8,10 @@
     			$mdDialog.hide($scope.comment);
     		};	
     	}])
-    	.controller('topicDetailCtrl', ['$scope', '$stateParams', 'userInfoService', '$mdDialog',
+    	.controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog',
     		function($scope, $stateParams, userInfoService, $mdDialog) {
     		var topicID = $stateParams.id;
-    		$scope.user = userInfoService.get();
+    		// $scope.user = userInfoService.get();
 
     		/*
 			loading state

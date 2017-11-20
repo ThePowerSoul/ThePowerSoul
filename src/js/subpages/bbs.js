@@ -14,7 +14,18 @@
     			"Value": "AFTERSALE",
     			"Title": "品牌售后"
     		}
-    	])
+		])
+		.service('topicOperation', ['$resource', function($resource) {
+			var serviceUrl = "localhost:3000/"
+			var res = $resource(serviceUrl + 'topic', {id: '@id'}, {
+				'getTopic': {method: 'GET', isArray: true},
+				'addNewTopic': {method: 'POST', isArray: false},
+				'deleteTopic': {method: 'DELETE', inArray: false}
+			});
+			return {
+				res: res
+			};
+		}])
     	.controller('addNewTopicCtrl', ['$scope', '$mdDialog', function($scope, $mdDialog) {
     		$scope.topic = {
     			Title: "",
@@ -26,8 +37,9 @@
     		};
 
     	}])
-    	.controller('bbsCtrl', ['$scope', '$mdDialog', 'userInfoService', 'selectorItems', '$state', 'alertService',
-    		function($scope, $mdDialog, userInfoService, selectorItems, $state, alertService) {
+		.controller('bbsCtrl', ['$scope', '$mdDialog', 'selectorItems', '$state', 'alertService', 'topicOperation',
+			'localStorageService',
+    		function($scope, $mdDialog, selectorItems, $state, alertService, topicOperation, localStorageService) {
     			$scope.customFullscreen = false;
     			$scope.selectedItem = "STRENGTHTRAINING";
     			$scope.selectorItems = selectorItems;
@@ -50,7 +62,7 @@
 					loading state
     			*/
     			$scope.isLoadingTopic = false;
-    			$scope.isSubmittingTipic = false;
+    			$scope.isSubmittingTopic = false;
     			$scope.isChangingCategory = false;
 
     			/*
@@ -73,50 +85,50 @@
     				}
     			}
 
-                                    $scope.addNewArticle = function(ev) {
-                                                if (userInfoService.get()) {
-                                                            var url = $state.href('new-article');
-                                                            window.open(url, '_blank');
-                                                } else {
-                                                            $mdDialog.show({ 
-                                                                    controller: 'loginOrSignupCtrl',
-                                                                    templateUrl: 'dist/pages/login-and-signup.html',
-                                                                    parent: angular.element(document.body),
-                                                                    targetEvent: ev,
-                                                                    clickOutsideToClose:true,
-                                                                    fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
-                                                            })
-                                                            .then(function(data) {
-                                                                // handle user data
-                                                            }, function() {
-                                                                // canceled
-                                                            });
-                                                }
-                                    };
+				$scope.addNewArticle = function(ev) {
+					if (localStorageService.get('userInfo')) {
+						var url = $state.href('new-article');
+						window.open(url, '_blank');
+					} else {
+						$mdDialog.show({ 
+								controller: 'loginOrSignupCtrl',
+								templateUrl: 'dist/pages/login-and-signup.html',
+								parent: angular.element(document.body),
+								targetEvent: ev,
+								clickOutsideToClose:true,
+								fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
+						})
+						.then(function(data) {
+							// handle user data
+						}, function() {
+							// canceled
+						});
+					}
+				};
 
     			$scope.goTopicDetail = function(topic, ev) {
-    				if (userInfoService.get()) {
+    				if (localStorageService.get('userInfo')) {
     					var url = $state.href('topic-detail', {id: topic.ID});
     					window.open(url, '_blank');
     				} else {
     					$mdDialog.show({ 
-                                                                    controller: 'loginOrSignupCtrl',
-                                                                    templateUrl: 'dist/pages/login-and-signup.html',
-                                                                    parent: angular.element(document.body),
-                                                                    targetEvent: ev,
-                                                                    clickOutsideToClose:true,
-                                                                    fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
-                                                            })
-                                                            .then(function(data) {
-                                                                    // handle user data
-                                                            }, function() {
-                                                                    // canceled
-                                                            });
+							controller: 'loginOrSignupCtrl',
+							templateUrl: 'dist/pages/login-and-signup.html',
+							parent: angular.element(document.body),
+							targetEvent: ev,
+							clickOutsideToClose:true,
+							fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
+					})
+					.then(function(data) {
+							// handle user data
+					}, function() {
+							// canceled
+					});
     				}
     			};
 
 	    		$scope.addNewTopic = function(ev) {
-	    			if (userInfoService.get()) {
+	    			if (localStorageService.get('userInfo')) {
 	    				$mdDialog.show({ 
 				            controller: 'addNewTopicCtrl',
 				            templateUrl: 'dist/pages/add-new-topic.html',
@@ -126,9 +138,16 @@
 				            fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
 				        })
 				        .then(function(data) {
-				        	// handle new topic data
+							$scope.isSubmittingTopic = false;
+				        	topicOperation.res.addNewTopic({}, data, function(result) {
+								
+							}, function(error) {
+								alertService.showAlert('发表帖子失败，请重试。', ev);
+							}).$promise.finally(function() {
+								$scope.isSubmittingTopic = false;
+							});
 				        }, function() {
-				        	// canceled
+				        	// dialog canceled
 				        });
 	    			} else {
 	    				$mdDialog.show({ 

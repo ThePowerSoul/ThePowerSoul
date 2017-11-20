@@ -4,12 +4,18 @@
     	'The.Power.Soul.Introduction',
     	'The.Power.Soul.BBS', 
     	'The.Power.Soul.Caculator',
-            'The.Power.Soul.Tools',
-            'The.Power.Soul.Topic.Detail',
-            'The.Power.Soul.NewArticle',
-            'The.Power.Soul.UserDetail'
+        'The.Power.Soul.Tools',
+        'The.Power.Soul.Topic.Detail',
+        'The.Power.Soul.NewArticle',
+        'The.Power.Soul.UserDetail',
+        'The.Power.Soul.Mall',
+        'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
+        .config(function (localStorageServiceProvider) {
+            localStorageServiceProvider
+            .setPrefix('thepowersoul');
+        })
     	.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 	        $urlRouterProvider.when('', 'introduction');
 	        $stateProvider
@@ -28,23 +34,29 @@
 	                templateUrl: 'dist/pages/bbs.html',
 	                controller: 'bbsCtrl',
 	            })
-                         .state('topic-detail', {
-                            url: '/topic-detail/{id}',
-                            templateUrl: 'dist/pages/topic-detail.html',
-                            controller: 'topicDetailCtrl',
-                        })
-                         .state('new-article', {
-                            url: '/new-article',
-                            templateUrl: 'dist/pages/add-new-article.html',
-                            controller: 'addNewArticleCtrl',
-                        })
-                         .state('user-detail', {
-                            url: '/user-detail',
-                            templateUrl: 'dist/pages/user-detail.html',
-                            controller: 'userDetailCtrl',
-                        });
+                .state('topic-detail', {
+                    url: '/topic-detail/{id}',
+                    templateUrl: 'dist/pages/topic-detail.html',
+                    controller: 'topicDetailCtrl',
+                })
+                .state('new-article', {
+                    url: '/new-article',
+                    templateUrl: 'dist/pages/add-new-article.html',
+                    controller: 'addNewArticleCtrl',
+                })
+                .state('user-detail', {
+                    url: '/user-detail',
+                    templateUrl: 'dist/pages/user-detail.html',
+                    controller: 'userDetailCtrl',
+                })
+                .state('mall', {
+                    url: '/mall',
+                    templateUrl: 'dist/pages/mall.html',
+                    controller: 'mallCtrl',
+                });
 	    }])
-        .controller('loginOrSignupCtrl', ['$scope', '$mdDialog', function($scope, $mdDialog) {
+        .controller('loginOrSignupCtrl', ['$scope', '$mdDialog',
+        function($scope, $mdDialog) {
             $scope.flag = true;
             $scope.signupButtonText = "";
             $scope.loginButtonText = "";
@@ -112,11 +124,12 @@
                 }
             };  
         }])
-    	.controller('mainCtrl', ['$scope', '$state', 'userInfoService', '$mdDialog',
-    		function($scope, $state, userInfoService, $mdDialog) {
+    	.controller('mainCtrl', ['$scope', '$state', '$mdDialog', 'localStorageService',
+    		function($scope, $state, $mdDialog, localStorageService) {
                 $scope.loggedIn = false;
-                if (userInfoService.get()) {
-                    $scope.loggedIn = true;
+                // localstorage check
+                if (localStorageService.get('userInfo')) {
+                    $socpe.loggedIn = true;
                 }
 
                 $scope.openLoginOrSignupPanel = function(ev) {
@@ -140,6 +153,10 @@
 
     			$scope.goToBBS = function() {
     				$state.go('bbs');
-    			};
+                };
+                
+                $scope.goToMall = function() {
+                    $state.go('mall');
+                };  
     	}])
 }());
