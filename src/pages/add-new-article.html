@@ -1,0 +1,47 @@
+<style type="text/css">
+	.new-article-container {
+		width: 1032px;
+		margin: 0 auto;
+		padding-top: 24px;
+	}
+	.new-article-container .new-article {
+		background-color: rgb(255, 255, 255);
+		box-shadow: 1.5px 1.5px 5px rgba(152, 152, 152, 0.5);
+		padding: 24px;
+	}
+	.new-article-container .new-article-widget {
+		margin-bottom: 24px;
+	}
+	.new-article-container .new-article-title {
+		width: 100%;
+		margin-bottom: 24px;
+		height: 48px;
+		line-height: 48px;
+		font-size: 24px;
+	}
+	.rich-text-input p {
+		margin: 0px;
+	}
+	.rich-text-input .ta-scroll-window {
+		border: 1px solid rgba(0, 0, 0, 0.12);
+	}
+	.rich-text-input .btn-group {
+		display: inline-block;
+	}
+</style>
+<div  class="new-article-container">
+	<div  class="new-article-widget" layout="row" layout-align="start center">
+		<md-button class="md-primary md-raised" ng-click="publishArticle()">发布</md-button>
+		<md-button class="md-primary md-raised">保存草稿</md-button>
+	</div>	
+	<div class="new-article">
+		<div>
+			<input  class="new-article-title" type="text" placeholder="请输入文章标题">
+		</div>
+		<div>
+			<div class="rich-text-input" text-angular ng-model="richTextContent">
+			</div>
+		</div>
+	</div>
+	<div ng-bind-html="richTextContent"></div>
+</div>

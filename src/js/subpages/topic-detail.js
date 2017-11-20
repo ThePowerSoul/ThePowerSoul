@@ -12,6 +12,15 @@
     		function($scope, $stateParams, userInfoService, $mdDialog) {
     		var topicID = $stateParams.id;
     		$scope.user = userInfoService.get();
+
+    		/*
+			loading state
+    		*/
+    		$scope.isPostingNewComment = false;
+    		$scope.isReplyingComment = false;
+    		$scope.isLoading = false;
+    		$scope.isLoadingHasError = false;
+
     		$scope.topic = {	
 				ID: "111",
 				Title: "PowerliftingPowerliftingPowerlifting",
@@ -50,7 +59,7 @@
 			$scope.commentReply = function(comment, ev) {
 				$mdDialog.show({ 
 		            controller: 'addNewCommentCtrl',
-		            templateUrl: 'dist/pages/addNewComment.html',
+		            templateUrl: 'dist/pages/add-new-comment.html',
 		            parent: angular.element(document.body),
 		            targetEvent: ev,
 		            clickOutsideToClose:true,

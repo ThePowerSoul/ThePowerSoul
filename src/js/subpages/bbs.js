@@ -73,12 +73,45 @@
     				}
     			}
 
-    			$scope.goTopicDetail = function(topic) {
+                                    $scope.addNewArticle = function(ev) {
+                                                if (userInfoService.get()) {
+                                                            var url = $state.href('new-article');
+                                                            window.open(url, '_blank');
+                                                } else {
+                                                            $mdDialog.show({ 
+                                                                    controller: 'loginOrSignupCtrl',
+                                                                    templateUrl: 'dist/pages/login-and-signup.html',
+                                                                    parent: angular.element(document.body),
+                                                                    targetEvent: ev,
+                                                                    clickOutsideToClose:true,
+                                                                    fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
+                                                            })
+                                                            .then(function(data) {
+                                                                // handle user data
+                                                            }, function() {
+                                                                // canceled
+                                                            });
+                                                }
+                                    };
+
+    			$scope.goTopicDetail = function(topic, ev) {
     				if (userInfoService.get()) {
     					var url = $state.href('topic-detail', {id: topic.ID});
     					window.open(url, '_blank');
     				} else {
-    					alertService.showAlert('登录才能查看');
+    					$mdDialog.show({ 
+                                                                    controller: 'loginOrSignupCtrl',
+                                                                    templateUrl: 'dist/pages/login-and-signup.html',
+                                                                    parent: angular.element(document.body),
+                                                                    targetEvent: ev,
+                                                                    clickOutsideToClose:true,
+                                                                    fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
+                                                            })
+                                                            .then(function(data) {
+                                                                    // handle user data
+                                                            }, function() {
+                                                                    // canceled
+                                                            });
     				}
     			};
 
@@ -86,7 +119,7 @@
 	    			if (userInfoService.get()) {
 	    				$mdDialog.show({ 
 				            controller: 'addNewTopicCtrl',
-				            templateUrl: 'dist/pages/addNewTopic.html',
+				            templateUrl: 'dist/pages/add-new-topic.html',
 				            parent: angular.element(document.body),
 				            targetEvent: ev,
 				            clickOutsideToClose:true,
@@ -100,7 +133,7 @@
 	    			} else {
 	    				$mdDialog.show({ 
 				            controller: 'loginOrSignupCtrl',
-				            templateUrl: 'dist/pages/loginAndSignup.html',
+				            templateUrl: 'dist/pages/login-and-signup.html',
 				            parent: angular.element(document.body),
 				            targetEvent: ev,
 				            clickOutsideToClose:true,

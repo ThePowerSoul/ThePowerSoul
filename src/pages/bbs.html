@@ -1,6 +1,6 @@
 <style type="text/css">
 	.bbs-container {
-		width: 1208px;
+		width: 1032px;
 		margin: 0 auto;
 	}
 	.bbs-widget-container {
@@ -26,13 +26,16 @@
 		min-height: 150px;
 		max-height: 200px;
 	}
+	.topic-card .fa {
+		color: rgba(0, 0, 0, 0.54);
+	}
 	.topic-card .topic-title-container {
 		max-height: 32px;
 	}
 	.topic-card .topic-title {
 		width: 200px;
 		overflow: hidden;
-    	text-overflow: ellipsis;
+    		text-overflow: ellipsis;
 		cursor: pointer;
 		outline: none;
 		margin-right: 24px;
@@ -42,6 +45,10 @@
 	}
 	.topic-card .like-number {
 		margin-right: 8px;
+		color:rgba(0, 0, 0, 0.54);
+	}
+	.topic-card .dislike-number {
+		color:rgba(0, 0, 0, 0.54);
 	}
 	.topic-card .topic-author {
 		margin-right: 24px;
@@ -68,6 +75,9 @@
 		<md-input-container>
 			<md-button class="md-raised md-primary" ng-click="addNewTopic($event)">发帖</md-button>
 		</md-input-container>
+		<md-input-container>
+			<md-button class="md-raised md-primary" ng-click="addNewArticle($event)">写文章</md-button>
+		</md-input-container>
 		<div class="selector-container">
 	        <md-select class="selector-widget" ng-model="selectedItem" ng-change="getSelectedCategory()">
 	            <md-option ng-value="item.Value" ng-repeat="item in selectorItems">{{item.Title}}</md-option>
@@ -82,7 +92,7 @@
 	<md-card class="topic-card" ng-repeat="topic in topicList">
 	    <md-card-title class="topic-title-container">
 	      <md-card-title-text layout="row" layout-align="start center">
-	        <span class="md-headline topic-title" ng-click="goTopicDetail(topic)">
+	        <span class="md-headline topic-title" ng-click="goTopicDetail(topic, $event)">
 	        	{{topic.Title}}
 	        </span>
 	        <div layout="row" layout-align="start center">
@@ -96,7 +106,7 @@
 	        </div>
 	       	<div layout="row" layout-align="start center">
 	       		<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
-	       		<span>11</span>
+	       		<span class="dislike-number">11</span>
 	       	</div>
 	       	<div class="topic-submit-time" layout="row">
 	       		<span>{{'发表于：2018-2-2'}}</span>
