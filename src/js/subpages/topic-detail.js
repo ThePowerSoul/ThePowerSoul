@@ -82,26 +82,26 @@
 
 			$scope.commentReply = function(comment, ev) {
 				$mdDialog.show({ 
-		            controller: 'addNewCommentCtrl',
-		            templateUrl: 'dist/pages/add-new-comment.html',
-		            parent: angular.element(document.body),
-		            targetEvent: ev,
-		            clickOutsideToClose:true,
-		            fullscreen: false
-		        })
-		        .then(function(data) {
-		        	// handle comment data
-		        }, function() {
-		        	// canceled
-		        });
-			};
+			            controller: 'addNewCommentCtrl',
+			            templateUrl: 'dist/pages/add-new-comment.html',
+			            parent: angular.element(document.body),
+			            targetEvent: ev,
+			            clickOutsideToClose:true,
+			            fullscreen: false
+			        })
+			        .then(function(data) {
+			        	// handle comment data
+			        }, function() {
+			        	// canceled
+			        });
+				};
 
 			$scope.changeExpandState = function() {
 				$scope.topic.Expand = !$scope.topic.Expand;
 			};
 
 			$scope.loadMore = function() {
-
+				loadTopicComments();
 			};
 
 			function loadTopicDetail() {
