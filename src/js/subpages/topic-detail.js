@@ -1,17 +1,39 @@
 (function() {   
     'use strict';
-    angular.module('The.Power.Soul.Topic.Detail', ['ngMaterial'])
+	angular.module('The.Power.Soul.Topic.Detail', ['ngMaterial'])
+		.service('topicOperation', ['$resource', function($resource) {
+			var serviceUrl = "localhost:3000/"
+			var res = $resource(serviceUrl + 'topic', {id: '@id', receptor: '@receptor'}, {
+				'getTopics': {method: 'GET', isArray: true},
+				'getTopicDetail': {method: 'GET', isArray: false},
+				'addNewTopic': {method: 'POST', isArray: false},
+				'deleteTopic': {method: 'DELETE', inArray: false}
+			});
+			return {
+				res: res
+			};
+		}])
+		.service('commentOperation', ['$resource', function($resource) {
+			var serviceUrl = "localhost:3000/"
+			var res = $resource(serviceUrl + 'comment', {id: '@id', receptor: '@receptor'}, {
+				'getComments': {method: 'GET', isArray: true},
+				'getCommentDetail': {method: 'GET', isArray: false},
+				'addNewComment': {method: 'POST', isArray: false},
+				'deleteComment': {method: 'DELETE', inArray: false}
+			});
+			return {
+				res: res
+			};
+		}])
     	.controller('addNewCommentCtrl', ['$scope', '$mdDialog', function($scope, $mdDialog) {
     		$scope.comment = "";
-
     		$scope.submit = function() {
     			$mdDialog.hide($scope.comment);
     		};	
     	}])
-    	.controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog',
-    		function($scope, $stateParams, userInfoService, $mdDialog) {
+    	.controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', 'topicOperation', 'commentOperation',
+    		function($scope, $stateParams, $mdDialog, topicOperation, commentOperation) {
     		var topicID = $stateParams.id;
-    		// $scope.user = userInfoService.get();
 
     		/*
 			loading state
@@ -19,7 +41,9 @@
     		$scope.isPostingNewComment = false;
     		$scope.isReplyingComment = false;
     		$scope.isLoading = false;
-    		$scope.isLoadingHasError = false;
+			$scope.isLoadingHasError = false;
+			$scope.isLoadingComments = false;
+			$scope.isLoadingCommentsHasError = false;
 
     		$scope.topic = {	
 				ID: "111",
@@ -63,7 +87,7 @@
 		            parent: angular.element(document.body),
 		            targetEvent: ev,
 		            clickOutsideToClose:true,
-		            fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
+		            fullscreen: false
 		        })
 		        .then(function(data) {
 		        	// handle comment data
@@ -75,5 +99,41 @@
 			$scope.changeExpandState = function() {
 				$scope.topic.Expand = !$scope.topic.Expand;
 			};
+
+			$scope.loadMore = function() {
+
+			};
+
+			function loadTopicDetail() {
+				$scope.isLoading = true;
+				return topicOperation.res.getTopicDetail({id: '', receptor: ''}, null, function(result) {
+					// success
+					angular.extend($scope.topic, result);
+				}, function(error) {
+					$scope.isLoadingHasError = true;
+				}).$promise.finally(function() {
+					$scope.isLoading = false;
+				});
+			}
+
+			function loadTopicComments(loadMoreSignal) {
+				$scope.isLoadingComments = true;
+				commentOperation.res.getComments({id: topicID}, null, function(result) {
+					// success
+					if (loadMoreSignal === 'load-more') {
+
+					} else {
+
+					}
+				},function(error) {
+					$scope.isLoadingCommentsHasError = true;
+				}).$promise.finally(function() {
+					$scope.isLoadingComments = false;
+				});
+			}
+
+			loadTopicDetail()
+				.then(loadTopicComments());
+
     	}])
 }());

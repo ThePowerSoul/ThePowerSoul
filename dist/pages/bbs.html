@@ -22,6 +22,9 @@
 	.bbs-widget-container .search-input-container {
 		margin-left: 24px;
 	}
+	.topic-card-container {
+		overflow-y: auto;
+	}
 	.topic-card {
 		min-height: 150px;
 		max-height: 200px;
@@ -33,7 +36,6 @@
 		max-height: 32px;
 	}
 	.topic-card .topic-title {
-		width: 200px;
 		overflow: hidden;
     		text-overflow: ellipsis;
 		cursor: pointer;
@@ -69,4 +71,4 @@
 	.topic-content-container .topic-content:hover {
 		color: rgba(0, 0, 0, 0.54);
 	}
-</style><div class=bbs-container><div class=bbs-widget-container layout=row layout-align="start center"><md-input-container><md-button class="md-raised md-primary" ng-click=addNewTopic($event)>发帖</md-button></md-input-container><md-input-container><md-button class="md-raised md-primary" ng-click=addNewArticle($event)>写文章</md-button></md-input-container><div class=selector-container><md-select class=selector-widget ng-model=selectedItem ng-change=getSelectedCategory()><md-option ng-value=item.Value ng-repeat="item in selectorItems">{{item.Title}}</md-option></md-select></div><div flex></div><div class=search-input-container layout=row layout-align="start center"><input class=search-input placeholder=请输入搜索关键字 ng-keypress=searchTopicKeyboard($event) ng-model=user.firstName> <i class="fa fa-search search-icon-button" aria-hidden=true ng-click=searchTopic()></i></div></div><md-card class=topic-card ng-repeat="topic in topicList"><md-card-title class=topic-title-container><md-card-title-text layout=row layout-align="start center"><span class="md-headline topic-title" ng-click="goTopicDetail(topic, $event)">{{topic.Title}}</span><div layout=row layout-align="start center"><span class=topic-author>{{'作者：Joey'}}</span></div><div layout=row layout-align="start center"><i class="fa fa-thumbs-o-up" aria-hidden=true></i> <span class=like-number>11</span></div><div layout=row layout-align="start center"><i class="fa fa-thumbs-o-down" aria-hidden=true></i> <span class=dislike-number>11</span></div><div class=topic-submit-time layout=row><span>{{'发表于：2018-2-2'}}</span></div></md-card-title-text></md-card-title><md-card-content class=topic-content-container><span class=topic-content ng-click=goTopicDetail(topic)>{{topic.Content}}</span></md-card-content></md-card></div>
+</style><div class=bbs-container><div class=bbs-widget-container layout=row layout-align="start center"><md-input-container><md-button class="md-raised md-primary" ng-click=addNewTopic($event)>发帖</md-button></md-input-container><md-input-container><md-button class="md-raised md-primary" ng-click=addNewArticle($event)>写文章</md-button></md-input-container><div class=selector-container><md-select class=selector-widget ng-model=selectedItem ng-change=getSelectedCategory()><md-option ng-value=item.Value ng-repeat="item in selectorItems">{{item.Title}}</md-option></md-select></div><div flex></div><div class=search-input-container layout=row layout-align="start center"><input class=search-input placeholder=请输入搜索关键字 ng-keypress=searchTopicKeyboard($event) ng-model=user.firstName> <i class="fa fa-search search-icon-button" aria-hidden=true ng-click=searchTopic()></i></div></div><div class=topic-card-container><md-card class=topic-card ng-repeat="topic in topicList"><md-card-title class=topic-title-container><md-card-title-text layout=row layout-align="start center"><span class="md-headline topic-title" ng-click="goTopicDetail(topic, $event)" flex>{{topic.Title}}</span><div layout=row layout-align="start center"><span class=topic-author>{{'作者：Joey'}}</span></div><div layout=row layout-align="start center"><i class="fa fa-thumbs-o-up" aria-hidden=true></i> <span class=like-number>11</span></div><div layout=row layout-align="start center"><i class="fa fa-thumbs-o-down" aria-hidden=true></i> <span class=dislike-number>11</span></div><div class=topic-submit-time layout=row><span>{{'发表于：2018-2-2'}}</span></div></md-card-title-text></md-card-title><md-card-content class=topic-content-container><span class=topic-content ng-click=goTopicDetail(topic)>{{topic.Content}}</span></md-card-content></md-card></div></div>

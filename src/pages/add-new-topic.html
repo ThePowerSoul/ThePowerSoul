@@ -18,8 +18,17 @@
 </style>
 <md-dialog class="dialog-content-container" layout="column">
 	<div layout="column">
+		<md-input-container>
+			<label>分类</label>
+			<md-select ng-model="topic.Category">
+				<md-option ng-repeat="item in categories" ng-value="item.Value">
+				{{item.Title}}
+				</md-option>
+			</md-select>
+		</md-input-container>
 		<input class="topic-title" type="text" ng-model="topic.Title" placeholder="请输入帖子标题">
 		<textarea class="topic-content" ng-model="topic.Content" placeholder="请输入帖子内容"></textarea>
-		<md-button class="md-raised md-primary" ng-click="submit()" ng-disabled="topic.Title === '' || topic.Content === ''">提交</md-button>
+		<md-button class="md-raised md-primary" ng-click="submit()" 
+		ng-disabled="topic.Title === '' || topic.Content === '' || topic.Category === ''">提交</md-button>
 	</div>
 </md-dialog>

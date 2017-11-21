@@ -102,16 +102,6 @@
                     $scope.signupButtonText = "注册";
                     return false;
                 }
-
-                // if ($scope.newUser.Name === "" || $scope.newUser.DisplayName === "" ||
-                //     $scope.newUser.Email === "" || $scope.newUser.Password === "" || 
-                //     $scope.newUser.ConfirmPassword === "") {
-                //     $scope.signupButtonText = "请输入正确的注册信息";
-                //     return true;
-                // } else {
-                //     $scope.signupButtonText = "注册";
-                //     return false;
-                // }
             };
 
             $scope.disableLoginButtonOrNot = function() {
@@ -127,9 +117,14 @@
     	.controller('mainCtrl', ['$scope', '$state', '$mdDialog', 'localStorageService',
     		function($scope, $state, $mdDialog, localStorageService) {
                 $scope.loggedIn = false;
+                localStorageService.set('userInfo', {
+                    DisplayName: "Joe"
+                });
+                
                 // localstorage check
                 if (localStorageService.get('userInfo')) {
-                    $socpe.loggedIn = true;
+                    $scope.loggedIn = true;
+                    $scope.loggedInUser = localStorageService.get('userInfo');
                 }
 
                 $scope.openLoginOrSignupPanel = function(ev) {
