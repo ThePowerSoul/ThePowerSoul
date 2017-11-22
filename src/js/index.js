@@ -12,6 +12,7 @@
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
+        .constant('BaseUrl', "http://localhost:3030")
         .config(function (localStorageServiceProvider) {
             localStorageServiceProvider
             .setPrefix('thepowersoul');
@@ -55,11 +56,14 @@
                     controller: 'mallCtrl',
                 });
 	    }])
-        .controller('loginOrSignupCtrl', ['$scope', '$mdDialog',
-        function($scope, $mdDialog) {
+        .controller('loginOrSignupCtrl', ['$scope', '$mdDialog', 'BaseUrl', 'localStorageService', 'alertService',
+        function($scope, $mdDialog, BaseUrl, localStorageService, alertService) {
+            var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/; 
             $scope.flag = true;
             $scope.signupButtonText = "";
             $scope.loginButtonText = "";
+            $scope.isLogining = false;
+            $scope.isSigningup = false;
             $scope.newUser = {
                 Name: "",
                 DisplayName: "",
@@ -80,21 +84,38 @@
                 }
             };  
 
-            $scope.login = function() {
-                $mdDialog.hide();
+            $scope.login = function(ev) {
+                $scope.isLogining = true;
+                $http.post(BaseUrl + '/login', function(response) {
+                    localStorageService.set('userInfo', response.data);
+                    $mdDialog.hide();
+                    alertService.showAlert('登录成功', ev);
+                }, function(error) {
+                    alertService.showAlert('注册失败， 请重试', ev);
+                }).$promise.finally(function() {
+                    $scope.isLogining = false;
+                });
             };
 
-            $scope.signup = function() {
-                $mdDialog.hide();
+            $scope.signup = function(ev) {
+                $scope.isSigningup = true;
+                $http.post(BaseUrl + '/signup', function(response) {
+                    // 注册成功，直接进行登录后的流程。
+                    localStorageService.set('userInfo', response.data);
+                    $mdDialog.hide();
+                    alertService.showAlert('登录成功', ev);
+                }, function(error) {
+                    alertService.showAlert('登录失败， 请重试', ev);
+                }).$promise.finally(function() {
+                    $scope.isSigningup = false;
+                }); 
             };
 
             $scope.disableSignupButtonOrNot = function() {
-                var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/; 
                 if( 
                     ($scope.newUser.Name.length === 0 || $scope.newUser.Name.length > 5) || 
                     !reg.test($scope.newUser.Email) || 
-                    ($scope.newUser.Password === ""  || $scope.newUser.ConfirmPassword === "" || 
-                        $scope.newUser.Password !== $scope.newUser.ConfirmPassword)
+                    ($scope.newUser.Password === ""  || $scope.newUser.ConfirmPassword === "" || $scope.newUser.Password !== $scope.newUser.ConfirmPassword || $scope.Password.length < 6 || $scope.ConfirmPassword.length < 6)
                  ) {
                     $scope.signupButtonText = "请输入正确的注册信息";
                     return true;
@@ -105,7 +126,7 @@
             };
 
             $scope.disableLoginButtonOrNot = function() {
-                if ($scope.user.Email === "" || $scope.user.Password === "") {
+                if ($scope.user.Email === "" || $scope.user.Password === "" || !reg.test($scope.newUser.Email) || $scope.user.Password.length < 6) {
                     $scope.loginButtonText = "请输入正确的邮箱和密码";
                     return true;
                 } else {
@@ -113,28 +134,37 @@
                     return false;
                 }
             };  
+
+            $scope.closeDialog = function(ev) {
+                if ($scope.isLogining || $scope.isSigningup) {
+                    alertService.showAlert('正在进行操作，请勿关闭弹窗', ev);
+                } else {
+                    $mdDialog.hide();
+                }
+            };
         }])
-    	.controller('mainCtrl', ['$scope', '$state', '$mdDialog', 'localStorageService',
-    		function($scope, $state, $mdDialog, localStorageService) {
-                $scope.loggedIn = false;
-                localStorageService.set('userInfo', {
-                    DisplayName: "Joe"
-                });
-                
+    	.controller('mainCtrl', ['$scope', '$state', '$http', '$mdDialog', 'localStorageService',
+    		function($scope, $state, $http, $mdDialog, localStorageService) {
+                $scope.loggedIn = false;                
                 // localstorage check
                 if (localStorageService.get('userInfo')) {
                     $scope.loggedIn = true;
                     $scope.loggedInUser = localStorageService.get('userInfo');
                 }
-
+                
                 $scope.openLoginOrSignupPanel = function(ev) {
                     $mdDialog.show({ 
                         controller: 'loginOrSignupCtrl',
                         templateUrl: 'dist/pages/loginAndSignup.html',
                         parent: angular.element(document.body),
                         targetEvent: ev,
-                        clickOutsideToClose:true,
-                        fullscreen: $scope.customFullscreen// Only for -xs, -sm breakpoints.
+                        clickOutsideToClose: false,
+                        fullscreen: false
+                    })
+                    .then(function(data) {
+                        
+                    }, function(){
+                        // canceled
                     });
                 };
 

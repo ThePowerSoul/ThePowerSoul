@@ -2,7 +2,7 @@
     'use strict';
 
     var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'LocalStorageModule'];
-    angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).config(function (localStorageServiceProvider) {
+    angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         $urlRouterProvider.when('', 'introduction');
@@ -35,10 +35,13 @@
             templateUrl: 'dist/pages/mall.html',
             controller: 'mallCtrl'
         });
-    }]).controller('loginOrSignupCtrl', ['$scope', '$mdDialog', function ($scope, $mdDialog) {
+    }]).controller('loginOrSignupCtrl', ['$scope', '$mdDialog', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $mdDialog, BaseUrl, localStorageService, alertService) {
+        var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
         $scope.flag = true;
         $scope.signupButtonText = "";
         $scope.loginButtonText = "";
+        $scope.isLogining = false;
+        $scope.isSigningup = false;
         $scope.newUser = {
             Name: "",
             DisplayName: "",
@@ -59,17 +62,35 @@
             }
         };
 
-        $scope.login = function () {
-            $mdDialog.hide();
+        $scope.login = function (ev) {
+            $scope.isLogining = true;
+            $http.post(BaseUrl + '/login', function (response) {
+                localStorageService.set('userInfo', response.data);
+                $mdDialog.hide();
+                alertService.showAlert('登录成功', ev);
+            }, function (error) {
+                alertService.showAlert('注册失败， 请重试', ev);
+            }).$promise.finally(function () {
+                $scope.isLogining = false;
+            });
         };
 
-        $scope.signup = function () {
-            $mdDialog.hide();
+        $scope.signup = function (ev) {
+            $scope.isSigningup = true;
+            $http.post(BaseUrl + '/signup', function (response) {
+                // 注册成功，直接进行登录后的流程。
+                localStorageService.set('userInfo', response.data);
+                $mdDialog.hide();
+                alertService.showAlert('登录成功', ev);
+            }, function (error) {
+                alertService.showAlert('登录失败， 请重试', ev);
+            }).$promise.finally(function () {
+                $scope.isSigningup = false;
+            });
         };
 
         $scope.disableSignupButtonOrNot = function () {
-            var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
-            if ($scope.newUser.Name.length === 0 || $scope.newUser.Name.length > 5 || !reg.test($scope.newUser.Email) || $scope.newUser.Password === "" || $scope.newUser.ConfirmPassword === "" || $scope.newUser.Password !== $scope.newUser.ConfirmPassword) {
+            if ($scope.newUser.Name.length === 0 || $scope.newUser.Name.length > 5 || !reg.test($scope.newUser.Email) || $scope.newUser.Password === "" || $scope.newUser.ConfirmPassword === "" || $scope.newUser.Password !== $scope.newUser.ConfirmPassword || $scope.Password.length < 6 || $scope.ConfirmPassword.length < 6) {
                 $scope.signupButtonText = "请输入正确的注册信息";
                 return true;
             } else {
@@ -79,7 +100,7 @@
         };
 
         $scope.disableLoginButtonOrNot = function () {
-            if ($scope.user.Email === "" || $scope.user.Password === "") {
+            if ($scope.user.Email === "" || $scope.user.Password === "" || !reg.test($scope.newUser.Email) || $scope.user.Password.length < 6) {
                 $scope.loginButtonText = "请输入正确的邮箱和密码";
                 return true;
             } else {
@@ -87,12 +108,16 @@
                 return false;
             }
         };
-    }]).controller('mainCtrl', ['$scope', '$state', '$mdDialog', 'localStorageService', function ($scope, $state, $mdDialog, localStorageService) {
-        $scope.loggedIn = false;
-        localStorageService.set('userInfo', {
-            DisplayName: "Joe"
-        });
 
+        $scope.closeDialog = function (ev) {
+            if ($scope.isLogining || $scope.isSigningup) {
+                alertService.showAlert('正在进行操作，请勿关闭弹窗', ev);
+            } else {
+                $mdDialog.hide();
+            }
+        };
+    }]).controller('mainCtrl', ['$scope', '$state', '$http', '$mdDialog', 'localStorageService', function ($scope, $state, $http, $mdDialog, localStorageService) {
+        $scope.loggedIn = false;
         // localstorage check
         if (localStorageService.get('userInfo')) {
             $scope.loggedIn = true;
@@ -105,8 +130,10 @@
                 templateUrl: 'dist/pages/loginAndSignup.html',
                 parent: angular.element(document.body),
                 targetEvent: ev,
-                clickOutsideToClose: true,
-                fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+                clickOutsideToClose: false,
+                fullscreen: false
+            }).then(function (data) {}, function () {
+                // canceled
             });
         };
 
@@ -128,56 +155,56 @@
     }]);
 })();
 (function () {
-	'use strict';
+				'use strict';
 
-	angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
-		// this demonstrates how to register a new tool and add it to the default toolbar
-		$provide.decorator('taOptions', ['$delegate', function (taOptions) {
-			// $delegate is the taOptions we are decorating
-			// here we override the default toolbars and classes specified in taOptions.
-			taOptions.forceTextAngularSanitize = true; // set false to allow the textAngular-sanitize provider to be replaced
-			taOptions.keyMappings = []; // allow customizable keyMappings for specialized key boards or languages
-			taOptions.toolbar = [['bold', 'italics', 'underline', 'ul', 'ol']];
-			taOptions.classes = {
-				focussed: 'focussed',
-				toolbar: 'btn-toolbar',
-				toolbarGroup: 'btn-group',
-				toolbarButton: 'btn btn-default',
-				toolbarButtonActive: 'active',
-				disabled: 'disabled',
-				textEditor: 'form-control',
-				htmlEditor: 'form-control'
-			};
-			return taOptions; // whatever you return will be the taOptions
-		}]);
-		// this demonstrates changing the classes of the icons for the tools for font-awesome v3.x
-		$provide.decorator('taTools', ['$delegate', function (taTools) {
-			taTools.bold.iconclass = 'fa fa-bold';
-			taTools.italics.iconclass = 'fa fa-italic';
-			taTools.underline.iconclass = 'fa fa-underline';
-			taTools.ul.iconclass = 'fa fa-list-ul';
-			taTools.ol.iconclass = 'fa fa-list-ol';
-			taTools.undo.iconclass = 'icon-undo';
-			taTools.redo.iconclass = 'icon-repeat';
-			taTools.justifyLeft.iconclass = 'icon-align-left';
-			taTools.justifyRight.iconclass = 'icon-align-right';
-			taTools.justifyCenter.iconclass = 'icon-align-center';
-			taTools.clear.iconclass = 'icon-ban-circle';
-			taTools.insertLink.iconclass = 'icon-link';
-			taTools.insertImage.iconclass = 'icon-picture';
-			// there is no quote icon in old font-awesome so we change to text as follows
-			delete taTools.quote.iconclass;
-			taTools.quote.buttontext = 'quote';
-			return taTools;
-		}]);
-	}]).controller('addNewArticleCtrl', ['$scope', function ($scope) {
-		$scope.richTextContent = "";
-		$scope.publishArticle = function () {};
+				angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
+								// this demonstrates how to register a new tool and add it to the default toolbar
+								$provide.decorator('taOptions', ['$delegate', function (taOptions) {
+												// $delegate is the taOptions we are decorating
+												// here we override the default toolbars and classes specified in taOptions.
+												taOptions.forceTextAngularSanitize = true; // set false to allow the textAngular-sanitize provider to be replaced
+												taOptions.keyMappings = []; // allow customizable keyMappings for specialized key boards or languages
+												taOptions.toolbar = [['bold', 'italics', 'underline', 'ul', 'ol']];
+												taOptions.classes = {
+																focussed: 'focussed',
+																toolbar: 'btn-toolbar',
+																toolbarGroup: 'btn-group',
+																toolbarButton: 'btn btn-default',
+																toolbarButtonActive: 'active',
+																disabled: 'disabled',
+																textEditor: 'form-control',
+																htmlEditor: 'form-control'
+												};
+												return taOptions; // whatever you return will be the taOptions
+								}]);
+								// this demonstrates changing the classes of the icons for the tools for font-awesome v3.x
+								$provide.decorator('taTools', ['$delegate', function (taTools) {
+												taTools.bold.iconclass = 'fa fa-bold';
+												taTools.italics.iconclass = 'fa fa-italic';
+												taTools.underline.iconclass = 'fa fa-underline';
+												taTools.ul.iconclass = 'fa fa-list-ul';
+												taTools.ol.iconclass = 'fa fa-list-ol';
+												taTools.undo.iconclass = 'icon-undo';
+												taTools.redo.iconclass = 'icon-repeat';
+												taTools.justifyLeft.iconclass = 'icon-align-left';
+												taTools.justifyRight.iconclass = 'icon-align-right';
+												taTools.justifyCenter.iconclass = 'icon-align-center';
+												taTools.clear.iconclass = 'icon-ban-circle';
+												taTools.insertLink.iconclass = 'icon-link';
+												taTools.insertImage.iconclass = 'icon-picture';
+												// there is no quote icon in old font-awesome so we change to text as follows
+												delete taTools.quote.iconclass;
+												taTools.quote.buttontext = 'quote';
+												return taTools;
+								}]);
+				}]).controller('addNewArticleCtrl', ['$scope', function ($scope) {
+								$scope.richTextContent = "";
+								$scope.publishArticle = function () {};
 
-		$scope.saveAsDraft = function () {};
+								$scope.saveAsDraft = function () {};
 
-		function autoSaveDraft() {}
-	}]);
+								function autoSaveDraft() {}
+				}]);
 })();
 (function () {
 	'use strict';
@@ -197,31 +224,19 @@
 	}, {
 		Title: "全部",
 		Value: "ALL"
-	}]).controller('addNewTopicCtrl', ['$scope', '$mdDialog', function ($scope, $mdDialog) {
+	}]).controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'selectorItems', function ($scope, $mdDialog, selectorItems) {
 		$scope.topic = {
 			Title: "",
 			Content: "",
 			Category: ""
 		};
 
-		$scope.categories = [{
-			Title: "力量",
-			Value: "STRENGTH"
-		}, {
-			Title: "瑜伽",
-			Value: "YOGA"
-		}, {
-			Title: "形体",
-			Value: "FITNESS"
-		}, {
-			Title: "跑步",
-			Value: "RUNNING"
-		}];
+		$scope.categories = selectorItems;
 
 		$scope.submit = function () {
 			$mdDialog.hide($scope.topic);
 		};
-	}]).controller('bbsCtrl', ['$scope', '$mdDialog', 'selectorItems', '$state', 'alertService', 'localStorageService', '$http', function ($scope, $mdDialog, selectorItems, $state, alertService, localStorageService, $http) {
+	}]).controller('bbsCtrl', ['$scope', '$mdDialog', 'selectorItems', '$state', 'alertService', 'localStorageService', '$http', 'BaseUrl', function ($scope, $mdDialog, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
 		$scope.selectedItem = "STRENGTH";
 		$scope.selectorItems = selectorItems;
 		$scope.searchContext = "";
@@ -298,6 +313,7 @@
 		};
 
 		$scope.addNewTopic = function (ev) {
+			console.log(localStorageService.get('userInfo'));
 			if (localStorageService.get('userInfo')) {
 				var user_id = localStorageService.get('userInfo')._id;
 				$mdDialog.show({
@@ -348,7 +364,7 @@
 			}
 			$scope.isLoadingTopic = true;
 
-			$http.get("http://localhost:3030/topic/user-111").then(function (response) {
+			$http.get(BaseUrl + "topic/user-111").then(function (response) {
 				if (loadMoreSignal === 'load-more') {
 					$scope.topicList = $scope.topicList.concat(response.data);
 				} else {

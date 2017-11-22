@@ -23,31 +23,14 @@
 				Value: "ALL"
 			}
 		])
-    	.controller('addNewTopicCtrl', ['$scope', '$mdDialog', function($scope, $mdDialog) {
+    	.controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'selectorItems', function($scope, $mdDialog, selectorItems) {
     		$scope.topic = {
     			Title: "",
 				Content: "",
 				Category: "",
 			};
 			
-			$scope.categories = [
-				{
-					Title: "力量",
-					Value: "STRENGTH"
-				},
-				{
-					Title: "瑜伽",
-					Value: "YOGA"
-				},
-				{
-					Title: "形体",
-					Value: "FITNESS"
-				},
-				{
-					Title: "跑步",
-					Value: "RUNNING"
-				}
-			];
+			$scope.categories = selectorItems;
 
     		$scope.submit = function() {	
     			$mdDialog.hide($scope.topic);
@@ -55,8 +38,8 @@
 
     	}])
 		.controller('bbsCtrl', ['$scope', '$mdDialog', 'selectorItems', '$state', 'alertService',
-			'localStorageService', '$http',
-			function($scope, $mdDialog, selectorItems, $state, alertService, localStorageService, $http) {
+			'localStorageService', '$http', 'BaseUrl',
+			function($scope, $mdDialog, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
     			$scope.selectedItem = "STRENGTH";
     			$scope.selectorItems = selectorItems;
     			$scope.searchContext = "";
@@ -135,6 +118,7 @@
     			};
 
 	    		$scope.addNewTopic = function(ev) {
+					console.log(localStorageService.get('userInfo'));
 	    			if (localStorageService.get('userInfo')) {
 						var user_id = localStorageService.get('userInfo')._id;
 	    				$mdDialog.show({ 
@@ -187,7 +171,7 @@
 					}
 					$scope.isLoadingTopic = true;
 				
-					$http.get("http://localhost:3030/topic/user-111")
+					$http.get(BaseUrl + "topic/user-111")
 						.then(function(response) {
 					  		if (loadMoreSignal === 'load-more') {
 								$scope.topicList = $scope.topicList.concat(response.data);
