@@ -17,6 +17,46 @@
             localStorageServiceProvider
             .setPrefix('thepowersoul');
         })
+        .config(function($httpProvider) {
+            $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';  
+              // Serialize function  
+              //只能是嵌套两层的对象  
+              var param = function(obj) {  
+                  var query = '', name, value, fullSubName, subName, subValue, innerObj,i;  
+                  for(name in obj) {  
+                      value = obj[name];  
+                      //如果值是数组  
+                      if(value instanceof Array) {  
+                          for(i = 0; i < value.length; ++i) {  
+                              subValue = value[i];  
+                              fullSubName = name + '[' + i + ']';  
+                              innerObj = {};  
+                              innerObj[fullSubName] = subValue;  
+                              query += param(innerObj) + '&';  
+                          }  
+                      //如果值是对象  
+                      } else if(value instanceof Object) {  
+                          for(subName in value) {  
+                              subValue = value[subName];  
+                              fullSubName = name + '[' + subName + ']';  
+                              innerObj = {};  
+                              innerObj[fullSubName] = subValue;  
+                              query += param(innerObj) + '&';  
+                          }  
+                      如果值是字符串  
+                      } else if(value !== undefined && value !== null) {  
+                          query += encodeURIComponent(name) + '=' + encodeURIComponent(value) + '&';  
+                      }  
+                  }  
+            
+                  return query.length ? query.substr(0, query.length - 1) : query;  
+              }  
+            
+              //重写transformRequest参数处理方法(利用param function 处理)  
+              $httpProvider.defaults.transformRequest = [function(data) {  
+                  return angular.isObject(data) && String(data) !== '[object File]' ? param(data) : data;  
+              }];  
+        })
     	.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 	        $urlRouterProvider.when('', 'introduction');
 	        $stateProvider
@@ -56,14 +96,15 @@
                     controller: 'mallCtrl',
                 });
 	    }])
-        .controller('loginOrSignupCtrl', ['$scope', '$mdDialog', 'BaseUrl', 'localStorageService', 'alertService',
-        function($scope, $mdDialog, BaseUrl, localStorageService, alertService) {
+        .controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService',
+        function($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService) {
             var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/; 
             $scope.flag = true;
             $scope.signupButtonText = "";
             $scope.loginButtonText = "";
             $scope.isLogining = false;
             $scope.isSigningup = false;
+            $scope.loginErrorText = ""
             $scope.newUser = {
                 Name: "",
                 DisplayName: "",
@@ -86,36 +127,48 @@
 
             $scope.login = function(ev) {
                 $scope.isLogining = true;
-                $http.post(BaseUrl + '/login', function(response) {
-                    localStorageService.set('userInfo', response.data);
-                    $mdDialog.hide();
-                    alertService.showAlert('登录成功', ev);
-                }, function(error) {
-                    alertService.showAlert('注册失败， 请重试', ev);
-                }).$promise.finally(function() {
-                    $scope.isLogining = false;
-                });
+                $http.post(BaseUrl + '/login', $scope.user)
+                    .then(function(response) {
+                        $scope.isLogining = false;
+                        localStorageService.set('userInfo', response.data);
+                        $mdDialog.hide();
+                        alertService.showAlert('登录成功', ev);
+                    }, function(error) {
+                        $scope.isLogining = false;
+                        if (error.status === 400) {
+                            $scope.loginErrorText = error.data;
+                        } else {
+                            alertService.showAlert('登录失败，请重试', ev);
+                        }
+                    });
             };
 
             $scope.signup = function(ev) {
                 $scope.isSigningup = true;
-                $http.post(BaseUrl + '/signup', function(response) {
-                    // 注册成功，直接进行登录后的流程。
-                    localStorageService.set('userInfo', response.data);
-                    $mdDialog.hide();
-                    alertService.showAlert('登录成功', ev);
-                }, function(error) {
-                    alertService.showAlert('登录失败， 请重试', ev);
-                }).$promise.finally(function() {
-                    $scope.isSigningup = false;
-                }); 
+                $http.post(BaseUrl + '/signup', $scope.newUser)
+                    .then(function(response) {
+                        // 注册成功，直接进行登录后的流程。
+                        $scope.isSigningup = false;
+                        localStorageService.set('userInfo', response.data);
+                        $mdDialog.hide();
+                        alertService.showAlert('注册成功，已自动登录', ev);
+                    }, function(error) {
+                        $scope.isSigningup = false;
+                        if (error.status === 400 && error.data === "邮箱已存在") {
+                            $scope.newUser.Email = "邮箱已存在，请重新输入";
+                        } else if (error.status === 400 && error.data === "显示名已被占用"){
+                            $scope.newUser.DisplayName = "显示名已被占用，请重新输入";
+                        } else {
+                            alertService.showAlert('注册发生错误，请重试', ev);
+                        }
+                    });
             };
 
             $scope.disableSignupButtonOrNot = function() {
-                if( 
+                if ( 
                     ($scope.newUser.Name.length === 0 || $scope.newUser.Name.length > 5) || 
                     !reg.test($scope.newUser.Email) || 
-                    ($scope.newUser.Password === ""  || $scope.newUser.ConfirmPassword === "" || $scope.newUser.Password !== $scope.newUser.ConfirmPassword || $scope.Password.length < 6 || $scope.ConfirmPassword.length < 6)
+                    ($scope.newUser.Password === ""  || $scope.newUser.ConfirmPassword === "" || $scope.newUser.Password !== $scope.newUser.ConfirmPassword || $scope.newUser.Password.length < 6 || $scope.newUser.ConfirmPassword.length < 6)
                  ) {
                     $scope.signupButtonText = "请输入正确的注册信息";
                     return true;
@@ -126,7 +179,7 @@
             };
 
             $scope.disableLoginButtonOrNot = function() {
-                if ($scope.user.Email === "" || $scope.user.Password === "" || !reg.test($scope.newUser.Email) || $scope.user.Password.length < 6) {
+                if ($scope.user.Email === "" || $scope.user.Password === "" || !reg.test($scope.user.Email) || $scope.user.Password.length < 6 || !reg.test($scope.user.Email)) {
                     $scope.loginButtonText = "请输入正确的邮箱和密码";
                     return true;
                 } else {
@@ -143,28 +196,47 @@
                 }
             };
         }])
-    	.controller('mainCtrl', ['$scope', '$state', '$http', '$mdDialog', 'localStorageService',
-    		function($scope, $state, $http, $mdDialog, localStorageService) {
+    	.controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService',
+    		function($scope, $state, $http, $rootScope, $mdDialog, localStorageService) {
                 $scope.loggedIn = false;                
                 // localstorage check
                 if (localStorageService.get('userInfo')) {
+                    updateUserLoginState();
+                }
+
+                $rootScope.$on('$USERLOGGEDIN', function() {
+                    updateUserLoginState();
+                });
+                
+                // 登录或注册成功，更新页面状态
+                function updateUserLoginState() {
                     $scope.loggedIn = true;
                     $scope.loggedInUser = localStorageService.get('userInfo');
                 }
-                
+
+                $scope.logOut = function() {
+                    $scope.loggedIn = false;
+                    localStorageService.remove('userInfo');
+                    $state.go('bbs');
+                };
+
+                $scope.goToUserDetail = function() {
+                    $state.go('user-detail');
+                };
+
                 $scope.openLoginOrSignupPanel = function(ev) {
                     $mdDialog.show({ 
                         controller: 'loginOrSignupCtrl',
-                        templateUrl: 'dist/pages/loginAndSignup.html',
+                        templateUrl: 'dist/pages/login-and-signup.html',
                         parent: angular.element(document.body),
                         targetEvent: ev,
                         clickOutsideToClose: false,
                         fullscreen: false
                     })
                     .then(function(data) {
-                        
+                        updateUserLoginState();
                     }, function(){
-                        // canceled
+                        // canceled mdDialog
                     });
                 };
 

@@ -13,6 +13,9 @@
 	.home-page-toolbar {
 		width: 1032px
 	}
+	.title-bar-action-button {
+		width: 100% !important;
+	}
 </style>
 <body class="ng-cloak" ng-app="The.Power.Soul" ng-controller="mainCtrl">
 	<md-toolbar layout="row" layout-align="center">
@@ -29,8 +32,24 @@
 			<md-button ng-click="goToMall()" aria-label="优质商品推荐">
 				优质品牌推荐
 	        </md-button>
-	        <div flex></div>
-	        <span ng-show="loggedIn">{{'你好，' + loggedInUser.DisplayName}}</span>
+			<div flex></div>
+			<md-menu ng-show="loggedIn">
+				<md-button aria-label="Open loggedin menu" class="md-icon-button title-bar-action-button" ng-click="$mdOpenMenu()">
+					 {{'你好' + loggedInUser.DisplayName}}
+				</md-button>
+				<md-menu-content width="4">
+				  	<md-menu-item>
+						<md-button ng-click="goToUserDetail()">
+					  		个人中心
+						</md-button>
+				  	</md-menu-item>
+				  	<md-menu-item>
+						<md-button ng-click="logOut()">
+					  		登出
+						</md-button>
+				  	</md-menu-item>
+				</md-menu-content>
+			</md-menu>
 	        <md-button ng-show="!loggedIn" ng-click="openLoginOrSignupPanel($event)" aria-label="论坛">
 	          	登录/注册
 	        </md-button>

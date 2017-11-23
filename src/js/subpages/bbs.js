@@ -29,6 +29,10 @@
 				Content: "",
 				Category: "",
 			};
+
+			$scope.closeDialog = function(ev) {
+				$mdDialog.hide();
+			};	
 			
 			$scope.categories = selectorItems;
 
@@ -37,9 +41,9 @@
     		};
 
     	}])
-		.controller('bbsCtrl', ['$scope', '$mdDialog', 'selectorItems', '$state', 'alertService',
+		.controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService',
 			'localStorageService', '$http', 'BaseUrl',
-			function($scope, $mdDialog, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
+			function($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
     			$scope.selectedItem = "STRENGTH";
     			$scope.selectorItems = selectorItems;
     			$scope.searchContext = "";
@@ -85,7 +89,7 @@
 							templateUrl: 'dist/pages/login-and-signup.html',
 							parent: angular.element(document.body),
 							targetEvent: ev,
-							clickOutsideToClose:true,
+							clickOutsideToClose: false,
 							fullscreen: false
 						})
 						.then(function(data) {
@@ -106,19 +110,18 @@
 							templateUrl: 'dist/pages/login-and-signup.html',
 							parent: angular.element(document.body),
 							targetEvent: ev,
-							clickOutsideToClose:true,
+							clickOutsideToClose: false,
 							fullscreen: false
 						})
 						.then(function(data) {
-								// handle user data
+							$rootScope.$broadcast('$USERLOGGEDIN');
 						}, function() {
-								// canceled
+							// canceled
 						});
 					}
     			};
 
 	    		$scope.addNewTopic = function(ev) {
-					console.log(localStorageService.get('userInfo'));
 	    			if (localStorageService.get('userInfo')) {
 						var user_id = localStorageService.get('userInfo')._id;
 	    				$mdDialog.show({ 
@@ -126,7 +129,7 @@
 				            templateUrl: 'dist/pages/add-new-topic.html',
 				            parent: angular.element(document.body),
 				            targetEvent: ev,
-				            clickOutsideToClose:true,
+				            clickOutsideToClose: false,
 				            fullscreen: false
 				        })
 				        .then(function(data) {
@@ -148,7 +151,7 @@
 				            templateUrl: 'dist/pages/login-and-signup.html',
 				            parent: angular.element(document.body),
 				            targetEvent: ev,
-				            clickOutsideToClose:true,
+				            clickOutsideToClose: false,
 				            fullscreen: false
 				        })
 				        .then(function(data) {

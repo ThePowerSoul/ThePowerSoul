@@ -37,19 +37,19 @@
 	<div class="user-detail-info">
 		<div class="name info-panel" layout="row" layout-align="start center">
 			<span>姓名：</span>
-			<span>朱越</span>
+			<span ng-bind="user.Name"></span>
 		</div>
 		<div class="display-name info-panel"  layout="row" layout-align="start center">
 			<span>显示名：</span>
-			<span>Joey</span>
+			<span ng-bind="user.DisplayName"></span>
 		</div>
 		<div class="display-name info-panel"  layout="row" layout-align="start center">
 			<span>邮箱：</span>
-			<span>wps_zy@126.com</span>
+			<span ng-bind="user.Email"></span>
 		</div>
 		<div class="display-name info-panel"  layout="row" layout-align="start center">
 			<span>积分：</span>
-			<span>50</span>
+			<span ng-bind="user.Point"></span>
 		</div>
 		<div class="display-name info-panel"  layout="row" layout-align="start center">
 			<span class="user-detail-action-button" flex="50">我的帖子</span>

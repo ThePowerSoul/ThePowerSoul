@@ -15,8 +15,21 @@
 		width: 100%;
 		padding-left: 8px;
 	}
+	.dialog-content-container .dialog-close-button {
+		cursor: pointer;
+		outline: none;
+	}
+	.dialog-content-container .dialog-close-button:hover {
+		color: rgba(0, 0, 0, 0.12);
+	}
 </style>
 <md-dialog class="dialog-content-container" layout="column">
+	<div layout="row" layout-align="start center">
+		<div flex></div>
+		<div>
+			<i class="fa fa-times small dialog-close-button" ng-click="closeDialog($event)" aria-hidden="true"></i>	
+		</div>	
+	</div>
 	<div layout="column">
 		<md-input-container>
 			<label>分类</label>

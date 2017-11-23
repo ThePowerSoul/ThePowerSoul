@@ -62,11 +62,11 @@
     	<md-content class="md-no-momentum panel-content">
     		<form name="signupForm">
     			<md-input-container class="md-icon-float md-block">
-			      	<input md-maxlength="5" placeholder="请输入姓名（10字内）..." ng-disabled="isSigningup" ng-model="newUser.Name" type="text" placeholder="姓名">
+			      	<input md-maxlength="10" placeholder="请输入姓名（10字内）..." ng-disabled="isSigningup" ng-model="newUser.Name" type="text" placeholder="姓名">
 		    	</md-input-container>
 
 			    <md-input-container md-no-float class="md-block">
-			      	<input md-maxlength="5" placeholder="请输入昵称（5字内）..." ng-disabled="isSigningup" ng-model="newUser.DisplayName" type="text" placeholder="昵称">
+			      	<input md-maxlength="10" placeholder="请输入昵称（5字内）..." ng-disabled="isSigningup" ng-model="newUser.DisplayName" type="text" placeholder="昵称">
 			    </md-input-container>
 
 			    <md-input-container md-no-float class="md-block">
@@ -74,11 +74,11 @@
 			    </md-input-container>
 
 			    <md-input-container md-no-float class="md-block">
-			      	<input ng-model="newUser.Password" placeholder="请自由输入密码（>=6位即可）..." ng-disabled="isSigningup" type="text" placeholder="密码">
+			      	<input ng-model="newUser.Password" placeholder="请自由输入密码（>=6位即可）..." ng-disabled="isSigningup" type="password" placeholder="密码">
 			    </md-input-container>
 
 			    <md-input-container md-no-float class="md-block">
-			      	<input ng-model="newUser.ConfirmPassword" placeholder="请再输一次密码..." ng-disabled="isSigningup" type="text" placeholder="确认密码">
+			      	<input ng-model="newUser.ConfirmPassword" placeholder="请再输一次密码..." ng-disabled="isSigningup" type="password" placeholder="确认密码">
 			    </md-input-container>
     		</form>
     	</md-content>
@@ -89,9 +89,12 @@
 		      	<input ng-model="user.Email" placeholder="请输入符合格式的邮箱..." ng-disabled="isLogining" type="text" placeholder="邮箱">
 	    	</md-input-container>
 	    	<md-input-container md-no-float class="md-block">
-		      	<input ng-model="user.Password" placeholder="请输入密码..." ng-disabled="isLogining" type="text" placeholder="密码">
+		      	<input ng-model="user.Password" placeholder="请输入密码..." ng-disabled="isLogining" type="password" placeholder="密码">
 		    </md-input-container>
-	    </md-content>
+		</md-content>
+		<div layout="row" layout-align="center center">
+			<span class="input-tip" ng-bind="loginErrorText"></span>
+		</div>
 	</div>
 	<div layout="row" layout-align="center center">
 		<span class="input-tip">如果按钮没有变亮，那一定是因为有地方填错了！</span>
