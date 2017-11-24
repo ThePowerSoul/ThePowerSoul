@@ -41,7 +41,7 @@
 				<span ng-bind="user.Name"></span>
 			</div>
 			<md-button class="md-primary md-raised" ng-show="showActionButton">发私信</md-button>
-			<md-button class="md-primary md-raised" ng-disabled="disableFollowButton" ng-bind="disableButtonText" ng-show="showActionButton"></md-button>
+			<md-button class="md-primary md-raised" ng-disabled="isOperating" ng-click="followOperation()" ng-bind="followButtonText" ng-show="showActionButton"></md-button>
 		</div>
 		<div class="info-panel" layout="row" layout-align="start center">
 			<span>显示名：</span>

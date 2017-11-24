@@ -19,11 +19,11 @@
             .setPrefix('thepowersoul');
         })
         .config(function($httpProvider) {
-            $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';  
+            $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8'; 
               // Serialize function  
               //只能是嵌套两层的对象  
               var param = function(obj) {  
-                  var query = '', name, value, fullSubName, subName, subValue, innerObj,i;  
+                  var query = '', name, value, fullSubName, subName, subValue, innerObj, i;  
                   for(name in obj) {  
                       value = obj[name];  
                       //如果值是数组  
