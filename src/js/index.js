@@ -9,6 +9,7 @@
         'The.Power.Soul.NewArticle',
         'The.Power.Soul.UserDetail',
         'The.Power.Soul.Mall',
+        'The.Power.Soul.Search.For.Users',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
@@ -86,7 +87,7 @@
                     controller: 'addNewArticleCtrl',
                 })
                 .state('user-detail', {
-                    url: '/user-detail',
+                    url: '/user-detail/{id}',
                     templateUrl: 'dist/pages/user-detail.html',
                     controller: 'userDetailCtrl',
                 })
@@ -220,8 +221,24 @@
                     $state.go('bbs');
                 };
 
+                $scope.searchForUsers = function(ev) {
+                    $mdDialog.show({ 
+                        controller: 'searchForUsersCtrl',
+                        templateUrl: 'dist/pages/search-for-users.html',
+                        parent: angular.element(document.body),
+                        targetEvent: ev,
+                        clickOutsideToClose: false,
+                        fullscreen: false
+                    })
+                    .then(function(data) {
+                        updateUserLoginState();
+                    }, function(){
+                        // canceled mdDialog
+                    });
+                };
+
                 $scope.goToUserDetail = function() {
-                    $state.go('user-detail');
+                    $state.go('user-detail', {id: $scope.loggedInUser._id});
                 };
 
                 $scope.openLoginOrSignupPanel = function(ev) {

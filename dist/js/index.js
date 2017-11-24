@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(function ($httpProvider) {
@@ -73,7 +73,7 @@
             templateUrl: 'dist/pages/add-new-article.html',
             controller: 'addNewArticleCtrl'
         }).state('user-detail', {
-            url: '/user-detail',
+            url: '/user-detail/{id}',
             templateUrl: 'dist/pages/user-detail.html',
             controller: 'userDetailCtrl'
         }).state('mall', {
@@ -196,8 +196,23 @@
             $state.go('bbs');
         };
 
+        $scope.searchForUsers = function (ev) {
+            $mdDialog.show({
+                controller: 'searchForUsersCtrl',
+                templateUrl: 'dist/pages/search-for-users.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: false,
+                fullscreen: false
+            }).then(function (data) {
+                updateUserLoginState();
+            }, function () {
+                // canceled mdDialog
+            });
+        };
+
         $scope.goToUserDetail = function () {
-            $state.go('user-detail');
+            $state.go('user-detail', { id: $scope.loggedInUser._id });
         };
 
         $scope.openLoginOrSignupPanel = function (ev) {
@@ -288,6 +303,9 @@
 	'use strict';
 
 	angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource']).constant('selectorItems', [{
+		Title: "我关注的",
+		Value: "FOLLOWING"
+	}, {
 		Title: "力量训练",
 		Value: "STRENGTH"
 	}, {
@@ -472,6 +490,59 @@
     angular.module('The.Power.Soul.Mall', ['ngMaterial']).controller('mallCtrl', ['$scope', function ($scope) {}]);
 })();
 (function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Search.For.Users', ['ngMaterial']).controller('searchForUsersCtrl', ['$scope', '$mdDialog', '$http', '$state', 'BaseUrl', 'localStorageService', function ($scope, $mdDialog, $http, $state, BaseUrl, localStorageService) {
+        $scope.isSearching = false;
+        $scope.isSearchingHasError = false;
+        $scope.searchContext = "";
+        $scope.currentSelectedUser = null;
+        $scope.users = [];
+        var currentLoggedUser = localStorageService.get('userInfo');
+
+        $scope.searchForUsers = function (ev) {
+            if (ev.keyCode === 13) {
+                if ($scope.searchContext === "") {
+                    $scope.users = [];
+                } else {
+                    $scope.isSearching = true;
+                    $http.post(BaseUrl + '/users', { EmailKeyword: $scope.searchContext }).then(function (response) {
+                        $scope.isSearching = false;
+                        $scope.users = filterDataToRemoveCurrentUser(response.data);
+                    }, function (error) {
+                        $scope.isSearching = false;
+                    });
+                }
+            }
+        };
+
+        function filterDataToRemoveCurrentUser(arr) {
+            angular.forEach(arr, function (user) {
+                if (user._id === currentLoggedUser._id) {
+                    var index = arr.indexOf(user);
+                    arr.splice(index, 1);
+                }
+            });
+            return arr;
+        }
+
+        $scope.goToUserPage = function (ev, user) {
+            ev.stopPropagation();
+            $mdDialog.hide();
+            var url = $state.href('user-detail', { id: user._id });
+            window.open(url, '_blank');
+        };
+
+        $scope.sendPrivateMessage = function (ev, user) {
+            ev.stopPropagation();
+        };
+
+        $scope.closeDialog = function () {
+            $mdDialog.hide();
+        };
+    }]);
+})();
+(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.Topic.Detail', ['ngMaterial']).service('topicOperation', ['$resource', function ($resource) {
@@ -599,8 +670,32 @@
 (function () {
     'use strict';
 
-    angular.module('The.Power.Soul.UserDetail', ['ngMaterial']).controller('userDetailCtrl', ['$scope', '$http', 'localStorageService', 'BaseUrl', function ($scope, $http, localStorageService, BaseUrl) {
-        $scope.user = localStorageService.get('userInfo');
+    angular.module('The.Power.Soul.UserDetail', ['ngMaterial']).controller('userDetailCtrl', ['$scope', '$http', '$stateParams', 'localStorageService', 'BaseUrl', function ($scope, $http, $stateParams, localStorageService, BaseUrl) {
+        $scope.isLoading = false;
+        $scope.isLoadingHasError = false;
+        $scope.user = null;
+        $scope.showActionButton = false;
+        $scope.disableFollowButton = false;
+        $scope.disableButtonText = "";
+        var user_id = $stateParams.id;
+        var loggedUser = localStorageService.get('userInfo');
+        if (loggedUser._id === user_id) {
+            // 进入当前页面的是登录用户本人
+            $scope.user = localStorageService.get('userInfo');
+        } else {
+            // 查看其它人的页面
+            $scope.isLoading = true;
+            $http.get(BaseUrl + '/user-detail/' + loggedUser._id + '/' + user_id).then(function (response) {
+                $scope.showActionButton = true;
+                $scope.disableFollowButton = response.data.IsFollowing;
+                $scope.disableButtonText = $scope.disableFollowButton ? "已关注" : '关注';
+                $scope.user = response.data.Data;
+                $scope.isLoading = false;
+            }, function (error) {
+                $scope.isLoading = false;
+                $scope.isLoadingHasError = true;
+            });
+        }
     }]);
 })();
 (function () {

@@ -2,6 +2,10 @@
     'use strict';
     angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource'])
     	.constant('selectorItems', [
+			{	
+				Title: "我关注的",
+				Value: "FOLLOWING"
+			},
     		{
 				Title: "力量训练",
 				Value: "STRENGTH"
