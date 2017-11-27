@@ -4,52 +4,6 @@
     var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
-    }).config(function ($httpProvider) {
-        $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
-        // Serialize function  
-        //只能是嵌套两层的对象  
-        var param = function (obj) {
-            var query = '',
-                name,
-                value,
-                fullSubName,
-                subName,
-                subValue,
-                innerObj,
-                i;
-            for (name in obj) {
-                value = obj[name];
-                //如果值是数组  
-                if (value instanceof Array) {
-                    for (i = 0; i < value.length; ++i) {
-                        subValue = value[i];
-                        fullSubName = name + '[' + i + ']';
-                        innerObj = {};
-                        innerObj[fullSubName] = subValue;
-                        query += param(innerObj) + '&';
-                    }
-                    //如果值是对象  
-                } else if (value instanceof Object) {
-                    for (subName in value) {
-                        subValue = value[subName];
-                        fullSubName = name + '[' + subName + ']';
-                        innerObj = {};
-                        innerObj[fullSubName] = subValue;
-                        query += param(innerObj) + '&';
-                    }
-                    如果值是字符串;
-                } else if (value !== undefined && value !== null) {
-                    query += encodeURIComponent(name) + '=' + encodeURIComponent(value) + '&';
-                }
-            }
-
-            return query.length ? query.substr(0, query.length - 1) : query;
-        };
-
-        //重写transformRequest参数处理方法(利用param function 处理)  
-        $httpProvider.defaults.transformRequest = [function (data) {
-            return angular.isObject(data) && String(data) !== '[object File]' ? param(data) : data;
-        }];
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         $urlRouterProvider.when('', 'introduction');
         $stateProvider.state('introduction', {
@@ -248,56 +202,67 @@
     }]);
 })();
 (function () {
-				'use strict';
+    'use strict';
 
-				angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
-								// this demonstrates how to register a new tool and add it to the default toolbar
-								$provide.decorator('taOptions', ['$delegate', function (taOptions) {
-												// $delegate is the taOptions we are decorating
-												// here we override the default toolbars and classes specified in taOptions.
-												taOptions.forceTextAngularSanitize = true; // set false to allow the textAngular-sanitize provider to be replaced
-												taOptions.keyMappings = []; // allow customizable keyMappings for specialized key boards or languages
-												taOptions.toolbar = [['bold', 'italics', 'underline', 'ul', 'ol']];
-												taOptions.classes = {
-																focussed: 'focussed',
-																toolbar: 'btn-toolbar',
-																toolbarGroup: 'btn-group',
-																toolbarButton: 'btn btn-default',
-																toolbarButtonActive: 'active',
-																disabled: 'disabled',
-																textEditor: 'form-control',
-																htmlEditor: 'form-control'
-												};
-												return taOptions; // whatever you return will be the taOptions
-								}]);
-								// this demonstrates changing the classes of the icons for the tools for font-awesome v3.x
-								$provide.decorator('taTools', ['$delegate', function (taTools) {
-												taTools.bold.iconclass = 'fa fa-bold';
-												taTools.italics.iconclass = 'fa fa-italic';
-												taTools.underline.iconclass = 'fa fa-underline';
-												taTools.ul.iconclass = 'fa fa-list-ul';
-												taTools.ol.iconclass = 'fa fa-list-ol';
-												taTools.undo.iconclass = 'icon-undo';
-												taTools.redo.iconclass = 'icon-repeat';
-												taTools.justifyLeft.iconclass = 'icon-align-left';
-												taTools.justifyRight.iconclass = 'icon-align-right';
-												taTools.justifyCenter.iconclass = 'icon-align-center';
-												taTools.clear.iconclass = 'icon-ban-circle';
-												taTools.insertLink.iconclass = 'icon-link';
-												taTools.insertImage.iconclass = 'icon-picture';
-												// there is no quote icon in old font-awesome so we change to text as follows
-												delete taTools.quote.iconclass;
-												taTools.quote.buttontext = 'quote';
-												return taTools;
-								}]);
-				}]).controller('addNewArticleCtrl', ['$scope', function ($scope) {
-								$scope.richTextContent = "";
-								$scope.publishArticle = function () {};
+    angular.module('The.Power.Soul.Tools', []).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
+            }
+        };
+    }]);
+})();
+(function () {
+	'use strict';
 
-								$scope.saveAsDraft = function () {};
+	angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
+		// this demonstrates how to register a new tool and add it to the default toolbar
+		$provide.decorator('taOptions', ['$delegate', function (taOptions) {
+			// $delegate is the taOptions we are decorating
+			// here we override the default toolbars and classes specified in taOptions.
+			taOptions.forceTextAngularSanitize = true; // set false to allow the textAngular-sanitize provider to be replaced
+			taOptions.keyMappings = []; // allow customizable keyMappings for specialized key boards or languages
+			taOptions.toolbar = [['bold', 'italics', 'underline', 'ul', 'ol']];
+			taOptions.classes = {
+				focussed: 'focussed',
+				toolbar: 'btn-toolbar',
+				toolbarGroup: 'btn-group',
+				toolbarButton: 'btn btn-default',
+				toolbarButtonActive: 'active',
+				disabled: 'disabled',
+				textEditor: 'form-control',
+				htmlEditor: 'form-control'
+			};
+			return taOptions; // whatever you return will be the taOptions
+		}]);
+		// this demonstrates changing the classes of the icons for the tools for font-awesome v3.x
+		$provide.decorator('taTools', ['$delegate', function (taTools) {
+			taTools.bold.iconclass = 'fa fa-bold';
+			taTools.italics.iconclass = 'fa fa-italic';
+			taTools.underline.iconclass = 'fa fa-underline';
+			taTools.ul.iconclass = 'fa fa-list-ul';
+			taTools.ol.iconclass = 'fa fa-list-ol';
+			taTools.undo.iconclass = 'icon-undo';
+			taTools.redo.iconclass = 'icon-repeat';
+			taTools.justifyLeft.iconclass = 'icon-align-left';
+			taTools.justifyRight.iconclass = 'icon-align-right';
+			taTools.justifyCenter.iconclass = 'icon-align-center';
+			taTools.clear.iconclass = 'icon-ban-circle';
+			taTools.insertLink.iconclass = 'icon-link';
+			taTools.insertImage.iconclass = 'icon-picture';
+			// there is no quote icon in old font-awesome so we change to text as follows
+			delete taTools.quote.iconclass;
+			taTools.quote.buttontext = 'quote';
+			return taTools;
+		}]);
+	}]).controller('addNewArticleCtrl', ['$scope', function ($scope) {
+		$scope.richTextContent = "";
+		$scope.publishArticle = function () {};
 
-								function autoSaveDraft() {}
-				}]);
+		$scope.saveAsDraft = function () {};
+
+		function autoSaveDraft() {}
+	}]);
 })();
 (function () {
 	'use strict';
@@ -394,7 +359,7 @@
 
 		$scope.goTopicDetail = function (topic, ev) {
 			if (localStorageService.get('userInfo')) {
-				var url = $state.href('topic-detail', { id: topic.ID });
+				var url = $state.href('topic-detail', { id: topic._id });
 				window.open(url, '_blank');
 			} else {
 				$mdDialog.show({
@@ -414,7 +379,7 @@
 
 		$scope.addNewTopic = function (ev) {
 			if (localStorageService.get('userInfo')) {
-				var user_id = localStorageService.get('userInfo')._id;
+				var user = localStorageService.get('userInfo');
 				$mdDialog.show({
 					controller: 'addNewTopicCtrl',
 					templateUrl: 'dist/pages/add-new-topic.html',
@@ -423,14 +388,18 @@
 					clickOutsideToClose: false,
 					fullscreen: false
 				}).then(function (data) {
+					// 发表新贴
 					$scope.isSubmittingTopic = false;
-					topicOperation.res.addNewTopic({ id: user_id }, data, function (result) {
+					$http.post(BaseUrl + '/topic/' + user._id, {
+						Author: user.DisplayName,
+						Topic: data
+					}).then(function (response) {
+						$scope.isSubmittingTopic = false;
 						loadTopics(1, $scope.selectedItem, $scope.searchContext, '');
 						alertService.showAlert('发表帖子成功。', ev);
 					}, function (error) {
-						alertService.showAlert('发表帖子失败，请重试。', ev);
-					}).$promise.finally(function () {
 						$scope.isSubmittingTopic = false;
+						alertService.showAlert('发表帖子失败，请重试。', ev);
 					});
 				}, function () {
 					// dialog canceled
@@ -463,7 +432,7 @@
 			}
 			$scope.isLoadingTopic = true;
 
-			$http.get(BaseUrl + "topic/user-111").then(function (response) {
+			$http.post(BaseUrl + "/topic", body).then(function (response) {
 				if (loadMoreSignal === 'load-more') {
 					$scope.topicList = $scope.topicList.concat(response.data);
 				} else {
@@ -545,35 +514,32 @@
 (function () {
 	'use strict';
 
-	angular.module('The.Power.Soul.Topic.Detail', ['ngMaterial']).service('topicOperation', ['$resource', function ($resource) {
-		var serviceUrl = "localhost:3000/";
-		var res = $resource(serviceUrl + 'topic', { id: '@id', receptor: '@receptor' }, {
-			'getTopics': { method: 'GET', isArray: true },
-			'getTopicDetail': { method: 'GET', isArray: false },
-			'addNewTopic': { method: 'POST', isArray: false },
-			'deleteTopic': { method: 'DELETE', inArray: false }
-		});
-		return {
-			res: res
-		};
-	}]).service('commentOperation', ['$resource', function ($resource) {
-		var serviceUrl = "localhost:3000/";
-		var res = $resource(serviceUrl + 'comment', { id: '@id', receptor: '@receptor' }, {
-			'getComments': { method: 'GET', isArray: true },
-			'getCommentDetail': { method: 'GET', isArray: false },
-			'addNewComment': { method: 'POST', isArray: false },
-			'deleteComment': { method: 'DELETE', inArray: false }
-		});
-		return {
-			res: res
-		};
-	}]).controller('addNewCommentCtrl', ['$scope', '$mdDialog', function ($scope, $mdDialog) {
+	angular.module('The.Power.Soul.Topic.Detail', ['ngMaterial']).controller('addNewCommentCtrl', ['$scope', '$mdDialog', function ($scope, $mdDialog) {
 		$scope.comment = "";
 		$scope.submit = function () {
 			$mdDialog.hide($scope.comment);
 		};
-	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', 'topicOperation', 'commentOperation', function ($scope, $stateParams, $mdDialog, topicOperation, commentOperation) {
+		$scope.closeDialog = function () {
+			$mdDialog.hide();
+		};
+	}]).controller('seeCommentConversationCtrl', ['$scope', '$mdDialog', 'Comment', 'BaseUrl', 'alertService', '$http', function ($scope, $mdDialog, Comment, BaseUrl, alertService, $http) {
+		$scope.isLoading = false;
+		$scope.isLoadingHasError = false;
+		$scope.commentList = [];
+		$http.get(BaseUrl + '/comment/' + Comment.UserID + '/' + Comment.TargetUserID + '/' + Comment.TargetContextID).then(function (response) {
+			$scope.isLoading = false;
+			$scope.commentList = response.data;
+		}, function (error) {
+			$scope.isLoading = false;
+			$scope.isLoadingHasError = false;
+		});
+		$scope.closeDialog = function () {
+			$mdDialog.hide();
+		};
+	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $stateParams, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
 		var topicID = $stateParams.id;
+		$scope.user = localStorageService.get('userInfo');
+		var topic_id = $stateParams.id;
 
 		/*
   loading state
@@ -584,51 +550,97 @@
 		$scope.isLoadingHasError = false;
 		$scope.isLoadingComments = false;
 		$scope.isLoadingCommentsHasError = false;
+		$scope.isChangingLikeStauts = false;
+		$scope.topic = {};
+		$scope.commentList = [];
 
-		$scope.topic = {
-			ID: "111",
-			Title: "PowerliftingPowerliftingPowerlifting",
-			Content: "作为同一时期的作家，蒋方舟似乎有点“固守”自己的领域。郭敬明已经拍了两部电影了，韩寒也在做自己的电影。但蒋方舟对自己要不要做这些事情，想得很清楚。她鼓励现代人不要害怕被时代抛下。她调侃地说，其实被时代淘汰也挺好的，一定还有一些跟你一样被时代淘汰的人，慢腾腾地在后面溜达，你们自己组一个局不是很好吗？对于韩寒日前表示，在自己想清楚之前不再写长篇小说了。蒋方舟说，她还是很期待韩寒的长篇小说的。蒋方舟的业余生活跟普通女生一样，喜欢淘宝，买的衣服曾把大学宿舍淹没。喜欢本身不胖还是嚷着要减肥，做饭对她来说，只是一个调剂，不是很喜欢，但可以减压。她还喜欢爬山，想在30岁之前多爬几座山，因为爬山的过程很痛苦，但下山后就会感受到放大了的快乐。作为同一时期的作家，蒋方舟似乎有点“固守”自己的领域。郭敬明已经拍了两部电影了，韩寒也在做自己的电影。但蒋方舟对自己要不要做这些事情，想得很清楚。她鼓励现代人不要害怕被时代抛下。她调侃地说，其实被时代淘汰也挺好的，一定还有一些跟你一样被时代淘汰的人，慢腾腾地在后面溜达，你们自己组一个局不是很好吗？对于韩寒日前表示，在自己想清楚之前不再写长篇小说了。蒋方舟说，她还是很期待韩寒的长篇小说的。蒋方舟的业余生活跟普通女生一样，喜欢淘宝，买的衣服曾把大学宿舍淹没。喜欢本身不胖还是嚷着要减肥，做饭对她来说，只是一个调剂，不是很喜欢，但可以减压。她还喜欢爬山，想在30岁之前多爬几座山，因为爬山的过程很痛苦，但下山后就会感受到放大了的快乐。",
-			CreatedAt: new Date(),
-			Category: "STRENGTHTRAINING",
-			Like: 111,
-			Dislike: 222,
-			Author: "Joey",
-			Expand: false
+		$scope.addNewCommentToTopic = function (ev) {
+			$scope.isPostingNewComment = true;
+			$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topicID, {
+				Comment: $scope.newCommentContent,
+				ContextID: "",
+				TargetUserID: "",
+				Author: $scope.user.DisplayName,
+				TargetAuthor: ""
+			}).then(function (response) {
+				$scope.commentList.push(response.data);
+				$scope.isPostingNewComment = false;
+			}, function (error) {
+				$scope.isPostingNewComment = false;
+				alertService.showAlert('发布评论失败，请重试', ev);
+			});
 		};
 
-		$scope.commentList = [{
-			ID: "c-1",
-			TopicID: "t-1",
-			UserID: "u-1",
-			CreatedAt: new Date(),
-			Author: "Joe",
-			Content: "说的确实有道理",
-			Like: 10,
-			Dislike: 11
-		}, {
-			ID: "c-1",
-			TopicID: "t-1",
-			UserID: "u-1",
-			CreatedAt: new Date(),
-			Author: "Leo",
-			Content: "说的确实没有道理",
-			Like: 10,
-			Dislike: 11
-		}];
-
+		/*
+  	评论帖子
+  */
 		$scope.commentReply = function (comment, ev) {
 			$mdDialog.show({
 				controller: 'addNewCommentCtrl',
 				templateUrl: 'dist/pages/add-new-comment.html',
 				parent: angular.element(document.body),
 				targetEvent: ev,
-				clickOutsideToClose: true,
+				clickOutsideToClose: false,
 				fullscreen: false
 			}).then(function (data) {
+				sendCommentReply(comment, data, ev);
 				// handle comment data
 			}, function () {
 				// canceled
+			});
+		};
+
+		$scope.seeConversation = function (comment, ev) {
+			$mdDialog.show({
+				controller: 'seeCommentConversationCtrl',
+				templateUrl: 'dist/pages/see-conversation.html',
+				parent: angular.element(document.body),
+				targetEvent: ev,
+				clickOutsideToClose: false,
+				fullscreen: false,
+				locals: {
+					Comment: comment
+				}
+			}).then(function (data) {}, function () {
+				// canceled
+			});
+		};
+
+		$scope.likeTheComment = function (comment, ev) {
+			comment.Like += 1;
+			$scope.isChangingLikeStauts = true;
+			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/' + 'up').then(function (response) {
+				var index = comment.LikeUser.indexOf($scope.user._id);
+				var indexDis = comment.DislikeUser.indexOf($scope.user._id);
+				if (indexDis >= 0) {
+					comment.DislikeUser.splice(index, 1);
+				}
+				if (index < 0) {
+					comment.LikeUser.push($scope.user._id);
+				}
+				$scope.isChangingLikeStauts = false;
+			}, function (error) {
+				$scope.isChangingLikeStauts = false;
+				if (error.status === 400 && error.data === "Added") {}
+			});
+		};
+
+		$scope.dislikeTheComment = function (comment, ev) {
+			comment.Dislike += 1;
+			$scope.isChangingLikeStauts = true;
+			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/' + 'down').then(function (response) {
+				var index = comment.LikeUser.indexOf($scope.user._id);
+				var indexDis = comment.DislikeUser.indexOf($scope.user._id);
+				if (index >= 0) {
+					comment.LikeUser.splice(index, 1);
+				}
+				if (indexDis < 0) {
+					comment.DislikeUser.push($scope.user._id);
+				}
+				$scope.isChangingLikeStauts = false;
+			}, function (error) {
+				$scope.isChangingLikeStauts = false;
+				if (error.status === 400 && error.data === "Removed") {}
 			});
 		};
 
@@ -640,27 +652,44 @@
 			loadTopicComments();
 		};
 
+		/*
+  	回复评论
+  */
+		function sendCommentReply(comment, newComment, ev) {
+			$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topic_id, {
+				Comment: newComment,
+				ContextID: comment.TargetContextID,
+				TargetUserID: comment.UserID,
+				Author: $scope.user.DisplayName,
+				TargetAuthor: comment.Author
+			}).then(function (response) {
+				$scope.commentList.push(response.data);
+			}, function (error) {
+				alertService.showAlert('回复评论失败，请重试', ev);
+			});
+		}
+
 		function loadTopicDetail() {
 			$scope.isLoading = true;
-			return topicOperation.res.getTopicDetail({ id: '', receptor: '' }, null, function (result) {
-				// success
-				angular.extend($scope.topic, result);
-			}, function (error) {
-				$scope.isLoadingHasError = true;
-			}).$promise.finally(function () {
+			return $http.get(BaseUrl + '/topic/' + $scope.user._id + '/' + topic_id).then(function (response) {
 				$scope.isLoading = false;
+				angular.extend($scope.topic, response.data);
+			}, function (error) {
+				$scope.isLoading = false;
+				$scope.isLoadingHasError = true;
 			});
 		}
 
 		function loadTopicComments(loadMoreSignal) {
 			$scope.isLoadingComments = true;
-			commentOperation.res.getComments({ id: topicID }, null, function (result) {
-				// success
-				if (loadMoreSignal === 'load-more') {} else {}
-			}, function (error) {
-				$scope.isLoadingCommentsHasError = true;
-			}).$promise.finally(function () {
+			$http.get(BaseUrl + '/comment/' + topic_id).then(function (response) {
 				$scope.isLoadingComments = false;
+				if (loadMoreSignal === 'load-more') {} else {
+					$scope.commentList = response.data;
+				}
+			}, function (error) {
+				$scope.isLoadingComments = false;
+				$scope.isLoadingCommentsHasError = true;
 			});
 		}
 
@@ -715,17 +744,6 @@
                     alertService.showAlert('关注失败', ev);
                     $scope.isOperating = true;
                 });
-            }
-        };
-    }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
             }
         };
     }]);

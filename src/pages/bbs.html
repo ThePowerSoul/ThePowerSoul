@@ -100,19 +100,20 @@
 				</span>
 				<div layout="row" layout-align="start center">
 					<span class="topic-author">
-						{{'作者：Joey'}}
+						{{topic.Author}}
 					</span>
 				</div>
 				<div layout="row" layout-align="start center">
 					<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
-					<span class="like-number">11</span>
+					<span class="like-number">{{'&nbsp;' + topic.Like + '&nbsp;'}}</span>
 				</div>
 					<div layout="row" layout-align="start center">
 						<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
-						<span class="dislike-number">11</span>
+						<span class="dislike-number">{{'&nbsp;' + topic.Dislike + '&nbsp;'}}</span>
 					</div>
 					<div class="topic-submit-time" layout="row">
-						<span>{{'发表于：2018-2-2'}}</span>
+						<span>发表于&nbsp;</span>
+						<span>{{topic.CreatedAt | date: 'yy-MM-dd'}}</span>
 					</div>
 				</md-card-title-text>
 			</md-card-title>

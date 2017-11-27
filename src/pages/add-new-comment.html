@@ -13,6 +13,12 @@
 	}
 </style>
 <md-dialog class="dialog-content-container" layout="column">
+	<div layout="row" layout-align="start center">
+		<div flex></div>
+		<div>
+			<i class="fa fa-times small dialog-close-button" ng-click="closeDialog($event)" aria-hidden="true"></i>	
+		</div>	
+	</div>
 	<div layout="column">
 		<textarea class="comment-content" ng-model="comment" placeholder="请输入回复内容"></textarea>
 		<md-button class="md-raised md-primary" ng-click="submit()" ng-disabled="comment === ''">提交</md-button>

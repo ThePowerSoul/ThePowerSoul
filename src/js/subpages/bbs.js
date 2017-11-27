@@ -106,7 +106,7 @@
 
     			$scope.goTopicDetail = function(topic, ev) {
     				if (localStorageService.get('userInfo')) {
-    					var url = $state.href('topic-detail', {id: topic.ID});
+    					var url = $state.href('topic-detail', {id: topic._id});
     					window.open(url, '_blank');
     				} else {
     					$mdDialog.show({ 
@@ -127,7 +127,7 @@
 
 	    		$scope.addNewTopic = function(ev) {
 	    			if (localStorageService.get('userInfo')) {
-						var user_id = localStorageService.get('userInfo')._id;
+						var user = localStorageService.get('userInfo');
 	    				$mdDialog.show({ 
 				            controller: 'addNewTopicCtrl',
 				            templateUrl: 'dist/pages/add-new-topic.html',
@@ -136,16 +136,20 @@
 				            clickOutsideToClose: false,
 				            fullscreen: false
 				        })
-				        .then(function(data) {
+				        .then(function(data) { // 发表新贴
 							$scope.isSubmittingTopic = false;
-				        	topicOperation.res.addNewTopic({id: user_id}, data, function(result) {
-								loadTopics(1, $scope.selectedItem, $scope.searchContext, '');
-								alertService.showAlert('发表帖子成功。', ev);
-							}, function(error) {
-								alertService.showAlert('发表帖子失败，请重试。', ev);
-							}).$promise.finally(function() {
-								$scope.isSubmittingTopic = false;
-							});
+							$http.post(BaseUrl + '/topic/' + user._id, {
+									Author: user.DisplayName,
+									Topic: data
+								})
+								.then(function(response) {
+									$scope.isSubmittingTopic = false;
+									loadTopics(1, $scope.selectedItem, $scope.searchContext, '');
+									alertService.showAlert('发表帖子成功。', ev);
+								}, function(error) {
+									$scope.isSubmittingTopic = false;
+									alertService.showAlert('发表帖子失败，请重试。', ev);
+								});
 				        }, function() {
 				        	// dialog canceled
 				        });
@@ -178,7 +182,7 @@
 					}
 					$scope.isLoadingTopic = true;
 				
-					$http.get(BaseUrl + "topic/user-111")
+					$http.post(BaseUrl + "/topic", body)
 						.then(function(response) {
 					  		if (loadMoreSignal === 'load-more') {
 								$scope.topicList = $scope.topicList.concat(response.data);
