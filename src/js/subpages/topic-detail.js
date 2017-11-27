@@ -7,7 +7,7 @@
     			$mdDialog.hide($scope.comment);
 			};	
 			$scope.closeDialog = function() {
-				$mdDialog.hide();
+				$mdDialog.cancel();
 			};
 		}])
 		.controller('seeCommentConversationCtrl', ['$scope', '$mdDialog', 'Comment', 'BaseUrl', 'alertService', '$http',
@@ -24,7 +24,7 @@
 					$scope.isLoadingHasError = false;
 				});
 			$scope.closeDialog = function() {
-				$mdDialog.hide();
+				$mdDialog.cancel();
 			};
     	}])
 		.controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 
@@ -45,6 +45,7 @@
 			$scope.isLoadingComments = false;
 			$scope.isLoadingCommentsHasError = false;
 			$scope.isChangingLikeStauts = false;
+			$scope.isChangingTopicLikeStauts = false;
 			$scope.topic = {};
 			$scope.commentList = [];
 
@@ -107,10 +108,51 @@
 				});
 			};
 
+			$scope.likeTheTopic = function(ev) {
+				$scope.isChangingTopicLikeStauts = true;
+				$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/up')
+					.then(function(response) {
+						$scope.isChangingTopicLikeStauts = false;
+						var index = $scope.topic.LikeUser.indexOf($scope.user._id);
+						var indexDis = $scope.topic.DislikeUser.indexOf($scope.user._id);
+						if (indexDis >= 0) {
+							$scope.topic.DislikeUser.splice(index, 1);
+						}
+						if (index < 0) {
+							$scope.topic.LikeUser.push($scope.user._id)
+						}
+					}, function(error) {
+						$scope.isChangingTopicLikeStauts = false;
+						if (error.status === 400 && error.data === "Added") {
+							return;
+						}
+					});
+			};
+
+			$scope.dislikeTheTopic = function(ev) {
+				$scope.isChangingTopicLikeStauts = true;
+				$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/down')
+					.then(function(response) {
+						$scope.isChangingTopicLikeStauts = false;
+						var index = $scope.topic.LikeUser.indexOf($scope.user._id);
+						var indexDis = $scope.topic.DislikeUser.indexOf($scope.user._id);
+						if (index >= 0) {
+							$scope.topic.LikeUser.splice(index, 1);
+						}
+						if (indexDis < 0) {
+							$scope.topic.DislikeUser.push($scope.user._id)
+						}
+					}, function(error) {
+						$scope.isChangingTopicLikeStauts = false;
+						if (error.status === 400 && error.data === "Removed") {
+							return;
+						}
+					});
+			};
+
 			$scope.likeTheComment = function(comment, ev) {
-				comment.Like += 1;
 				$scope.isChangingLikeStauts = true;
-				$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/' + 'up')
+				$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/up')
 					.then(function(response) {
 						var index = comment.LikeUser.indexOf($scope.user._id);
 						var indexDis = comment.DislikeUser.indexOf($scope.user._id);
@@ -124,15 +166,14 @@
 					}, function(error) {
 						$scope.isChangingLikeStauts = false;
 						if (error.status === 400 && error.data === "Added") {
-							
+							return;
 						}
 					});
 			};
 
 			$scope.dislikeTheComment = function(comment, ev) {
-				comment.Dislike += 1;
 				$scope.isChangingLikeStauts = true;
-				$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/' + 'down')
+				$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/down')
 					.then(function(response) {
 						var index = comment.LikeUser.indexOf($scope.user._id);
 						var indexDis = comment.DislikeUser.indexOf($scope.user._id);
@@ -146,7 +187,7 @@
 					}, function(error) {
 						$scope.isChangingLikeStauts = false;
 						if (error.status === 400 && error.data === "Removed") {
-							
+							return;
 						}
 					});
 			};

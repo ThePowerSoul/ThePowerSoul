@@ -10,6 +10,7 @@
         'The.Power.Soul.UserDetail',
         'The.Power.Soul.Mall',
         'The.Power.Soul.Search.For.Users',
+        'The.Power.Soul.Article.List',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
@@ -42,7 +43,7 @@
                     controller: 'topicDetailCtrl',
                 })
                 .state('new-article', {
-                    url: '/new-article',
+                    url: '/new-article/{id}',
                     templateUrl: 'dist/pages/add-new-article.html',
                     controller: 'addNewArticleCtrl',
                 })
@@ -55,6 +56,11 @@
                     url: '/mall',
                     templateUrl: 'dist/pages/mall.html',
                     controller: 'mallCtrl',
+                })
+                .state('article-list', {
+                    url: '/article-list',
+                    templateUrl: 'dist/pages/article-list.html',
+                    controller: 'articleListCtrl',
                 });
 	    }])
         .controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService',
@@ -153,7 +159,7 @@
                 if ($scope.isLogining || $scope.isSigningup) {
                     alertService.showAlert('正在进行操作，请勿关闭弹窗', ev);
                 } else {
-                    $mdDialog.hide();
+                    $mdDialog.cancel();
                 }
             };
         }])
@@ -195,6 +201,10 @@
                     }, function(){
                         // canceled mdDialog
                     });
+                };
+
+                $scope.listArticles = function() {
+                    $state.go('article-list');
                 };
 
                 $scope.goToUserDetail = function() {

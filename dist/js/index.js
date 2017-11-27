@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -23,7 +23,7 @@
             templateUrl: 'dist/pages/topic-detail.html',
             controller: 'topicDetailCtrl'
         }).state('new-article', {
-            url: '/new-article',
+            url: '/new-article/{id}',
             templateUrl: 'dist/pages/add-new-article.html',
             controller: 'addNewArticleCtrl'
         }).state('user-detail', {
@@ -34,6 +34,10 @@
             url: '/mall',
             templateUrl: 'dist/pages/mall.html',
             controller: 'mallCtrl'
+        }).state('article-list', {
+            url: '/article-list',
+            templateUrl: 'dist/pages/article-list.html',
+            controller: 'articleListCtrl'
         });
     }]).controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService) {
         var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
@@ -124,7 +128,7 @@
             if ($scope.isLogining || $scope.isSigningup) {
                 alertService.showAlert('正在进行操作，请勿关闭弹窗', ev);
             } else {
-                $mdDialog.hide();
+                $mdDialog.cancel();
             }
         };
     }]).controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService', function ($scope, $state, $http, $rootScope, $mdDialog, localStorageService) {
@@ -165,6 +169,10 @@
             });
         };
 
+        $scope.listArticles = function () {
+            $state.go('article-list');
+        };
+
         $scope.goToUserDetail = function () {
             $state.go('user-detail', { id: $scope.loggedInUser._id });
         };
@@ -198,17 +206,6 @@
 
         $scope.goToMall = function () {
             $state.go('mall');
-        };
-    }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
-            }
         };
     }]);
 })();
@@ -255,14 +252,117 @@
 			taTools.quote.buttontext = 'quote';
 			return taTools;
 		}]);
-	}]).controller('addNewArticleCtrl', ['$scope', function ($scope) {
-		$scope.richTextContent = "";
-		$scope.publishArticle = function () {};
+	}]).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
+		var article_id = $stateParams.id;
+		$scope.categories = categoryItems;
+		$scope.user = localStorageService.get('userInfo');
+		$scope.article = {
+			Title: "",
+			Author: $scope.user.DisplayName,
+			Content: "",
+			Category: ""
+		};
+		$scope.publishArticle = function (ev) {
+			$scope.isPublishing = true;
+			$http.post(BaseUrl + '/article/' + $scope.user._id, $scope.article).then(function (response) {
+				$scope.isPublishing = false;
+				removeFromDraftList();
+			}, function (error) {
+				$scope.isPublishing = false;
+				alertService.showAlert('发布失败，请重试', ev);
+			});
+		};
 
-		$scope.saveAsDraft = function () {};
+		$scope.saveAsDraft = function () {
+			saveDraft();
+		};
 
-		function autoSaveDraft() {}
+		function removeFromDraftList() {
+			$http.delete(BaseUrl + '/article-draft/' + $scope.article._id).then(function (response) {
+				$state.go('article-list');
+			}, function (error) {
+				alertService.showAlert('删除草稿失败，请重试', ev);
+			});
+		}
+
+		function saveDraft() {
+			$http.put(BaseUrl + '/article-draft/' + article_id, $scope.article).then(function (response) {
+				alertSuccessMsg('保存草稿成功');
+			}, function (error) {});
+		}
+
+		// 等待添加定时保存草稿的代码
+		function autoSendSaveRequest() {}
+
+		function alertSuccessMsg(content) {
+			$mdToast.show($mdToast.simple().textContent(content).highlightClass('md-primary').position('top right'));
+		}
+
+		function loadArticleDraft() {
+			$http.get(BaseUrl + '/article-draft/' + article_id).then(function (response) {
+				$scope.isLoading = false;
+				$scope.article = response.data;
+			}, function (error) {
+				$scope.isLoading = false;
+				$scope.isLoadingHasError = true;
+			});
+		}
+		loadArticleDraft();
 	}]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Article.List', ['ngMaterial']).controller('articleListCtrl', ['$scope', '$http', '$state', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $http, $state, BaseUrl, localStorageService, alertService) {
+        $scope.articles = [];
+        $scope.articleDrafts = [];
+        $scope.isLoading = false;
+        $scope.isLoadingDraft = false;
+        $scope.isLoadingHasError = false;
+        $scope.user = localStorageService.get('userInfo');
+
+        $scope.goToEdit = function (article) {
+            $state.go('new-article', { id: article._id });
+        };
+
+        // 生成新草稿，内容为正文内容，成功后删除正文内容
+        $scope.editArticle = function (article, ev) {
+            $http.post(BaseUrl + '/article-draft/' + $scope.user._id, article).then(function (response) {
+                removeFromArticleList(article, response.data, ev);
+            }, function (error) {
+                alertService.showAlert('生成编辑内容失败，请重试', ev);
+            });
+        };
+
+        function removeFromArticleList(article, data, ev) {
+            $http.delete(BaseUrl + '/article/' + article._id).then(function (response) {
+                $state.go('new-article', { id: data._id });
+            }, function (error) {
+                alertService.showAlert('清除文章失败', ev);
+            });
+        }
+
+        function loadArticles() {
+            $scope.isLoading = true;
+            $http.get(BaseUrl + '/articles/' + $scope.user._id).then(function (response) {
+                $scope.articles = response.data;
+            }, function (error) {
+                $scope.isLoadingHasError = true;
+            });
+        }
+
+        function loadArticleDrafts() {
+            $scope.isLoadingDraft = true;
+            $http.get(BaseUrl + '/article-drafts/' + $scope.user._id).then(function (response) {
+                $scope.articleDrafts = response.data;
+            }, function (error) {
+                $scope.isLoadingHasError = true;
+            });
+        }
+
+        loadArticles();
+        loadArticleDrafts();
+    }]);
 })();
 (function () {
 	'use strict';
@@ -285,7 +385,7 @@
 	}, {
 		Title: "全部",
 		Value: "ALL"
-	}]).controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'selectorItems', function ($scope, $mdDialog, selectorItems) {
+	}]).controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'categoryItems', function ($scope, $mdDialog, categoryItems) {
 		$scope.topic = {
 			Title: "",
 			Content: "",
@@ -293,10 +393,10 @@
 		};
 
 		$scope.closeDialog = function (ev) {
-			$mdDialog.hide();
+			$mdDialog.cancel();
 		};
 
-		$scope.categories = selectorItems;
+		$scope.categories = categoryItems;
 
 		$scope.submit = function () {
 			$mdDialog.hide($scope.topic);
@@ -312,6 +412,8 @@
 		$scope.isSubmittingTopic = false;
 		$scope.isChangingCategory = false;
 		$scope.isLoadingTopicHasError = false;
+
+		var user = localStorageService.get('userInfo');
 
 		/*
   filter topic
@@ -339,8 +441,7 @@
   */
 		$scope.addNewArticle = function (ev) {
 			if (localStorageService.get('userInfo')) {
-				var url = $state.href('new-article');
-				window.open(url, '_blank');
+				generateNewArticleDraft();
 			} else {
 				$mdDialog.show({
 					controller: 'loginOrSignupCtrl',
@@ -419,6 +520,21 @@
 				});
 			}
 		};
+
+		function generateNewArticleDraft(ev) {
+			var body = {
+				Title: "",
+				Category: "",
+				Author: user.DisplayName,
+				Content: ""
+			};
+			$http.post(BaseUrl + '/article-draft/' + user._id, body).then(function (response) {
+				var url = $state.href('new-article', { id: response.data._id });
+				window.open(url, '_blank');
+			}, function (error) {
+				alertService.showAlert('新建文章模板失败，请重试', ev);
+			});
+		}
 
 		function loadTopics(pageNum, category, keyword, loadMoreSignal) {
 			var body = {
@@ -507,7 +623,7 @@
         };
 
         $scope.closeDialog = function () {
-            $mdDialog.hide();
+            $mdDialog.cancel();
         };
     }]);
 })();
@@ -520,7 +636,7 @@
 			$mdDialog.hide($scope.comment);
 		};
 		$scope.closeDialog = function () {
-			$mdDialog.hide();
+			$mdDialog.cancel();
 		};
 	}]).controller('seeCommentConversationCtrl', ['$scope', '$mdDialog', 'Comment', 'BaseUrl', 'alertService', '$http', function ($scope, $mdDialog, Comment, BaseUrl, alertService, $http) {
 		$scope.isLoading = false;
@@ -534,7 +650,7 @@
 			$scope.isLoadingHasError = false;
 		});
 		$scope.closeDialog = function () {
-			$mdDialog.hide();
+			$mdDialog.cancel();
 		};
 	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $stateParams, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
 		var topicID = $stateParams.id;
@@ -551,6 +667,7 @@
 		$scope.isLoadingComments = false;
 		$scope.isLoadingCommentsHasError = false;
 		$scope.isChangingLikeStauts = false;
+		$scope.isChangingTopicLikeStauts = false;
 		$scope.topic = {};
 		$scope.commentList = [];
 
@@ -606,10 +723,49 @@
 			});
 		};
 
+		$scope.likeTheTopic = function (ev) {
+			$scope.isChangingTopicLikeStauts = true;
+			$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/up').then(function (response) {
+				$scope.isChangingTopicLikeStauts = false;
+				var index = $scope.topic.LikeUser.indexOf($scope.user._id);
+				var indexDis = $scope.topic.DislikeUser.indexOf($scope.user._id);
+				if (indexDis >= 0) {
+					$scope.topic.DislikeUser.splice(index, 1);
+				}
+				if (index < 0) {
+					$scope.topic.LikeUser.push($scope.user._id);
+				}
+			}, function (error) {
+				$scope.isChangingTopicLikeStauts = false;
+				if (error.status === 400 && error.data === "Added") {
+					return;
+				}
+			});
+		};
+
+		$scope.dislikeTheTopic = function (ev) {
+			$scope.isChangingTopicLikeStauts = true;
+			$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/down').then(function (response) {
+				$scope.isChangingTopicLikeStauts = false;
+				var index = $scope.topic.LikeUser.indexOf($scope.user._id);
+				var indexDis = $scope.topic.DislikeUser.indexOf($scope.user._id);
+				if (index >= 0) {
+					$scope.topic.LikeUser.splice(index, 1);
+				}
+				if (indexDis < 0) {
+					$scope.topic.DislikeUser.push($scope.user._id);
+				}
+			}, function (error) {
+				$scope.isChangingTopicLikeStauts = false;
+				if (error.status === 400 && error.data === "Removed") {
+					return;
+				}
+			});
+		};
+
 		$scope.likeTheComment = function (comment, ev) {
-			comment.Like += 1;
 			$scope.isChangingLikeStauts = true;
-			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/' + 'up').then(function (response) {
+			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/up').then(function (response) {
 				var index = comment.LikeUser.indexOf($scope.user._id);
 				var indexDis = comment.DislikeUser.indexOf($scope.user._id);
 				if (indexDis >= 0) {
@@ -621,14 +777,15 @@
 				$scope.isChangingLikeStauts = false;
 			}, function (error) {
 				$scope.isChangingLikeStauts = false;
-				if (error.status === 400 && error.data === "Added") {}
+				if (error.status === 400 && error.data === "Added") {
+					return;
+				}
 			});
 		};
 
 		$scope.dislikeTheComment = function (comment, ev) {
-			comment.Dislike += 1;
 			$scope.isChangingLikeStauts = true;
-			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/' + 'down').then(function (response) {
+			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/down').then(function (response) {
 				var index = comment.LikeUser.indexOf($scope.user._id);
 				var indexDis = comment.DislikeUser.indexOf($scope.user._id);
 				if (index >= 0) {
@@ -640,7 +797,9 @@
 				$scope.isChangingLikeStauts = false;
 			}, function (error) {
 				$scope.isChangingLikeStauts = false;
-				if (error.status === 400 && error.data === "Removed") {}
+				if (error.status === 400 && error.data === "Removed") {
+					return;
+				}
 			});
 		};
 
@@ -744,6 +903,29 @@
                     alertService.showAlert('关注失败', ev);
                     $scope.isOperating = true;
                 });
+            }
+        };
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
             }
         };
     }]);

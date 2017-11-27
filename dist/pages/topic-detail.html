@@ -14,14 +14,15 @@
 	.topic-detail-container .topic-title {
 		max-width: 300px;
 		overflow: hidden;
-    		text-overflow: ellipsis;
+    	text-overflow: ellipsis;
 		margin-right: 24px;
+		font-size: 20px;
 	}
 	.topic-detail-container .topic-author {
 		margin-right: 24px;
 	}
 	.topic-detail-container .topic-createtime {
-
+		margin-right: 24px;
 	}
 	.topic-detail-container .topic-content-container {
 		margin-top: 24px;
@@ -82,7 +83,8 @@
 	.topic-comment-panel .comment-panel-header {
 		margin-bottom: 16px;
 	}
-	.topic-comment-panel .fa, .like-number, .dislike-number {
+	
+	.topic-comment-panel .fa, .like-number, .dislike-number, .topic-description-container .fa {
 		color: rgba(0, 0, 0, 0.38);
 	}
 	.topic-comment-panel .fa:hover {
@@ -97,4 +99,4 @@
 		line-height: 32px;
 		font-size: 16px;
 	}
-</style><div class=topic-detail-container><div class=topic-description-container layout=column><div layout=row><span class=topic-title>{{topic.Title}}</span> <span class=topic-author>{{'作者：' + topic.Author}}</span><div layout=row layout-align="start center"><span class=topic-createtime>日期：</span> <span class=topic-createtime>{{topic.CreatedAt | date: 'yy-MM-dd'}}</span></div></div><div class=topic-content-container layout=column><span class=topic-content ng-show=!topic.Expand>{{topic.Content}}</span> <span class=topic-content-normal ng-show=topic.Expand>{{topic.Content}}</span> <span class=expand-button ng-show=!topic.Expand ng-click=changeExpandState()>展开</span> <span class=retract-button ng-show=topic.Expand ng-click=changeExpandState()>收起</span></div></div><div class=topic-comment-panel><div class=comment-panel-header><span>评论区</span></div><div class=comment-card ng-repeat="comment in commentList"><md-divider></md-divider><div class=comment-title-container layout=row layout-align="start center"><span>{{comment.Author}}</span> <span ng-show="comment.TargetUserID !== ''" topic>&nbsp;回复&nbsp;</span> <span ng-show="comment.TargetUserID !== ''">{{comment.TargetAuthor}}</span><div layout=row layout-align="start center"><span>&nbsp;&nbsp;&nbsp;&nbsp;发表日期：</span> <span>{{comment.CreatedAt | date: 'yy-MM-dd'}}</span></div></div><div class=comment-content-container><span>{{comment.Content}}</span></div><div class=comment-operation-container layout=row layout-align="start center"><div class=like-container layout=row layout-align="start center"><md-button class=md-raised ng-disabled=isChangingLikeStauts ng-click="likeTheComment(comment, $event)"><i class="fa fa-thumbs-o-up" aria-hidden=true></i> <span class=like-number>{{'&nbsp;' + comment.LikeUser.length}}</span></md-button></div><div layout=row layout-align="start center"><md-button class=md-raised ng-disabled=isChangingLikeStauts ng-click="dislikeTheComment(comment, $event)"><i class="fa fa-thumbs-o-down" aria-hidden=true></i> <span class=dislike-number>{{'&nbsp;' + comment.DislikeUser.length}}</span></md-button></div><div layout=row layout-align="start center" ng-show="comment.TargetUserID !== ''"><span class=reply-comment ng-click="commentReply(comment, $event)">回复</span> <span class=check-conversation-comment ng-click="seeConversation(comment, $event)">查看对话</span></div></div></div><md-divider></md-divider><div class=new-comment-input-container layout=row layout-align="start center"><input class=new-comment-input type=text ng-model=newCommentContent flex><md-button class="md-primary md-raised" ng-click=addNewCommentToTopic($event)>评论</md-button></div></div></div>
+</style><div class=topic-detail-container><div class=topic-description-container layout=column><div layout=row><div class=topic-title layout=row layout-align="start center">{{topic.Title}}</div><div class=topic-author layout=row layout-align="start center">{{'作者：' + topic.Author}}</div><div layout=row layout-align="start center"><span>发布日期：</span> <span class=topic-createtime>{{topic.CreatedAt | date: 'yy-MM-dd'}}</span></div><div layout=row layout-align="start center"><md-button class=md-icon-button ng-disabled=isChangingTopicLikeStauts ng-click=likeTheTopic($event)><i class="fa fa-thumbs-o-up" aria-hidden=true></i> <span class=like-number>{{'&nbsp;' + topic.LikeUser.length}}</span></md-button><md-button class=md-icon-button ng-disabled=isChangingTopicLikeStauts ng-click=dislikeTheTopic($event)><i class="fa fa-thumbs-o-down" aria-hidden=true></i> <span class=dislike-number>{{'&nbsp;' + topic.DislikeUser.length}}</span></md-button></div></div><div class=topic-content-container layout=column><span class=topic-content ng-show=!topic.Expand>{{topic.Content}}</span> <span class=topic-content-normal ng-show=topic.Expand>{{topic.Content}}</span> <span class=expand-button ng-show=!topic.Expand ng-click=changeExpandState()>展开</span> <span class=retract-button ng-show=topic.Expand ng-click=changeExpandState()>收起</span></div></div><div class=topic-comment-panel><div class=comment-panel-header><span>评论区</span></div><div class=comment-card ng-repeat="comment in commentList"><md-divider></md-divider><div class=comment-title-container layout=row layout-align="start center"><span>{{comment.Author}}</span> <span ng-show="comment.TargetUserID !== ''" topic>&nbsp;回复&nbsp;</span> <span ng-show="comment.TargetUserID !== ''">{{comment.TargetAuthor}}</span><div layout=row layout-align="start center"><span>&nbsp;&nbsp;&nbsp;&nbsp;发布日期：</span> <span>{{comment.CreatedAt | date: 'yy-MM-dd'}}</span></div></div><div class=comment-content-container><span>{{comment.Content}}</span></div><div class=comment-operation-container layout=row layout-align="start center"><div class=like-container layout=row layout-align="start center"><md-button class=md-icon-button ng-disabled=isChangingLikeStauts ng-click="likeTheComment(comment, $event)"><i class="fa fa-thumbs-o-up" aria-hidden=true></i> <span class=like-number>{{'&nbsp;' + comment.LikeUser.length}}</span></md-button></div><div layout=row layout-align="start center"><md-button class=md-icon-button ng-disabled=isChangingLikeStauts ng-click="dislikeTheComment(comment, $event)"><i class="fa fa-thumbs-o-down" aria-hidden=true></i> <span class=dislike-number>{{'&nbsp;' + comment.DislikeUser.length}}</span></md-button></div><div layout=row layout-align="start center" ng-show="comment.TargetUserID !== ''"><span class=reply-comment ng-click="commentReply(comment, $event)">回复</span> <span class=check-conversation-comment ng-click="seeConversation(comment, $event)">查看对话</span></div></div></div><md-divider></md-divider><div class=new-comment-input-container layout=row layout-align="start center"><input class=new-comment-input type=text ng-model=newCommentContent flex><md-button class="md-primary md-raised" ng-click=addNewCommentToTopic($event)>评论</md-button></div></div></div>

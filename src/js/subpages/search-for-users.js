@@ -49,7 +49,7 @@
             };
 
             $scope.closeDialog = function() {
-                $mdDialog.hide();
+                $mdDialog.cancel();
             };
     	}])
 }());

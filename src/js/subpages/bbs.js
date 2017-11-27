@@ -27,7 +27,7 @@
 				Value: "ALL"
 			}
 		])
-    	.controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'selectorItems', function($scope, $mdDialog, selectorItems) {
+    	.controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'categoryItems', function($scope, $mdDialog, categoryItems) {
     		$scope.topic = {
     			Title: "",
 				Content: "",
@@ -35,10 +35,10 @@
 			};
 
 			$scope.closeDialog = function(ev) {
-				$mdDialog.hide();
+				$mdDialog.cancel();
 			};	
 			
-			$scope.categories = selectorItems;
+			$scope.categories = categoryItems;
 
     		$scope.submit = function() {	
     			$mdDialog.hide($scope.topic);
@@ -58,6 +58,8 @@
     			$scope.isSubmittingTopic = false;
 				$scope.isChangingCategory = false;
 				$scope.isLoadingTopicHasError = false;
+
+				var user = localStorageService.get('userInfo');
 
     			/*
 					filter topic
@@ -85,8 +87,7 @@
 				*/
 				$scope.addNewArticle = function(ev) {
 					if (localStorageService.get('userInfo')) {
-						var url = $state.href('new-article');
-						window.open(url, '_blank');
+						generateNewArticleDraft();
 					} else {
 						$mdDialog.show({ 
 							controller: 'loginOrSignupCtrl',
@@ -169,6 +170,22 @@
 				        });
 	    			}
 				};
+
+				function generateNewArticleDraft(ev) {
+					var body = {
+						Title: "",
+						Category: "",
+						Author: user.DisplayName,
+						Content: ""
+					}
+					$http.post(BaseUrl + '/article-draft/' + user._id, body)
+						.then(function(response) {
+							var url = $state.href('new-article', {id: response.data._id});
+							window.open(url, '_blank');
+						}, function(error) {	
+							alertService.showAlert('新建文章模板失败，请重试', ev);
+						});
+				}
 				
 				function loadTopics(pageNum, category, keyword, loadMoreSignal) {
 					var body = {

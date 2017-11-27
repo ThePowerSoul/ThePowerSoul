@@ -14,14 +14,15 @@
 	.topic-detail-container .topic-title {
 		max-width: 300px;
 		overflow: hidden;
-    		text-overflow: ellipsis;
+    	text-overflow: ellipsis;
 		margin-right: 24px;
+		font-size: 20px;
 	}
 	.topic-detail-container .topic-author {
 		margin-right: 24px;
 	}
 	.topic-detail-container .topic-createtime {
-
+		margin-right: 24px;
 	}
 	.topic-detail-container .topic-content-container {
 		margin-top: 24px;
@@ -82,7 +83,8 @@
 	.topic-comment-panel .comment-panel-header {
 		margin-bottom: 16px;
 	}
-	.topic-comment-panel .fa, .like-number, .dislike-number {
+	
+	.topic-comment-panel .fa, .like-number, .dislike-number, .topic-description-container .fa {
 		color: rgba(0, 0, 0, 0.38);
 	}
 	.topic-comment-panel .fa:hover {
@@ -101,11 +103,21 @@
 <div class="topic-detail-container">
 	<div class="topic-description-container" layout="column">
 		<div layout="row" layout="start center">
-			<span class="topic-title">{{topic.Title}}</span>
-			<span class="topic-author">{{'作者：' + topic.Author}}</span>
+			<div class="topic-title" layout="row" layout-align="start center">{{topic.Title}}</div>
+			<div class="topic-author" layout="row" layout-align="start center">{{'作者：' + topic.Author}}</div>
 			<div layout="row" layout-align="start center">
-				<span class="topic-createtime">日期：</span>
+				<span>发布日期：</span>
 				<span class="topic-createtime">{{topic.CreatedAt | date: 'yy-MM-dd'}}</span>				
+			</div>
+			<div layout="row" layout-align="start center">
+				<md-button class="md-icon-button" ng-disabled="isChangingTopicLikeStauts" ng-click="likeTheTopic($event)">
+					<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+					<span class="like-number">{{'&nbsp;' + topic.LikeUser.length}}</span>
+				</md-button>
+				<md-button class="md-icon-button" ng-disabled="isChangingTopicLikeStauts" ng-click="dislikeTheTopic($event)">
+					<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
+					<span class="dislike-number">{{'&nbsp;' + topic.DislikeUser.length}}</span>
+				</md-button>
 			</div>
 		</div>
 		<div class="topic-content-container" layout="column">
@@ -130,7 +142,7 @@
 				<span ng-show="comment.TargetUserID !== ''"topic>&nbsp;回复&nbsp;</span>
 				<span ng-show="comment.TargetUserID !== ''">{{comment.TargetAuthor}}</span>
 				<div layout="row" layout-align="start center">
-					<span>&nbsp;&nbsp;&nbsp;&nbsp;发表日期：</span>
+					<span>&nbsp;&nbsp;&nbsp;&nbsp;发布日期：</span>
 					<span>{{comment.CreatedAt | date: 'yy-MM-dd'}}</span>				
 				</div>
 			</div>
@@ -139,13 +151,13 @@
 			</div>
 			<div class="comment-operation-container" layout="row" layout-align="start center">
 				<div class="like-container" layout="row" layout-align="start center">
-					<md-button class="md-raised" ng-disabled="isChangingLikeStauts" ng-click="likeTheComment(comment, $event)">
+					<md-button class="md-icon-button" ng-disabled="isChangingLikeStauts" ng-click="likeTheComment(comment, $event)">
 						<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
 						<span class="like-number">{{'&nbsp;' + comment.LikeUser.length}}</span>
 					</md-button>
 		        </div>
 		       	<div layout="row" layout-align="start center">
-					<md-button class="md-raised" ng-disabled="isChangingLikeStauts" ng-click="dislikeTheComment(comment, $event)">
+					<md-button class="md-icon-button" ng-disabled="isChangingLikeStauts" ng-click="dislikeTheComment(comment, $event)">
 						<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
 						<span class="dislike-number">{{'&nbsp;' + comment.DislikeUser.length}}</span>
 					</md-button>
