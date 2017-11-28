@@ -171,8 +171,19 @@
 	    			}
 				};
 
-				$scope.addTopicToFav = function(topic) {
-					
+				$scope.goAddTopicToFav = function(topic, ev) {
+					$http.put(BaseUrl + '/user-topic-fav/' + user._id + '/' + topic._id)
+						.then(function(response) {
+							alertService.showAlert('收藏成功', ev);
+						}, function(error) {
+							if (error.status === 404 && error.data === 'UserNotFound') {
+								alertService.showAlert('用户不存在，请重新登录', ev);
+							} else if (error.status === 400 && error.data === 'Added') {
+								alertService.showAlert('请勿重复收藏', ev);
+							} else {
+								alertService.showAlert('收藏失败，请重试', ev);
+							}
+						});
 				};
 
 				function generateNewArticleDraft(ev) {

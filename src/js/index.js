@@ -12,6 +12,7 @@
         'The.Power.Soul.Search.For.Users',
         'The.Power.Soul.Article.List',
         'The.Power.Soul.Article.Detail',
+        'The.Power.Soul.Fav.List',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
@@ -67,6 +68,11 @@
                     url: '/article-detail/{id}',
                     templateUrl: 'dist/pages/article-detail.html',
                     controller: 'articleDetailCtrl',
+                })
+                .state('fav-list', {
+                    url: '/fav-list',
+                    templateUrl: 'dist/pages/fav-list.html',
+                    controller: 'favListCtrl',
                 });
 	    }])
         .controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService',
@@ -105,7 +111,8 @@
                         $scope.isLogining = false;
                         localStorageService.set('userInfo', response.data);
                         $mdDialog.hide();
-                        alertService.showAlert('登录成功', ev);
+                        // alertService.showAlert('登录成功', ev);
+                        location.reload();
                     }, function(error) {
                         $scope.isLogining = false;
                         if (error.status === 400) {
@@ -191,6 +198,7 @@
                     $scope.loggedIn = false;
                     localStorageService.remove('userInfo');
                     $state.go('bbs');
+                    location.reload();
                 };
 
                 $scope.searchForUsers = function(ev) {
@@ -211,6 +219,10 @@
 
                 $scope.listArticles = function() {
                     $state.go('article-list');
+                };
+
+                $scope.listFavs = function() {
+                    $state.go('fav-list');
                 };
 
                 $scope.goToUserDetail = function() {

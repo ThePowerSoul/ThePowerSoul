@@ -31,7 +31,6 @@
 			'BaseUrl', 'localStorageService', 'alertService',
 			function($scope, $stateParams, $mdDialog, $http,
 				 BaseUrl, localStorageService, alertService) {
-    		var topicID = $stateParams.id;
 			$scope.user = localStorageService.get('userInfo');
 			var topic_id = $stateParams.id;
 
@@ -52,7 +51,7 @@
 
 			$scope.addNewCommentToTopic = function(ev) {
 				$scope.isPostingNewComment = true;
-				$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topicID,
+				$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topic_id,
 					{
 						Comment: $scope.newCommentContent,
 						ContextID: "",
@@ -107,6 +106,21 @@
 				}, function() {
 					// canceled
 				});
+			};
+
+			$scope.goAddTopicToFav = function(ev) {
+				$http.put(BaseUrl + '/user-topic-fav/' + $scope.user._id + '/' + topic_id)
+					.then(function(response) {
+						alertService.showAlert('收藏成功', ev);
+					}, function(error) {
+						if (error.status === 404 && error.data === 'UserNotFound') {
+							alertService.showAlert('用户不存在，请重新登录', ev);
+						} else if (error.status === 400 && error.data === 'Added') {
+							alertService.showAlert('请勿重复收藏', ev);
+						} else {
+							alertService.showAlert('收藏失败，请重试', ev);
+						}
+					});
 			};
 
 			$scope.likeTheTopic = function(ev) {

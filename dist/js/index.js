@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -42,6 +42,10 @@
             url: '/article-detail/{id}',
             templateUrl: 'dist/pages/article-detail.html',
             controller: 'articleDetailCtrl'
+        }).state('fav-list', {
+            url: '/fav-list',
+            templateUrl: 'dist/pages/fav-list.html',
+            controller: 'favListCtrl'
         });
     }]).controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService) {
         var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
@@ -77,7 +81,8 @@
                 $scope.isLogining = false;
                 localStorageService.set('userInfo', response.data);
                 $mdDialog.hide();
-                alertService.showAlert('登录成功', ev);
+                // alertService.showAlert('登录成功', ev);
+                location.reload();
             }, function (error) {
                 $scope.isLogining = false;
                 if (error.status === 400) {
@@ -156,6 +161,7 @@
             $scope.loggedIn = false;
             localStorageService.remove('userInfo');
             $state.go('bbs');
+            location.reload();
         };
 
         $scope.searchForUsers = function (ev) {
@@ -175,6 +181,10 @@
 
         $scope.listArticles = function () {
             $state.go('article-list');
+        };
+
+        $scope.listFavs = function () {
+            $state.go('fav-list');
         };
 
         $scope.goToUserDetail = function () {
@@ -334,6 +344,20 @@
         $scope.isChangingLikeStauts = false;
         var user = localStorageService.get('userInfo');
         var article_id = $stateParams.id;
+
+        $scope.goAddArticleToFav = function (ev) {
+            $http.put(BaseUrl + '/user-article-fav/' + user._id + '/' + $scope.article._id).then(function (response) {
+                alertService.showAlert('收藏成功', ev);
+            }, function (error) {
+                if (error.status === 404 && error.data === 'UserNotFound') {
+                    alertService.showAlert('用户不存在，请重新登录', ev);
+                } else if (error.status === 400 && error.data === 'Added') {
+                    alertService.showAlert('已收藏，请勿重复添加', ev);
+                } else {
+                    alertService.showAlert('收藏失败，请重试', ev);
+                }
+            });
+        };
 
         $scope.postNewComment = function (ev) {
             $scope.isPosingNewComment = true;
@@ -672,7 +696,19 @@
 			}
 		};
 
-		$scope.addTopicToFav = function (topic) {};
+		$scope.goAddTopicToFav = function (topic, ev) {
+			$http.put(BaseUrl + '/user-topic-fav/' + user._id + '/' + topic._id).then(function (response) {
+				alertService.showAlert('收藏成功', ev);
+			}, function (error) {
+				if (error.status === 404 && error.data === 'UserNotFound') {
+					alertService.showAlert('用户不存在，请重新登录', ev);
+				} else if (error.status === 400 && error.data === 'Added') {
+					alertService.showAlert('请勿重复收藏', ev);
+				} else {
+					alertService.showAlert('收藏失败，请重试', ev);
+				}
+			});
+		};
 
 		function generateNewArticleDraft(ev) {
 			var body = {
@@ -716,6 +752,43 @@
     'use strict';
 
     angular.module('The.Power.Soul.Caculator', ['ngMaterial']).controller('caculatorCtrl', ['$scope', function ($scope) {}]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Fav.List', ['ngMaterial']).controller('favListCtrl', ['$scope', '$http', 'localStorageService', 'BaseUrl', function ($scope, $http, localStorageService, BaseUrl) {
+        $scope.isLoading = false;
+        $scope.isLoadingHasError = false;
+        $scope.isLoadingArticlesHasError = false;
+        $scope.isLoadingArticles = false;
+        $scope.favTopics = [];
+        $scope.favArticles = [];
+        var user = localStorageService.get('userInfo');
+
+        function loadFavTopics() {
+            $scope.isLoading = true;
+            $http.get(BaseUrl + '/user-fav-topics/' + user._id).then(function (response) {
+                $scope.isLoading = false;
+                $scope.favTopics = response.data;
+            }, function (error) {
+                $scope.isLoading = false;
+                $scope.isLoadingHasError = true;
+            });
+        }
+
+        function loadFavArticles() {
+            $scope.isLoadingArticles = false;
+            $http.get(BaseUrl + '/user-fav-articles/' + user._id).then(function (response) {
+                $scope.isLoadingArticles = false;
+                $scope.favArticles = response.data;
+            }, function (error) {
+                $scope.isLoadingArticlesHasError = true;
+                $scope.isLoadingArticles = false;
+            });
+        }
+        loadFavTopics();
+        loadFavArticles();
+    }]);
 })();
 (function () {
     'use strict';
@@ -806,7 +879,6 @@
 			$mdDialog.cancel();
 		};
 	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $stateParams, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
-		var topicID = $stateParams.id;
 		$scope.user = localStorageService.get('userInfo');
 		var topic_id = $stateParams.id;
 
@@ -827,7 +899,7 @@
 
 		$scope.addNewCommentToTopic = function (ev) {
 			$scope.isPostingNewComment = true;
-			$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topicID, {
+			$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topic_id, {
 				Comment: $scope.newCommentContent,
 				ContextID: "",
 				TargetUserID: "",
@@ -875,6 +947,20 @@
 				}
 			}).then(function (data) {}, function () {
 				// canceled
+			});
+		};
+
+		$scope.goAddTopicToFav = function (ev) {
+			$http.put(BaseUrl + '/user-topic-fav/' + $scope.user._id + '/' + topic_id).then(function (response) {
+				alertService.showAlert('收藏成功', ev);
+			}, function (error) {
+				if (error.status === 404 && error.data === 'UserNotFound') {
+					alertService.showAlert('用户不存在，请重新登录', ev);
+				} else if (error.status === 400 && error.data === 'Added') {
+					alertService.showAlert('请勿重复收藏', ev);
+				} else {
+					alertService.showAlert('收藏失败，请重试', ev);
+				}
 			});
 		};
 

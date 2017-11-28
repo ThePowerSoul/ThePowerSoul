@@ -16,6 +16,21 @@
             var user = localStorageService.get('userInfo');
             var article_id = $stateParams.id;
 
+            $scope.goAddArticleToFav = function(ev) {
+                $http.put(BaseUrl + '/user-article-fav/' + user._id + '/' + $scope.article._id)
+                    .then(function(response) {
+                        alertService.showAlert('收藏成功', ev);
+                    }, function(error) {
+                        if (error.status === 404 && error.data === 'UserNotFound') {
+                            alertService.showAlert('用户不存在，请重新登录', ev);
+                        } else if (error.status === 400 && error.data === 'Added') {
+                            alertService.showAlert('已收藏，请勿重复添加', ev);
+                        } else {
+                            alertService.showAlert('收藏失败，请重试', ev);
+                        }
+                    });
+            };
+
             $scope.postNewComment = function(ev) {
                 $scope.isPosingNewComment = true;
                 var body = {

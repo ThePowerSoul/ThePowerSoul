@@ -53,6 +53,7 @@
 	}
 	.topic-card .add-to-fav-button {
 		margin-right: 24px;
+		outline: none;
 	}
 	.topic-card .add-to-fav-button:hover {
 		cursor: pointer;
@@ -120,7 +121,7 @@
 						</span>
 					</div>
 					<div layout="row" layout-align="start center">
-						<span class="md-body-1 add-to-fav-button" ng-click="addTopicToFav(topic)">收藏</span>
+						<span class="md-body-1 add-to-fav-button" ng-click="goAddTopicToFav(topic, $event)">收藏</span>
 					</div>
 					<div layout="row" layout-align="start center">
 						<span class="md-body-1 like-number">{{'&nbsp;' + topic.LikeUser.length + '&nbsp;'}}</span>

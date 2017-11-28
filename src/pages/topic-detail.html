@@ -21,6 +21,14 @@
 	.topic-detail-container .topic-author {
 		margin-right: 24px;
 	}
+	.topic-detail-container .topic-add-to-fav-button {
+		margin-right: 24px;
+		outline: none;
+	}
+	.topic-detail-container .topic-add-to-fav-button:hover {
+		color: lightblue;
+		cursor: pointer;
+	}
 	.topic-detail-container .topic-createtime {
 		margin-right: 24px;
 	}
@@ -104,7 +112,8 @@
 	<div class="topic-description-container" layout="column">
 		<div layout="row" layout="start center">
 			<div class="topic-title md-body-1" layout="row" layout-align="start center">{{topic.Title}}</div>
-			<div class="topic-author md-body-1" layout="row" layout-align="start center">{{'作者：' + topic.Author}}</div>
+			<div class="topic-author md-body-1" layout="row" layout-align="start center">{{topic.Author}}</div>
+			<div class="topic-add-to-fav-button md-body-1" layout="row" layout-align="start center" ng-click="goAddTopicToFav($event)">收藏</div>
 			<div layout="row" layout-align="start center">
 				<span class="md-body-1">发布日期：</span>
 				<span class="topic-createtime md-body-1">{{topic.CreatedAt | date: 'yy-MM-dd'}}</span>				
