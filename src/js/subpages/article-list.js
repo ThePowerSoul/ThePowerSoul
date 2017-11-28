@@ -14,6 +14,10 @@
                 $state.go('new-article', {id: article._id});
             };
 
+            $scope.goToArticleDetail = function(article) {
+                $state.go('article-detail', {id: article._id});
+            };
+
             // 生成新草稿，内容为正文内容，成功后删除正文内容
             $scope.editArticle = function(article, ev) {
                 $http.post(BaseUrl + '/article-draft/' + $scope.user._id, article)

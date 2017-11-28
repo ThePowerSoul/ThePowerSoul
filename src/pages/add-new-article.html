@@ -31,7 +31,8 @@
 </style>
 <div  class="new-article-container">
 	<div class="new-article-widget" layout="row" layout-align="start center">
-		<md-button class="md-primary md-raised" ng-click="publishArticle($event)">发布</md-button>
+		<md-button class="md-primary md-raised" ng-disabled="article.Category === '' || article.Title === '' || article.Content === ''" 
+			ng-click="publishArticle($event)">发布</md-button>
 		<md-button class="md-primary md-raised" ng-click="saveAsDraft()">保存草稿</md-button>
 		<span class="md-body-1">草稿每30秒会自动保存一次</span>
 	</div>	

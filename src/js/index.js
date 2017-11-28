@@ -11,6 +11,7 @@
         'The.Power.Soul.Mall',
         'The.Power.Soul.Search.For.Users',
         'The.Power.Soul.Article.List',
+        'The.Power.Soul.Article.Detail',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
@@ -61,6 +62,11 @@
                     url: '/article-list',
                     templateUrl: 'dist/pages/article-list.html',
                     controller: 'articleListCtrl',
+                })
+                .state('article-detail', {
+                    url: '/article-detail/{id}',
+                    templateUrl: 'dist/pages/article-detail.html',
+                    controller: 'articleDetailCtrl',
                 });
 	    }])
         .controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService',

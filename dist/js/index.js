@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -38,6 +38,10 @@
             url: '/article-list',
             templateUrl: 'dist/pages/article-list.html',
             controller: 'articleListCtrl'
+        }).state('article-detail', {
+            url: '/article-detail/{id}',
+            templateUrl: 'dist/pages/article-detail.html',
+            controller: 'articleDetailCtrl'
         });
     }]).controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService) {
         var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
@@ -263,6 +267,7 @@
 			Category: ""
 		};
 		$scope.publishArticle = function (ev) {
+			removeBlankSpace();
 			$scope.isPublishing = true;
 			$http.post(BaseUrl + '/article/' + $scope.user._id, $scope.article).then(function (response) {
 				$scope.isPublishing = false;
@@ -276,6 +281,10 @@
 		$scope.saveAsDraft = function () {
 			saveDraft();
 		};
+
+		function removeBlankSpace() {
+			// 将文本中没有内容的标签去除
+		}
 
 		function removeFromDraftList() {
 			$http.delete(BaseUrl + '/article-draft/' + $scope.article._id).then(function (response) {
@@ -313,6 +322,144 @@
 (function () {
     'use strict';
 
+    angular.module('The.Power.Soul.Article.Detail', ['ngMaterial', 'The.Power.Soul.Topic.Detail']).controller('articleDetailCtrl', ['$scope', '$http', 'BaseUrl', 'localStorageService', '$stateParams', 'alertService', '$mdDialog', function ($scope, $http, BaseUrl, localStorageService, $stateParams, alertService, $mdDialog) {
+        $scope.isLoading = false;
+        $scope.isLoadingHasError = false;
+        $scope.isLoadingComments = false;
+        $scope.isLoadingCommentsHasError = false;
+        $scope.isPosingNewComment = false;
+        $scope.article = {};
+        $scope.comments = [];
+        $scope.newComment = "";
+        $scope.isChangingLikeStauts = false;
+        var user = localStorageService.get('userInfo');
+        var article_id = $stateParams.id;
+
+        $scope.postNewComment = function (ev) {
+            $scope.isPosingNewComment = true;
+            var body = {
+                Comment: $scope.newComment,
+                ContextID: "",
+                TargetUserID: "",
+                Author: user.DisplayName,
+                TargetAuthor: ""
+            };
+            $http.post(BaseUrl + '/comment/' + user._id + '/' + article_id, body).then(function (response) {
+                $scope.isPosingNewComment = false;
+                $scope.comments.push(response.data);
+                $scope.newComment = "";
+            }, function (error) {
+                $scope.isPosingNewComment = false;
+                alertService.showAlert('发表评论失败', ev);
+            });
+        };
+
+        $scope.commentReply = function (comment, ev) {
+            $mdDialog.show({
+                controller: 'addNewCommentCtrl',
+                templateUrl: 'dist/pages/add-new-comment.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: false,
+                fullscreen: false
+            }).then(function (data) {
+                sendCommentReply(comment, data, ev);
+                // handle comment data
+            }, function () {
+                // canceled
+            });
+        };
+
+        $scope.likeTheArticle = function (ev) {
+            $http.put(BaseUrl + '/article/' + user._id + '/' + $scope.article._id).then(function (response) {
+                $scope.article.LikeUser.push(user._id);
+            }, function (error) {
+                if (error.status === 400 && error.data === "Added") {
+                    return;
+                }
+            });
+        };
+
+        $scope.likeTheComment = function (comment, ev) {
+            $scope.isChangingLikeStauts = true;
+            $http.put(BaseUrl + '/comment/' + user._id + '/' + comment._id + '/up').then(function (response) {
+                var index = comment.LikeUser.indexOf(user._id);
+                var indexDis = comment.DislikeUser.indexOf(user._id);
+                if (indexDis >= 0) {
+                    comment.DislikeUser.splice(index, 1);
+                }
+                if (index < 0) {
+                    comment.LikeUser.push(user._id);
+                }
+                $scope.isChangingLikeStauts = false;
+            }, function (error) {
+                $scope.isChangingLikeStauts = false;
+                if (error.status === 400 && error.data === "Added") {
+                    return;
+                }
+            });
+        };
+
+        $scope.dislikeTheComment = function (comment, ev) {
+            $scope.isChangingLikeStauts = true;
+            $http.put(BaseUrl + '/comment/' + user._id + '/' + comment._id + '/down').then(function (response) {
+                var index = comment.LikeUser.indexOf(user._id);
+                var indexDis = comment.DislikeUser.indexOf(user._id);
+                if (index >= 0) {
+                    comment.LikeUser.splice(index, 1);
+                }
+                if (indexDis < 0) {
+                    comment.DislikeUser.push(user._id);
+                }
+                $scope.isChangingLikeStauts = false;
+            }, function (error) {
+                $scope.isChangingLikeStauts = false;
+                if (error.status === 400 && error.data === "Removed") {
+                    return;
+                }
+            });
+        };
+
+        function sendCommentReply(comment, newComment, ev) {
+            $http.post(BaseUrl + '/comment/' + user._id + '/' + article_id, {
+                Comment: newComment,
+                ContextID: comment.TargetContextID,
+                TargetUserID: comment.UserID,
+                Author: user.DisplayName,
+                TargetAuthor: comment.Author
+            }).then(function (response) {
+                $scope.comments.push(response.data);
+            }, function (error) {
+                alertService.showAlert('回复评论失败，请重试', ev);
+            });
+        }
+
+        function getComments() {
+            $scope.isLoadingComments = true;
+            $http.get(BaseUrl + '/comment/' + article_id).then(function (response) {
+                $scope.isLoadingComments = false;
+                $scope.comments = response.data;
+            }, function (error) {
+                $scope.isLoadingComments = false;
+                $scope.isLoadingCommentsHasError = true;
+            });
+        }
+
+        function getArticle() {
+            return $http.get(BaseUrl + '/article/' + article_id).then(function (response) {
+                $scope.isLoading = false;
+                $scope.article = response.data;
+            }, function (error) {
+                $scope.isLoadingHasError = true;
+                $scope.isLoading = false;
+            });
+        }
+        getArticle().then(getComments());
+    }]);
+})();
+(function () {
+    'use strict';
+
     angular.module('The.Power.Soul.Article.List', ['ngMaterial']).controller('articleListCtrl', ['$scope', '$http', '$state', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $http, $state, BaseUrl, localStorageService, alertService) {
         $scope.articles = [];
         $scope.articleDrafts = [];
@@ -323,6 +470,10 @@
 
         $scope.goToEdit = function (article) {
             $state.go('new-article', { id: article._id });
+        };
+
+        $scope.goToArticleDetail = function (article) {
+            $state.go('article-detail', { id: article._id });
         };
 
         // 生成新草稿，内容为正文内容，成功后删除正文内容
@@ -521,6 +672,8 @@
 			}
 		};
 
+		$scope.addTopicToFav = function (topic) {};
+
 		function generateNewArticleDraft(ev) {
 			var body = {
 				Title: "",
@@ -670,6 +823,7 @@
 		$scope.isChangingTopicLikeStauts = false;
 		$scope.topic = {};
 		$scope.commentList = [];
+		$scope.newCommentContent = "";
 
 		$scope.addNewCommentToTopic = function (ev) {
 			$scope.isPostingNewComment = true;
@@ -680,6 +834,7 @@
 				Author: $scope.user.DisplayName,
 				TargetAuthor: ""
 			}).then(function (response) {
+				$scope.newCommentContent = "";
 				$scope.commentList.push(response.data);
 				$scope.isPostingNewComment = false;
 			}, function (error) {

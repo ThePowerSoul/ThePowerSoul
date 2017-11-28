@@ -64,6 +64,7 @@
 				Category: ""
 			};
     		$scope.publishArticle = function(ev) {
+				removeBlankSpace();
 				$scope.isPublishing = true;
 				$http.post(BaseUrl + '/article/' + $scope.user._id, $scope.article)
 					.then(function(response) {
@@ -78,6 +79,10 @@
     		$scope.saveAsDraft = function() {
 				saveDraft();
 			};
+
+			function removeBlankSpace() {
+				// 将文本中没有内容的标签去除
+			}
 			
 			function removeFromDraftList() {
 				$http.delete(BaseUrl + '/article-draft/' + $scope.article._id)

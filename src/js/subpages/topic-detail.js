@@ -48,6 +48,7 @@
 			$scope.isChangingTopicLikeStauts = false;
 			$scope.topic = {};
 			$scope.commentList = [];
+			$scope.newCommentContent = "";
 
 			$scope.addNewCommentToTopic = function(ev) {
 				$scope.isPostingNewComment = true;
@@ -60,13 +61,13 @@
 						TargetAuthor: ""
 					})
 					.then(function(response) {
+						$scope.newCommentContent = "";
 						$scope.commentList.push(response.data);
 						$scope.isPostingNewComment = false;
 					}, function(error) {
 						$scope.isPostingNewComment = false;
 						alertService.showAlert('发布评论失败，请重试', ev);
 					});	
-
 			};
 
 			/*

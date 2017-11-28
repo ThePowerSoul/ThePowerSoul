@@ -171,6 +171,10 @@
 	    			}
 				};
 
+				$scope.addTopicToFav = function(topic) {
+					
+				};
+
 				function generateNewArticleDraft(ev) {
 					var body = {
 						Title: "",

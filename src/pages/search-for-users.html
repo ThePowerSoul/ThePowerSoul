@@ -27,7 +27,9 @@
         cursor: pointer;
         outline: none;
     }
-
+    .dialog-content-container .search-reminder-text {
+        color: rgba(0, 0, 0, 0.54);
+    }
 </style>
 <md-dialog class="dialog-content-container" layout="column">
     <div layout="row" layout-align="start center">
@@ -38,9 +40,17 @@
     </div>
     <div>
         <md-input-container class="md-icon-float md-block">
-            <input placeholder="请输入用户邮箱，回车搜索..." ng-disabled="isSearching" ng-model="searchContext" type="text" ng-keypress="searchForUsers($event)">
+            <input placeholder="请输入用户完整邮箱或关键字，回车搜索..." ng-disabled="isSearching" ng-model="searchContext" type="text" ng-keypress="searchForUsers($event)">
         </md-input-container>
-        <div class="search-results-container" ng-show="users.length > 0">
+        <div class="search-results-container" ng-show="users.length === 0 && !isSearching">
+            <span class="md-body-1 search-reminder-text">当前没有搜索结果</span>
+        </div>
+        <div class="search-results-container" ng-show="isSearching">
+            <span class="text-default">
+                <md-icon class="fa-spinner lui-spinner small"></md-icon>  正在搜索，请稍等
+            </span>
+        </div>
+        <div class="search-results-container" ng-show="users.length > 0 && !isSearching">
             <div layout="row" layout-align="start center">
                 <span flex="30">用户名</span>
                 <span flex>邮箱</span>
