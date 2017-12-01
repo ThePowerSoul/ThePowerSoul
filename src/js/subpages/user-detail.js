@@ -34,19 +34,21 @@
                     $http.put(BaseUrl + '/user-unfollow/' + loggedUser._id + '/' + user_id)
                         .then(function(response) {
                             $scope.followButtonText = "关注";
-                            $scope.isOperating = true;
+                            $scope.isOperating = false;
+                            $scope.isFollowing = false;
                         }, function(error) {
                             alertService.showAlert('取消关注失败', ev);
-                            $scope.isOperating = true;
+                            $scope.isOperating = false;
                         });
                 } else {
                     $http.put(BaseUrl + '/user-follow/' + loggedUser._id + '/' + user_id)
                         .then(function(response) {
                             $scope.followButtonText = "取消关注";
-                            $scope.isOperating = true;
+                            $scope.isOperating = false;
+                            $scope.isFollowing = true;
                         }, function(error) {
                             alertService.showAlert('关注失败', ev);
-                            $scope.isOperating = true;
+                            $scope.isOperating = false;
                         });
                 }
             };  

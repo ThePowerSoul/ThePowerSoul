@@ -74,7 +74,136 @@
                     templateUrl: 'dist/pages/fav-list.html',
                     controller: 'favListCtrl',
                 });
-	    }])
+        }])
+        .controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 
+        'alertService',
+        function($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
+            $scope.newMessage = "";
+            $scope.emailKeyword = "";
+            $scope.users = [];
+            $scope.targetUser = null;
+            var user = localStorageService.get('userInfo');
+
+            function filterDataToRemoveCurrentUser(arr) {
+                angular.forEach(arr, function(u) {
+                    if (u._id === user._id) {
+                        var index = arr.indexOf(u);
+                        arr.splice(index, 1);
+                    }
+                }); 
+                return arr;
+            }
+
+            $scope.searchForUsers = function(ev) {
+                if (ev.keyCode === 13) {
+                    $scope.users = [];
+                    var body = {
+                        EmailKeyword: $scope.emailKeyword
+                    }
+                    $http.post(BaseUrl + '/users', body)
+                        .then(function(response) {
+                            $scope.users = filterDataToRemoveCurrentUser(response.data);
+                        }, function(error) {
+    
+                        });
+                }
+            };
+
+            $scope.selectUser = function(user) {
+                $scope.targetUser = user;
+                $scope.emailKeyword = "";
+            };
+
+            $scope.changeTargetUser = function() {
+                $scope.targetUser = null;
+                $scope.users = [];
+            };
+
+            $scope.closeDialog = function() {
+                $mdDialog.cancel();
+            };
+
+            $scope.submit = function(ev) {
+                var body = {
+                    Content: $scope.newMessage,
+                    UserName: user.DisplayName,
+                    TargetUserName: $scope.targetUser.DisplayName
+                }
+                $http.post(BaseUrl + '/private-message/' + user._id + '/' + $scope.targetUser._id, body)
+                    .then(function(data) {
+                        alertService.showAlert('发送私信成功', ev);
+                        $mdDialog.cancel();
+                    }, function(error) {
+                        alertService.showAlert('发送私信失败', ev);
+                    });
+            };
+        }])
+
+        .controller('listPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService',
+        '$rootScope',
+        function($scope, $mdDialog, $http, BaseUrl, localStorageService, $rootScope) {
+            $scope.user = localStorageService.get('userInfo');
+            $scope.messages = [];
+            $scope.messagesShowed = [];
+            $scope.isLoading = false;
+
+            $scope.sendNewPrivateMessage = function(ev) {
+                $mdDialog.cancel();
+                $mdDialog.show({ 
+                    controller: 'sendNewPrivateMseeageCtrl',
+                    templateUrl: 'dist/pages/send-private-message.html',
+                    parent: angular.element(document.body),
+                    targetEvent: ev,
+                    clickOutsideToClose: false,
+                    fullscreen: false
+                })
+                .then(function(data) {
+                    
+                }, function(){
+                    // canceled mdDialog
+                });
+            };
+
+            $scope.getUnReadMessageNumber = function() {
+                var num = 0;
+                angular.forEach($scope.messages, function(message) {
+                    if (message.Status === "0") {
+                        num++;
+                    }
+                }); 
+                return num;
+            }
+
+            function loadMessages() {
+                $scope.isLoading = true;
+                $http.get(BaseUrl + '/private-message/' + $scope.user._id)
+                    .then(function(response) {
+                        $scope.messages = response.data;
+                    }, function(error) {
+                        $scope.isLoadingHasError = true;
+                        $scope.isLoading = false;
+                    });
+            }
+
+            function loadRecentMessages() {
+                $scope.isLoading = true;
+                $http.get(BaseUrl + '/user/' + $scope.user._id)
+                    .then(function(response) {
+                        $scope.messagesShowed = response.data.MostRecentConversation.slice(0, 5);
+                    }, function(error) {
+                        $scope.isLoadingHasError = true;
+                        $scope.isLoading = false;
+                    });
+            }
+            loadMessages();
+            loadRecentMessages();
+
+            $scope.closeDialog = function() {
+                $mdDialog.cancel();
+            };  
+        }])
+
+
         .controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService',
         function($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService) {
             var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/; 
@@ -111,8 +240,8 @@
                         $scope.isLogining = false;
                         localStorageService.set('userInfo', response.data);
                         $mdDialog.hide();
-                        // alertService.showAlert('登录成功', ev);
-                        location.reload();
+                        $state.go('bbs');
+                        // location.reload();
                     }, function(error) {
                         $scope.isLogining = false;
                         if (error.status === 400) {
@@ -176,16 +305,22 @@
                 }
             };
         }])
-    	.controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService',
-    		function($scope, $state, $http, $rootScope, $mdDialog, localStorageService) {
-                $scope.loggedIn = false;                
-                // localstorage check
+    	.controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService', 'BaseUrl',
+    		function($scope, $state, $http, $rootScope, $mdDialog, localStorageService, BaseUrl) {
+                $scope.loggedIn = false;       
+                $scope.loggedInUser = null; 
+                $scope.hasNewMessage = false;   
+                $scope.isLoadingMessageHasError = false;     
+                // 检查当前是否有用户登录
                 if (localStorageService.get('userInfo')) {
                     updateUserLoginState();
+                    loadMessages();
                 }
 
-                $rootScope.$on('$USERLOGGEDIN', function() {
+                // 有用户登录时更新页面状态
+                var userLoggedInListener = $rootScope.$on('$USERLOGGEDIN', function() {
                     updateUserLoginState();
+                    loadMessages();
                 });
                 
                 // 登录或注册成功，更新页面状态
@@ -194,13 +329,33 @@
                     $scope.loggedInUser = localStorageService.get('userInfo');
                 }
 
+                // 刷新页面检查是否有未读私信
+                function loadMessages() {
+                    $scope.isLoading = true;
+                    $http.get(BaseUrl + '/private-message/' + $scope.loggedInUser._id)
+                        .then(function(response) {
+                            if (response.data.length > 0) {
+                                $scope.hasNewMessage = true;
+                            } else {
+                                $scope.hasNewMessage = false; 
+                            }
+                        }, function(error) {
+                            $scope.isLoadingMessageHasError = true;
+                            $scope.isLoading = false;
+                        });
+                }
+
+                //　登出
                 $scope.logOut = function() {
                     $scope.loggedIn = false;
                     localStorageService.remove('userInfo');
                     $state.go('bbs');
-                    location.reload();
+                    // location.reload();
                 };
 
+                /**
+                 * 右上角面板相关操作
+                 */
                 $scope.searchForUsers = function(ev) {
                     $mdDialog.show({ 
                         controller: 'searchForUsersCtrl',
@@ -225,6 +380,22 @@
                     $state.go('fav-list');
                 };
 
+                $scope.listPrivateMessage = function(ev) {
+                    $mdDialog.show({ 
+                        controller: 'listPrivateMessageCtrl',
+                        templateUrl: 'dist/pages/list-private-message.html',
+                        parent: angular.element(document.body),
+                        targetEvent: ev,
+                        clickOutsideToClose: false,
+                        fullscreen: false
+                    })
+                    .then(function(data) {
+                        //
+                    }, function(){
+                        // canceled mdDialog
+                    });
+                };
+
                 $scope.goToUserDetail = function() {
                     $state.go('user-detail', {id: $scope.loggedInUser._id});
                 };
@@ -245,6 +416,9 @@
                     });
                 };
 
+                /**
+                 * 页面导航
+                 */
     			$scope.goToIntroduction = function() {
     				$state.go('introduction');
     			};
@@ -260,5 +434,11 @@
                 $scope.goToMall = function() {
                     $state.go('mall');
                 };  
+
+                $scope.$on('destroy', function() {
+                    userLoggedInListener();
+                    userLoggedInListener = null;
+                });
+
     	}])
 }());

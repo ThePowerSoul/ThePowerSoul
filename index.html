@@ -16,6 +16,10 @@
 	.title-bar-action-button {
 		width: 100% !important;
 	}
+	.new-message-reminder {
+		color: #f44336;
+		font-size: 6px;
+	}
 </style>
 <body class="ng-cloak" ng-app="The.Power.Soul" ng-controller="mainCtrl">
 	<md-toolbar layout="row" layout-align="center">
@@ -49,10 +53,16 @@
 						</md-button>
 					</md-menu-item>
 					<md-menu-item>
-							<md-button ng-click="listFavs()">
-								我的收藏
-							</md-button>
-						</md-menu-item>
+						<md-button ng-click="listFavs()">
+							我的收藏
+						</md-button>
+					</md-menu-item>
+					<md-menu-item>
+						<md-button ng-click="listPrivateMessage($event)" layout="row" layout-align="start center">
+							我的私信
+							<i class="fa fa-circle new-message-reminder" aria-hidden="true" ng-show="hasNewMessage"></i>
+						</md-button>
+					</md-menu-item>
 					<md-menu-item>
 						<md-button ng-click="listArticles()">
 							我的文章/草稿
