@@ -14,6 +14,7 @@
         'The.Power.Soul.Article.Detail',
         'The.Power.Soul.Fav.List',
         'The.Power.Soul.Message.Detail',
+        'The.Power.Soul.All.Messages',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
@@ -79,6 +80,11 @@
                     url: '/message-detail/{id}',
                     templateUrl: 'dist/pages/message-detail.html',
                     controller: 'messageDetailCtrl',
+                })
+                .state('all-messages', {
+                    url: '/all-messages/{id}',
+                    templateUrl: 'dist/pages/all-messages.html',
+                    controller: 'allMessagesCtrl',
                 });
         }])
         .controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 
@@ -170,9 +176,18 @@
                 });
             };
 
+            $scope.showAllMessages = function(evt) {
+                $mdDialog.cancel();
+                $state.go('all-messages', {id: $scope.user._id});
+            };
+
             $scope.checkMessgeConversation = function(message, ev) {
                 $mdDialog.cancel();
-                $state.go('message-detail', {id: message.SenderID});
+                if (message.SenderID === $scope.user._id) {
+                    $state.go('message-detail', {id: message.TargetID});
+                } else {
+                    $state.go('message-detail', {id: message.SenderID});
+                }
             };
 
             $scope.getUnReadMessageNumber = function() {

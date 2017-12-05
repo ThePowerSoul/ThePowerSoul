@@ -45,7 +45,7 @@
         <md-button class="md-raised send-new-message-button" ng-click="postNewMessage($event)">发送</md-button>
     </div>
     <div class="message-conversation-container">
-        <div class="message-item" ng-repeat="message in messages">
+        <div class="message-item" ng-hide="showMessageOrNot(message)" ng-repeat="message in messages">
             <md-divider class="message-item-divider"></md-divider>
             <div layout="row" layout-align="start center">
                 <div flex>
@@ -64,7 +64,6 @@
                     删除
                 </div>
             </div>
-            
         </div>
     </div>
 </div>

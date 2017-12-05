@@ -1,8 +1,8 @@
 (function() {   
     'use strict';
     angular.module('The.Power.Soul.Message.Detail', ['ngMaterial'])
-        .controller('messageDetailCtrl', ['$scope', '$http', '$rootScope', '$stateParams', 'alertService', 'BaseUrl', 'localStorageService', 
-        function($scope, $http, $rootScope, $stateParams, alertService, BaseUrl, localStorageService) {
+        .controller('messageDetailCtrl', ['$scope', '$http', '$rootScope', '$stateParams', '$mdDialog', 'alertService', 'BaseUrl', 'localStorageService', 
+        function($scope, $http, $rootScope, $stateParams, $mdDialog, alertService, BaseUrl, localStorageService) {
             $scope.isLoading = false;
             $scope.isLoadingHasError = false;
             $scope.isPosting = false;
@@ -18,30 +18,37 @@
                 // $http.post(BaseUrl + '/private-message/' + )
             };
 
+            $scope.showMessageOrNot = function(message) {
+                if (message.UserID === $scope.user._id) {
+                    return message.UserDelStatus;
+                } else if (message.TargetUserID === $scope.user._id) {
+                    return message.TargetUserDelStatus;
+                }
+            };
+
             $scope.deleteMessage = function(message, ev) {
                 var confirm = $mdDialog.confirm()
                     .title('提示')
-                    .textContent('All of the banks have agreed to forgive you your debts.')
-                    .ariaLabel('Lucky day')
+                    .textContent('确定删除这条私信？')
+                    .ariaLabel('')
                     .targetEvent(ev)
-                    .ok('Please do it!')
-                    .cancel('Sounds like a scam');
+                    .ok('确定')
+                    .cancel('取消');
             
                 $mdDialog.show(confirm).then(function() {
-                    $scope.status = 'You decided to get rid of your debt.';
+                    $scope.isDeleting = true;
+                    $http.delete(BaseUrl + '/private-message/' + $scope.user._id + '/' + message._id)
+                        .then(function(response) {
+                            $scope.isDeleting = false;
+                            $scope.messages.splice($scope.messages.indexOf(message), 1);
+                            alertService.showAlert('删除私信成功', ev);
+                        }, function(error) {
+                            $scope.isDeleting = false;
+                            alertService.showAlert('删除私信失败，请重试', ev);
+                        });
                 }, function() {
-                    $scope.status = 'You decided to keep your debt.';
-                });
-
-                $scope.isDeleting = true;
-                $http.delete(BaseUrl + '/private-message/' + $scope.user._id + '/' + message._id)
-                    .then(function(response) {
-                        $scope.isDeleting = false;
-                        alertService.showAlert('删除私信成功', ev);
-                    }, function(error) {
-                        $scope.isDeleting = false;
-                        alertService.showAlert('删除私信失败，请重试', ev);
-                    });
+                    // canceled
+                });                
             };
 
             function setReadStatus() {

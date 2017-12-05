@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -50,6 +50,10 @@
             url: '/message-detail/{id}',
             templateUrl: 'dist/pages/message-detail.html',
             controller: 'messageDetailCtrl'
+        }).state('all-messages', {
+            url: '/all-messages/{id}',
+            templateUrl: 'dist/pages/all-messages.html',
+            controller: 'allMessagesCtrl'
         });
     }]).controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
         $scope.newMessage = "";
@@ -127,9 +131,18 @@
             });
         };
 
+        $scope.showAllMessages = function (evt) {
+            $mdDialog.cancel();
+            $state.go('all-messages', { id: $scope.user._id });
+        };
+
         $scope.checkMessgeConversation = function (message, ev) {
             $mdDialog.cancel();
-            $state.go('message-detail', { id: message.SenderID });
+            if (message.SenderID === $scope.user._id) {
+                $state.go('message-detail', { id: message.TargetID });
+            } else {
+                $state.go('message-detail', { id: message.SenderID });
+            }
         };
 
         $scope.getUnReadMessageNumber = function () {
@@ -405,29 +418,6 @@
     }]);
 })();
 (function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
-            }
-        };
-    }]);
-})();
-(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
@@ -532,6 +522,18 @@
 		}
 		loadArticleDraft();
 	}]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.All.Messages', ['ngMaterial']).controller('allMessagesCtrl', ['$scope', '$stateParams', '$http', function ($scope, $stateParams, $http) {
+        var user_id = $stateParams.id;
+
+        function init() {
+            $http.get(BaseUrl + '');
+        }
+        init();
+    }]);
 })();
 (function () {
     'use strict';
@@ -1009,7 +1011,7 @@
 (function () {
     'use strict';
 
-    angular.module('The.Power.Soul.Message.Detail', ['ngMaterial']).controller('messageDetailCtrl', ['$scope', '$http', '$rootScope', '$stateParams', 'alertService', 'BaseUrl', 'localStorageService', function ($scope, $http, $rootScope, $stateParams, alertService, BaseUrl, localStorageService) {
+    angular.module('The.Power.Soul.Message.Detail', ['ngMaterial']).controller('messageDetailCtrl', ['$scope', '$http', '$rootScope', '$stateParams', '$mdDialog', 'alertService', 'BaseUrl', 'localStorageService', function ($scope, $http, $rootScope, $stateParams, $mdDialog, alertService, BaseUrl, localStorageService) {
         $scope.isLoading = false;
         $scope.isLoadingHasError = false;
         $scope.isPosting = false;
@@ -1025,22 +1027,29 @@
             // $http.post(BaseUrl + '/private-message/' + )
         };
 
+        $scope.showMessageOrNot = function (message) {
+            if (message.UserID === $scope.user._id) {
+                return message.UserDelStatus;
+            } else if (message.TargetUserID === $scope.user._id) {
+                return message.TargetUserDelStatus;
+            }
+        };
+
         $scope.deleteMessage = function (message, ev) {
-            var confirm = $mdDialog.confirm().title('提示').textContent('All of the banks have agreed to forgive you your debts.').ariaLabel('Lucky day').targetEvent(ev).ok('Please do it!').cancel('Sounds like a scam');
+            var confirm = $mdDialog.confirm().title('提示').textContent('确定删除这条私信？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
 
             $mdDialog.show(confirm).then(function () {
-                $scope.status = 'You decided to get rid of your debt.';
+                $scope.isDeleting = true;
+                $http.delete(BaseUrl + '/private-message/' + $scope.user._id + '/' + message._id).then(function (response) {
+                    $scope.isDeleting = false;
+                    $scope.messages.splice($scope.messages.indexOf(message), 1);
+                    alertService.showAlert('删除私信成功', ev);
+                }, function (error) {
+                    $scope.isDeleting = false;
+                    alertService.showAlert('删除私信失败，请重试', ev);
+                });
             }, function () {
-                $scope.status = 'You decided to keep your debt.';
-            });
-
-            $scope.isDeleting = true;
-            $http.delete(BaseUrl + '/private-message/' + $scope.user._id + '/' + message._id).then(function (response) {
-                $scope.isDeleting = false;
-                alertService.showAlert('删除私信成功', ev);
-            }, function (error) {
-                $scope.isDeleting = false;
-                alertService.showAlert('删除私信失败，请重试', ev);
+                // canceled
             });
         };
 
@@ -1410,6 +1419,29 @@
                     alertService.showAlert('关注失败', ev);
                     $scope.isOperating = false;
                 });
+            }
+        };
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
             }
         };
     }]);
