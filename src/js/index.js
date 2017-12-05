@@ -13,6 +13,7 @@
         'The.Power.Soul.Article.List',
         'The.Power.Soul.Article.Detail',
         'The.Power.Soul.Fav.List',
+        'The.Power.Soul.Message.Detail',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
@@ -73,6 +74,11 @@
                     url: '/fav-list',
                     templateUrl: 'dist/pages/fav-list.html',
                     controller: 'favListCtrl',
+                })
+                .state('message-detail', {
+                    url: '/message-detail/{id}',
+                    templateUrl: 'dist/pages/message-detail.html',
+                    controller: 'messageDetailCtrl',
                 });
         }])
         .controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 
@@ -139,9 +145,9 @@
             };
         }])
 
-        .controller('listPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService',
+        .controller('listPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', '$state', 'BaseUrl', 'localStorageService',
         '$rootScope',
-        function($scope, $mdDialog, $http, BaseUrl, localStorageService, $rootScope) {
+        function($scope, $mdDialog, $http, $state, BaseUrl, localStorageService, $rootScope) {
             $scope.user = localStorageService.get('userInfo');
             $scope.messages = [];
             $scope.messagesShowed = [];
@@ -162,6 +168,11 @@
                 }, function(){
                     // canceled mdDialog
                 });
+            };
+
+            $scope.checkMessgeConversation = function(message, ev) {
+                $mdDialog.cancel();
+                $state.go('message-detail', {id: message.SenderID});
             };
 
             $scope.getUnReadMessageNumber = function() {
@@ -310,12 +321,21 @@
                 $scope.loggedIn = false;       
                 $scope.loggedInUser = null; 
                 $scope.hasNewMessage = false;   
-                $scope.isLoadingMessageHasError = false;     
+                $scope.isLoadingMessageHasError = false;    
+                $scope.showMessageEntrance = true; 
                 // 检查当前是否有用户登录
                 if (localStorageService.get('userInfo')) {
                     updateUserLoginState();
                     loadMessages();
                 }
+
+                var hideMessageEntrance = $rootScope.$on('$HIDEMESSAGEENTRANCE', function() {
+                    $scope.showMessageEntrance = false;
+                });
+
+                var showMessageEntrance = $rootScope.$on('$SHOWMESSAGEENTRANCE', function() {
+                    $scope.showMessageEntrance = true;
+                });
 
                 // 有用户登录时更新页面状态
                 var userLoggedInListener = $rootScope.$on('$USERLOGGEDIN', function() {
@@ -334,11 +354,11 @@
                     $scope.isLoading = true;
                     $http.get(BaseUrl + '/private-message/' + $scope.loggedInUser._id)
                         .then(function(response) {
-                            if (response.data.length > 0) {
-                                $scope.hasNewMessage = true;
-                            } else {
-                                $scope.hasNewMessage = false; 
-                            }
+                            response.data.forEach(function(message) {
+                                if (message.Status === '0') {
+                                    $scope.hasNewMessage = true;
+                                }   
+                            });
                         }, function(error) {
                             $scope.isLoadingMessageHasError = true;
                             $scope.isLoading = false;
@@ -438,6 +458,10 @@
                 $scope.$on('destroy', function() {
                     userLoggedInListener();
                     userLoggedInListener = null;
+                    hideMessageEntrance();
+                    hideMessageEntrance = null;
+                    showMessageEntrance();
+                    showMessageEntrance = null;
                 });
 
     	}])

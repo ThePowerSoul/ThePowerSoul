@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -46,6 +46,10 @@
             url: '/fav-list',
             templateUrl: 'dist/pages/fav-list.html',
             controller: 'favListCtrl'
+        }).state('message-detail', {
+            url: '/message-detail/{id}',
+            templateUrl: 'dist/pages/message-detail.html',
+            controller: 'messageDetailCtrl'
         });
     }]).controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
         $scope.newMessage = "";
@@ -103,7 +107,7 @@
                 alertService.showAlert('发送私信失败', ev);
             });
         };
-    }]).controller('listPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', '$rootScope', function ($scope, $mdDialog, $http, BaseUrl, localStorageService, $rootScope) {
+    }]).controller('listPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', '$state', 'BaseUrl', 'localStorageService', '$rootScope', function ($scope, $mdDialog, $http, $state, BaseUrl, localStorageService, $rootScope) {
         $scope.user = localStorageService.get('userInfo');
         $scope.messages = [];
         $scope.messagesShowed = [];
@@ -121,6 +125,11 @@
             }).then(function (data) {}, function () {
                 // canceled mdDialog
             });
+        };
+
+        $scope.checkMessgeConversation = function (message, ev) {
+            $mdDialog.cancel();
+            $state.go('message-detail', { id: message.SenderID });
         };
 
         $scope.getUnReadMessageNumber = function () {
@@ -256,11 +265,20 @@
         $scope.loggedInUser = null;
         $scope.hasNewMessage = false;
         $scope.isLoadingMessageHasError = false;
+        $scope.showMessageEntrance = true;
         // 检查当前是否有用户登录
         if (localStorageService.get('userInfo')) {
             updateUserLoginState();
             loadMessages();
         }
+
+        var hideMessageEntrance = $rootScope.$on('$HIDEMESSAGEENTRANCE', function () {
+            $scope.showMessageEntrance = false;
+        });
+
+        var showMessageEntrance = $rootScope.$on('$SHOWMESSAGEENTRANCE', function () {
+            $scope.showMessageEntrance = true;
+        });
 
         // 有用户登录时更新页面状态
         var userLoggedInListener = $rootScope.$on('$USERLOGGEDIN', function () {
@@ -278,11 +296,11 @@
         function loadMessages() {
             $scope.isLoading = true;
             $http.get(BaseUrl + '/private-message/' + $scope.loggedInUser._id).then(function (response) {
-                if (response.data.length > 0) {
-                    $scope.hasNewMessage = true;
-                } else {
-                    $scope.hasNewMessage = false;
-                }
+                response.data.forEach(function (message) {
+                    if (message.Status === '0') {
+                        $scope.hasNewMessage = true;
+                    }
+                });
             }, function (error) {
                 $scope.isLoadingMessageHasError = true;
                 $scope.isLoading = false;
@@ -379,7 +397,34 @@
         $scope.$on('destroy', function () {
             userLoggedInListener();
             userLoggedInListener = null;
+            hideMessageEntrance();
+            hideMessageEntrance = null;
+            showMessageEntrance();
+            showMessageEntrance = null;
         });
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
+            }
+        };
     }]);
 })();
 (function () {
@@ -739,6 +784,8 @@
 		$scope.selectedItem = "STRENGTH";
 		$scope.selectorItems = selectorItems;
 		$scope.searchContext = "";
+		$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
+
 		/*
   loading state
   */
@@ -958,6 +1005,64 @@
     'use strict';
 
     angular.module('The.Power.Soul.Mall', ['ngMaterial']).controller('mallCtrl', ['$scope', function ($scope) {}]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Message.Detail', ['ngMaterial']).controller('messageDetailCtrl', ['$scope', '$http', '$rootScope', '$stateParams', 'alertService', 'BaseUrl', 'localStorageService', function ($scope, $http, $rootScope, $stateParams, alertService, BaseUrl, localStorageService) {
+        $scope.isLoading = false;
+        $scope.isLoadingHasError = false;
+        $scope.isPosting = false;
+        $scope.isDeleting = false;
+        $scope.isSettingStatusHasError = false;
+        $scope.user = localStorageService.get('userInfo');
+        $rootScope.$broadcast('$HIDEMESSAGEENTRANCE');
+        var sender_id = $stateParams.id;
+        $scope.messages = [];
+
+        $scope.postNewMessage = function (ev) {
+            $scope.isPosting = true;
+            // $http.post(BaseUrl + '/private-message/' + )
+        };
+
+        $scope.deleteMessage = function (message, ev) {
+            var confirm = $mdDialog.confirm().title('提示').textContent('All of the banks have agreed to forgive you your debts.').ariaLabel('Lucky day').targetEvent(ev).ok('Please do it!').cancel('Sounds like a scam');
+
+            $mdDialog.show(confirm).then(function () {
+                $scope.status = 'You decided to get rid of your debt.';
+            }, function () {
+                $scope.status = 'You decided to keep your debt.';
+            });
+
+            $scope.isDeleting = true;
+            $http.delete(BaseUrl + '/private-message/' + $scope.user._id + '/' + message._id).then(function (response) {
+                $scope.isDeleting = false;
+                alertService.showAlert('删除私信成功', ev);
+            }, function (error) {
+                $scope.isDeleting = false;
+                alertService.showAlert('删除私信失败，请重试', ev);
+            });
+        };
+
+        function setReadStatus() {
+            return $http.put(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id).then(function (response) {}, function (error) {
+                $scope.isSettingStatusHasError = true;
+            });
+        }
+
+        function getConversation() {
+            $scope.isLoading = true;
+            $http.get(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id).then(function (response) {
+                $scope.isLoading = false;
+                $scope.messages = response.data;
+            }, function (error) {
+                $scope.isLoading = false;
+                $scope.isLoadingHasError = true;
+            });
+        }
+
+        setReadStatus().then(getConversation());
+    }]);
 })();
 (function () {
     'use strict';
@@ -1305,29 +1410,6 @@
                     alertService.showAlert('关注失败', ev);
                     $scope.isOperating = false;
                 });
-            }
-        };
-    }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
             }
         };
     }]);

@@ -37,6 +37,10 @@
 				优质品牌推荐
 	        </md-button>
 			<div flex></div>
+			<md-button ng-click="listPrivateMessage($event)" ng-show="showMessageEntrance" layout="row" layout-align="start center">
+				我的私信&nbsp;
+				<i class="fa fa-circle new-message-reminder" aria-hidden="true" ng-show="hasNewMessage"></i>
+			</md-button>
 			<md-menu ng-show="loggedIn">
 				<md-button aria-label="Open loggedin menu" class="md-icon-button title-bar-action-button" ng-click="$mdOpenMenu()">
 					 {{'你好' + loggedInUser.DisplayName}}
@@ -55,12 +59,6 @@
 					<md-menu-item>
 						<md-button ng-click="listFavs()">
 							我的收藏
-						</md-button>
-					</md-menu-item>
-					<md-menu-item>
-						<md-button ng-click="listPrivateMessage($event)" layout="row" layout-align="start center">
-							我的私信
-							<i class="fa fa-circle new-message-reminder" aria-hidden="true" ng-show="hasNewMessage"></i>
 						</md-button>
 					</md-menu-item>
 					<md-menu-item>

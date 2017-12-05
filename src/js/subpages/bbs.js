@@ -50,7 +50,9 @@
 			function($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
     			$scope.selectedItem = "STRENGTH";
     			$scope.selectorItems = selectorItems;
-    			$scope.searchContext = "";
+				$scope.searchContext = "";
+				$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
+
     			/*
 					loading state
     			*/

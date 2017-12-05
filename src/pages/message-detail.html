@@ -1,0 +1,70 @@
+<style>
+    .message-detail-container {
+        width: 1032px;
+        margin: 0 auto;
+        padding: 32px 0px 16px 0px;
+    }
+    .message-detail-container .input-container{
+        width: 100%;
+    }
+    .input-container .input-widget-container {
+        width: 50%;
+    }
+    .input-container .send-new-message-button {
+        height: 24px;
+        margin-left: 16px;
+    }
+    .message-detail-container .message-conversation-container {
+        margin-top: 16px;
+        width: 586px;
+    }
+    .message-detail-container .message-item {
+        margin-top: 16px;
+    }
+    .message-item .message-content {
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+    .message-item .message-delete-button {
+        color: rgba(0, 0, 0, 0.54);
+        cursor: pointer;
+    }
+    .message-item .message-sent-time {
+        color: rgba(0, 0, 0, 0.54);
+    }
+    .message-item-divider {
+        margin-bottom: 16px;
+    }
+</style>
+<div class="message-detail-container">
+    <div class="input-container" layout="row" >
+        <md-input-container class="input-widget-container">
+            <label>请输入信息内容</label>
+            <input class="message-input" type="text" ng-model="newMessageContent">
+        </md-input-container>
+        <md-button class="md-raised send-new-message-button" ng-click="postNewMessage($event)">发送</md-button>
+    </div>
+    <div class="message-conversation-container">
+        <div class="message-item" ng-repeat="message in messages">
+            <md-divider class="message-item-divider"></md-divider>
+            <div layout="row" layout-align="start center">
+                <div flex>
+                    <div layout="row" layout-align="start center">
+                        <span class="md-body-1" ng-bind="message.UserName"></span>
+                        <span class="md-body-1">&nbsp;发给&nbsp;</span>
+                        <span class="md-body-1" ng-bind="message.TargetUserName"></span>
+                        <span class="md-body-1"> : </span>
+                    </div>
+                    <div class="message-content">
+                        <span class="md-body-1" ng-bind="message.Content"></span>
+                    </div>
+                    <span class="md-body-1 message-sent-time" ng-bind="message.CreatedAt | date:'MM/dd/yyyy hh:mm:ss'"></span>
+                </div>
+                <div class="md-body-1 message-delete-button" ng-click="deleteMessage(message, $event)">
+                    删除
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
