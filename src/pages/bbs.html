@@ -28,6 +28,9 @@
 	.bbs-widget-container .search-input-container {
 		margin-left: 24px;
 	}
+	.bbs-widget-container .list-my-following-button {
+		margin-left: 8px;
+	}
 	.topic-card-container {
 		overflow-y: auto;
 	}
@@ -101,7 +104,11 @@
 	        <md-select class="selector-widget" ng-model="selectedItem" ng-change="getSelectedCategory()">
 	            <md-option ng-value="item.Value" ng-repeat="item in selectorItems">{{item.Title}}</md-option>
 	        </md-select>
-	    </div>
+		</div>
+		<md-input-container class="list-my-following-button">
+			<md-button ng-click="listMyFollowing($event)">
+				我关注的</md-button>
+		</md-input-container>
 	    <div flex></div>
 	    <div class="search-input-container" layout="row" layout-align="start center">
 	        <input class="md-body-1 search-input" placeholder="请输入搜索关键字" ng-keypress="searchTopicKeyboard($event)" ng-model="user.firstName">

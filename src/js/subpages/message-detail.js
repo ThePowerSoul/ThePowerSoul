@@ -8,14 +8,30 @@
             $scope.isPosting = false;
             $scope.isDeleting = false;
             $scope.isSettingStatusHasError = false;
+            $scope.newMessageContent = "";
             $scope.user = localStorageService.get('userInfo');
             $rootScope.$broadcast('$HIDEMESSAGEENTRANCE');
             var sender_id = $stateParams.id;
+            var targetUser = null;
             $scope.messages = [];
 
             $scope.postNewMessage = function(ev) {
                 $scope.isPosting = true;
-                // $http.post(BaseUrl + '/private-message/' + )
+                var body = {
+                    Content: $scope.newMessageContent,
+                    UserName: $scope.user.DisplayName,
+                    TargetUserName: targetUser.DisplayName
+                }
+                $http.post(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id, body)
+                    .then(function(response) {
+                        $scope.isPosting = false;
+                        alertService.showAlert('发送私信成功', ev);
+                        $scope.newMessageContent = "";
+                        location.reload();
+                    }, function(error) {
+                        $scope.isPosting = false;
+                        alertService.showAlert('发送私信失败，请重试', ev);
+                    });
             };
 
             $scope.showMessageOrNot = function(message) {
@@ -62,7 +78,7 @@
 
             function getConversation() {
                 $scope.isLoading = true;
-                $http.get(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id)
+                return $http.get(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id)
                     .then(function(response) {
                         $scope.isLoading = false;
                         $scope.messages = response.data;
@@ -72,6 +88,17 @@
                     });
             }
 
-            setReadStatus().then(getConversation());
+            function getTargetUserName() {
+                $http.get(BaseUrl + '/user/' + sender_id)
+                    .then(function(response) {
+                        targetUser = response.data;
+                    }, function(error) {
+                        // 加载用户信息失败
+                    });
+            } 
+
+            setReadStatus()
+                .then(getConversation()
+                    .then(getTargetUserName()));
     	}])
 }());

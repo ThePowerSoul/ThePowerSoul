@@ -2,10 +2,6 @@
     'use strict';
     angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource'])
     	.constant('selectorItems', [
-			{	
-				Title: "我关注的",
-				Value: "FOLLOWING"
-			},
     		{
 				Title: "力量训练",
 				Value: "STRENGTH"
@@ -52,16 +48,16 @@
     			$scope.selectorItems = selectorItems;
 				$scope.searchContext = "";
 				$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
-
-    			/*
-					loading state
-    			*/
     			$scope.isLoadingTopic = false;
     			$scope.isSubmittingTopic = false;
 				$scope.isChangingCategory = false;
 				$scope.isLoadingTopicHasError = false;
 
 				var user = localStorageService.get('userInfo');
+
+				$scope.listMyFollowing = function(ev) {
+
+				};	
 
     			/*
 					filter topic

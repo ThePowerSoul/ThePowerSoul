@@ -87,7 +87,7 @@
                     controller: 'allMessagesCtrl',
                 });
         }])
-        .controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 
+        .controller('sendNewPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 
         'alertService',
         function($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
             $scope.newMessage = "";
@@ -162,7 +162,7 @@
             $scope.sendNewPrivateMessage = function(ev) {
                 $mdDialog.cancel();
                 $mdDialog.show({ 
-                    controller: 'sendNewPrivateMseeageCtrl',
+                    controller: 'sendNewPrivateMessageCtrl',
                     templateUrl: 'dist/pages/send-private-message.html',
                     parent: angular.element(document.body),
                     targetEvent: ev,

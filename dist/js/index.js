@@ -55,7 +55,7 @@
             templateUrl: 'dist/pages/all-messages.html',
             controller: 'allMessagesCtrl'
         });
-    }]).controller('sendNewPrivateMseeageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
+    }]).controller('sendNewPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
         $scope.newMessage = "";
         $scope.emailKeyword = "";
         $scope.users = [];
@@ -120,7 +120,7 @@
         $scope.sendNewPrivateMessage = function (ev) {
             $mdDialog.cancel();
             $mdDialog.show({
-                controller: 'sendNewPrivateMseeageCtrl',
+                controller: 'sendNewPrivateMessageCtrl',
                 templateUrl: 'dist/pages/send-private-message.html',
                 parent: angular.element(document.body),
                 targetEvent: ev,
@@ -526,11 +526,61 @@
 (function () {
     'use strict';
 
-    angular.module('The.Power.Soul.All.Messages', ['ngMaterial']).controller('allMessagesCtrl', ['$scope', '$stateParams', '$http', function ($scope, $stateParams, $http) {
+    angular.module('The.Power.Soul.All.Messages', ['ngMaterial']).controller('allMessagesCtrl', ['$scope', '$stateParams', '$http', '$state', '$mdDialog', 'BaseUrl', 'alertService', function ($scope, $stateParams, $http, $state, $mdDialog, BaseUrl, alertService) {
         var user_id = $stateParams.id;
+        $scope.messages = [];
+
+        $scope.postNewMessage = function (ev) {
+            $mdDialog.show({
+                controller: 'sendNewPrivateMessageCtrl',
+                templateUrl: 'dist/pages/send-private-message.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: false,
+                fullscreen: false
+            }).then(function (data) {}, function () {
+                // canceled mdDialog
+            });
+        };
+
+        $scope.deleteWholeConversation = function (message, ev) {
+            var target_user_id = "";
+            if (message.SenderID === user_id) {
+                target_user_id = message.TargetID;
+            } else if (message.TargetID === user_id) {
+                target_user_id = message.SenderID;
+            }
+            var confirm = $mdDialog.confirm().title('提示').textContent('确定删除和这位用户的全部私信？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
+
+            $mdDialog.show(confirm).then(function () {
+                $scope.isDeleting = true;
+                $http.put(BaseUrl + '/delete-conversation/' + user_id + '/' + target_user_id).then(function (response) {
+                    location.reload();
+                }, function (error) {
+                    alertService.showAlert('删除对话失败，请重试', ev);
+                });
+            }, function () {
+                // canceled
+            });
+        };
+
+        $scope.checkConversation = function (message) {
+            if (message.SenderID === user_id) {
+                $state.go('message-detail', { id: message.TargetID });
+            } else if (message.TargetID === user_id) {
+                $state.go('message-detail', { id: message.SenderID });
+            }
+        };
 
         function init() {
-            $http.get(BaseUrl + '');
+            $scope.isLoading = true;
+            $http.get(BaseUrl + '/user/' + user_id).then(function (response) {
+                $scope.isLoading = false;
+                $scope.messages = response.data.MostRecentConversation;
+            }, function (error) {
+                $scope.isLoadingHasError = true;
+                $scope.isLoading = false;
+            });
         }
         init();
     }]);
@@ -749,9 +799,6 @@
 	'use strict';
 
 	angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource']).constant('selectorItems', [{
-		Title: "我关注的",
-		Value: "FOLLOWING"
-	}, {
 		Title: "力量训练",
 		Value: "STRENGTH"
 	}, {
@@ -787,16 +834,14 @@
 		$scope.selectorItems = selectorItems;
 		$scope.searchContext = "";
 		$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
-
-		/*
-  loading state
-  */
 		$scope.isLoadingTopic = false;
 		$scope.isSubmittingTopic = false;
 		$scope.isChangingCategory = false;
 		$scope.isLoadingTopicHasError = false;
 
 		var user = localStorageService.get('userInfo');
+
+		$scope.listMyFollowing = function (ev) {};
 
 		/*
   filter topic
@@ -1017,14 +1062,29 @@
         $scope.isPosting = false;
         $scope.isDeleting = false;
         $scope.isSettingStatusHasError = false;
+        $scope.newMessageContent = "";
         $scope.user = localStorageService.get('userInfo');
         $rootScope.$broadcast('$HIDEMESSAGEENTRANCE');
         var sender_id = $stateParams.id;
+        var targetUser = null;
         $scope.messages = [];
 
         $scope.postNewMessage = function (ev) {
             $scope.isPosting = true;
-            // $http.post(BaseUrl + '/private-message/' + )
+            var body = {
+                Content: $scope.newMessageContent,
+                UserName: $scope.user.DisplayName,
+                TargetUserName: targetUser.DisplayName
+            };
+            $http.post(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id, body).then(function (response) {
+                $scope.isPosting = false;
+                alertService.showAlert('发送私信成功', ev);
+                $scope.newMessageContent = "";
+                location.reload();
+            }, function (error) {
+                $scope.isPosting = false;
+                alertService.showAlert('发送私信失败，请重试', ev);
+            });
         };
 
         $scope.showMessageOrNot = function (message) {
@@ -1061,7 +1121,7 @@
 
         function getConversation() {
             $scope.isLoading = true;
-            $http.get(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id).then(function (response) {
+            return $http.get(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id).then(function (response) {
                 $scope.isLoading = false;
                 $scope.messages = response.data;
             }, function (error) {
@@ -1070,7 +1130,15 @@
             });
         }
 
-        setReadStatus().then(getConversation());
+        function getTargetUserName() {
+            $http.get(BaseUrl + '/user/' + sender_id).then(function (response) {
+                targetUser = response.data;
+            }, function (error) {
+                // 加载用户信息失败
+            });
+        }
+
+        setReadStatus().then(getConversation().then(getTargetUserName()));
     }]);
 })();
 (function () {
