@@ -4,7 +4,8 @@
 		margin: 0 auto;
 	}
 	.bbs-widget-container {
-		margin: 24px 8px 24px 8px;
+		width: 586px;
+		margin: 24px 8px 24px 0px;
 		padding-left: 24px;
 		padding-right: 24px;
 		height: 65px;
@@ -19,7 +20,14 @@
 	.bbs-widget-container .selector-widget {
 		width: 150px;
 	}
+<<<<<<< HEAD
+=======
+	.bbs-widget-container .search-input-container {
+		margin-left: 24px;
+	}
+>>>>>>> dad236db9484c5a76d7f0b970d7a023ee2cf2568
 	.topic-card-container {
+		width: 586px;
 		overflow-y: auto;
 	}
 	.topic-card {
@@ -38,6 +46,7 @@
 		cursor: pointer;
 		outline: none;
 		margin-right: 24px;
+		font-weight: bold;
 	}
 	.topic-card .topic-title:hover {
 		color: rgba(0, 0, 0, 0.54);
@@ -59,6 +68,10 @@
 	.topic-card .topic-submit-time {
 		margin-left: 24px;
 	}
+	.topic-card .topic-operation-container {
+        padding-left: 16px;
+        color: #8590a6;
+    }
 	.topic-content-container .topic-content {
 		overflow:hidden; 
 		text-overflow:ellipsis;
@@ -88,6 +101,7 @@
 				<i class="fa fa-file-text-o small" aria-hidden="true"></i>
 				写文章</md-button>
 		</md-input-container>
+<<<<<<< HEAD
 		<md-input-container>
 			<md-button class="md-raised" ng-click="listMyFollowing($event)">
 				看我关注的</md-button>
@@ -100,6 +114,9 @@
 	        </md-select>
 		</div>
 	    
+=======
+	    <div flex></div>
+>>>>>>> dad236db9484c5a76d7f0b970d7a023ee2cf2568
 	    <!-- <div class="search-input-container" layout="row" layout-align="start center">
 	        <input class="md-body-1 search-input" placeholder="请输入搜索关键字" ng-keypress="searchTopicKeyboard($event)" ng-model="user.firstName">
 	        <i class="fa fa-search search-icon-button" aria-hidden="true" ng-click="searchTopic()"></i>
@@ -109,9 +126,17 @@
 		<md-card class="topic-card" ng-repeat="topic in topicList">
 			<md-card-title class="topic-title-container">
 				<md-card-title-text layout="row" layout-align="start center">
-					<span class="md-headline topic-title" ng-click="goTopicDetail(topic, $event)" flex>
+					<span class="md-body-1 topic-title" ng-click="goTopicDetail(topic, $event)" flex>
 						{{topic.Title}}
 					</span>
+				</md-card-title-text>
+			</md-card-title>
+			<md-card-content class="topic-content-container">
+					<span class="topic-content" ng-click="goTopicDetail(topic)">
+						{{topic.Content}}
+					</span>
+			</md-card-content>
+			<div class="topic-operation-container" layout="row" layout-align="start center">
 					<div layout="row" layout-align="start center">
 						<span class="md-body-1 topic-author">
 							{{topic.Author}}
@@ -132,13 +157,7 @@
 						<span class="md-body-1">发表于&nbsp;</span>
 						<span class="md-body-1">{{topic.CreatedAt | date:"MM/dd/yyyy '的' h:mma"}}</span>
 					</div>
-				</md-card-title-text>
-			</md-card-title>
-			<md-card-content class="topic-content-container">
-					<span class="topic-content" ng-click="goTopicDetail(topic)">
-						{{topic.Content}}
-					</span>
-			</md-card-content>
+				</div>
 		</md-card>
 	</div>
 	
