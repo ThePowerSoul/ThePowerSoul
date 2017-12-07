@@ -3,7 +3,7 @@
     var subModules = [
     	'The.Power.Soul.Introduction',
     	'The.Power.Soul.BBS', 
-    	'The.Power.Soul.Caculator',
+    	'The.Power.Soul.Square',
         'The.Power.Soul.Tools',
         'The.Power.Soul.Topic.Detail',
         'The.Power.Soul.NewArticle',
@@ -31,10 +31,10 @@
 	                templateUrl: 'dist/pages/introduction.html',
 	                controller: 'introductionCtrl',
 	            })
-	            .state('caculator', {
-	                url: '/caculator',
-	                templateUrl: 'dist/pages/caculator.html',
-	                controller: 'caculatorCtrl',
+	            .state('square', {
+	                url: '/square',
+	                templateUrl: 'dist/pages/square.html',
+	                controller: 'squareCtrl',
 	            })
 	            .state('bbs', {
 	                url: '/bbs',
@@ -458,8 +458,8 @@
     				$state.go('introduction');
     			};
 
-    			$scope.goToCaculator = function() {
-    				$state.go('caculator');
+    			$scope.goToSquare = function() {
+    				$state.go('square');
     			};
 
     			$scope.goToBBS = function() {

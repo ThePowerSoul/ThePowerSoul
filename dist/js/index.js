@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Caculator', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Square', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -10,10 +10,10 @@
             url: '/introduction',
             templateUrl: 'dist/pages/introduction.html',
             controller: 'introductionCtrl'
-        }).state('caculator', {
-            url: '/caculator',
-            templateUrl: 'dist/pages/caculator.html',
-            controller: 'caculatorCtrl'
+        }).state('square', {
+            url: '/square',
+            templateUrl: 'dist/pages/square.html',
+            controller: 'squareCtrl'
         }).state('bbs', {
             url: '/bbs',
             templateUrl: 'dist/pages/bbs.html',
@@ -395,8 +395,8 @@
             $state.go('introduction');
         };
 
-        $scope.goToCaculator = function () {
-            $state.go('caculator');
+        $scope.goToSquare = function () {
+            $state.go('square');
         };
 
         $scope.goToBBS = function () {
@@ -798,22 +798,7 @@
 (function () {
 	'use strict';
 
-	angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource']).constant('selectorItems', [{
-		Title: "力量训练",
-		Value: "STRENGTH"
-	}, {
-		Title: "瑜伽训练",
-		Value: "YOGA"
-	}, {
-		Title: "形体训练",
-		Value: "FITNESS"
-	}, {
-		Title: "跑步训练",
-		Value: "RUNNING"
-	}, {
-		Title: "全部",
-		Value: "ALL"
-	}]).controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'categoryItems', function ($scope, $mdDialog, categoryItems) {
+	angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource']).controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'categoryItems', function ($scope, $mdDialog, categoryItems) {
 		$scope.topic = {
 			Title: "",
 			Content: "",
@@ -830,8 +815,6 @@
 			$mdDialog.hide($scope.topic);
 		};
 	}]).controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService', 'localStorageService', '$http', 'BaseUrl', function ($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-		$scope.selectedItem = "STRENGTH";
-		$scope.selectorItems = selectorItems;
 		$scope.searchContext = "";
 		$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
 		$scope.isLoadingTopic = false;
@@ -841,14 +824,12 @@
 
 		var user = localStorageService.get('userInfo');
 
-		$scope.listMyFollowing = function (ev) {};
-
 		/*
   filter topic
   */
 		$scope.getSelectedCategory = function () {
 			// pageNum, category, keyword, loadMoreSignal
-			loadTopics(1, $scope.selectedItem, $scope.searchContext, '');
+			loadTopics(1, $scope.selectedItem, $scope.searchContext, false);
 		};
 
 		/*
@@ -864,9 +845,7 @@
 			}
 		};
 
-		/*
-   	topic operation
-  */
+		/********************** 页面新建文章按钮操作 ********************/
 		$scope.addNewArticle = function (ev) {
 			if (localStorageService.get('userInfo')) {
 				generateNewArticleDraft();
@@ -886,6 +865,7 @@
 			}
 		};
 
+		/********************** 查看帖子详情 ********************/
 		$scope.goTopicDetail = function (topic, ev) {
 			if (localStorageService.get('userInfo')) {
 				var url = $state.href('topic-detail', { id: topic._id });
@@ -906,6 +886,7 @@
 			}
 		};
 
+		/********************** 发表新帖 ********************/
 		$scope.addNewTopic = function (ev) {
 			if (localStorageService.get('userInfo')) {
 				var user = localStorageService.get('userInfo');
@@ -949,6 +930,7 @@
 			}
 		};
 
+		/********************** 添加帖子到我的收藏 ********************/
 		$scope.goAddTopicToFav = function (topic, ev) {
 			$http.put(BaseUrl + '/user-topic-fav/' + user._id + '/' + topic._id).then(function (response) {
 				alertService.showAlert('收藏成功', ev);
@@ -963,6 +945,7 @@
 			});
 		};
 
+		/********************** 创建新的文章草稿对象并保存 ********************/
 		function generateNewArticleDraft(ev) {
 			var body = {
 				Title: "",
@@ -978,33 +961,28 @@
 			});
 		}
 
-		function loadTopics(pageNum, category, keyword, loadMoreSignal) {
+		/********************** 初始化加载
+   * 								我关注的话题
+   * 								我关注的人关注的帖子信息
+   * 								我关注的人发表的帖子
+   * 								去重
+   * 	 ********************/
+		function loadTopics(pageNum, loadMoreSignal) {
 			var body = {
-				Page: pageNum,
-				Category: category,
-				Keyword: keyword,
-				LoadAll: false
+				Page: pageNum
 			};
-			if (category === 'ALL') {
-				body.LoadAll = true;
-			}
 			$scope.isLoadingTopic = true;
 
 			$http.post(BaseUrl + "/topic", body).then(function (response) {
-				if (loadMoreSignal === 'load-more') {
+				if (loadMoreSignal) {
 					$scope.topicList = $scope.topicList.concat(response.data);
 				} else {
 					$scope.topicList = response.data;
 				}
 			});
 		}
-		loadTopics(1, 'ALL', '', '');
+		loadTopics(1, false); // 数据初始化
 	}]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Caculator', ['ngMaterial']).controller('caculatorCtrl', ['$scope', function ($scope) {}]);
 })();
 (function () {
     'use strict';
@@ -1192,6 +1170,56 @@
         $scope.closeDialog = function () {
             $mdDialog.cancel();
         };
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Square', ['ngMaterial']).constant('selectorItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }, {
+        Title: "全部",
+        Value: "ALL"
+    }]).controller('squareCtrl', ['$scope', '$http', '$stateParams', 'BaseUrl', 'selectorItems', function ($scope, $http, $stateParams, BaseUrl, selectorItems) {
+        $scope.selectedItem = "ALL";
+        $scope.selectorItems = selectorItems;
+        $scope.topicList = [];
+        $scope.isLoadingTopic = false;
+        $scope.isLoadingHasError = true;
+
+        /********************** 初始化加载帖子信息 ********************/
+        function loadTopics(pageNum, category, keyword, loadMoreSignal) {
+            var body = {
+                Page: pageNum,
+                Category: category,
+                Keyword: keyword,
+                LoadAll: false
+            };
+            if (category === 'ALL') {
+                body.LoadAll = true;
+            }
+            $scope.isLoadingTopic = true;
+            $http.post(BaseUrl + "/topic", body).then(function (response) {
+                if (loadMoreSignal) {
+                    $scope.topicList = $scope.topicList.concat(response.data);
+                } else {
+                    $scope.topicList = response.data;
+                }
+            }, function (error) {
+                $scope.isLoadingHasError = true;
+            });
+        }
+        loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
     }]);
 })();
 (function () {
