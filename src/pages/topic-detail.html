@@ -107,6 +107,13 @@
 		line-height: 32px;
 		font-size: 16px;
 	}
+	.topic-description-container .report-button {
+		color: rgba(0, 0, 0, 0.54);
+	}
+	.topic-description-container .report-button:hover {
+		color: lightblue;
+		cursor: pointer;
+	}
 </style>
 <div class="topic-detail-container">
 	<div class="topic-description-container" layout="column">
@@ -128,6 +135,8 @@
 					<span class="md-body-1 dislike-number">{{'&nbsp;' + topic.DislikeUser.length}}</span>
 				</md-button>
 			</div>
+			<div flex></div>
+			<div class="md-body-1 report-button" layout="row" layout-align="start center">举报</div>
 		</div>
 		<div class="topic-content-container" layout="column">
 			<span class="topic-content" ng-show="!topic.Expand">

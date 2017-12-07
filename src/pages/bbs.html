@@ -12,24 +12,12 @@
 			0px 1px 1px 0px rgba(0, 0, 0, 0.14), 
 			0px 2px 1px -1px rgba(0, 0, 0, 0.12);
 	}
-	.bbs-widget-container .search-input {
-		width: 280px;
-		padding-left: 8px;
-	}
-	.bbs-widget-container .search-icon-button {
-		margin-left: 8px;
-	}
+	
 	.bbs-widget-container .selector-container {
 		margin-left: 16px;
 	}
 	.bbs-widget-container .selector-widget {
 		width: 150px;
-	}
-	.bbs-widget-container .search-input-container {
-		margin-left: 24px;
-	}
-	.bbs-widget-container .list-my-following-button {
-		margin-left: 8px;
 	}
 	.topic-card-container {
 		overflow-y: auto;
@@ -100,20 +88,22 @@
 				<i class="fa fa-file-text-o small" aria-hidden="true"></i>
 				写文章</md-button>
 		</md-input-container>
-		<div class="selector-container">
+		<md-input-container>
+			<md-button class="md-raised" ng-click="listMyFollowing($event)">
+				看我关注的</md-button>
+		</md-input-container>
+		<div flex></div>
+		<div class="selector-container" layout="row" layout-align="start center">
+			<span class="md-body-1">选择分类：&nbsp;&nbsp;</span>
 	        <md-select class="selector-widget" ng-model="selectedItem" ng-change="getSelectedCategory()">
 	            <md-option ng-value="item.Value" ng-repeat="item in selectorItems">{{item.Title}}</md-option>
 	        </md-select>
 		</div>
-		<md-input-container class="list-my-following-button">
-			<md-button ng-click="listMyFollowing($event)">
-				我关注的</md-button>
-		</md-input-container>
-	    <div flex></div>
-	    <div class="search-input-container" layout="row" layout-align="start center">
+	    
+	    <!-- <div class="search-input-container" layout="row" layout-align="start center">
 	        <input class="md-body-1 search-input" placeholder="请输入搜索关键字" ng-keypress="searchTopicKeyboard($event)" ng-model="user.firstName">
 	        <i class="fa fa-search search-icon-button" aria-hidden="true" ng-click="searchTopic()"></i>
-	    </div>
+	    </div> -->
 	</div>
 	<div class="topic-card-container">
 		<md-card class="topic-card" ng-repeat="topic in topicList">

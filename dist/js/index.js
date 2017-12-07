@@ -830,7 +830,7 @@
 			$mdDialog.hide($scope.topic);
 		};
 	}]).controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService', 'localStorageService', '$http', 'BaseUrl', function ($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-		$scope.selectedItem = "STRENGTH";
+		$scope.selectedItem = "ALL";
 		$scope.selectorItems = selectorItems;
 		$scope.searchContext = "";
 		$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');

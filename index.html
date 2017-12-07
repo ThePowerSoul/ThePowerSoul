@@ -20,12 +20,22 @@
 		color: #f44336;
 		font-size: 6px;
 	}
+	.root-page .search-input {
+		width: 280px;
+		padding-left: 8px;
+	}
+	.root-page .search-icon-button {
+		margin-left: 8px;
+	}
+	.root-page .search-input-container {
+		margin-left: 24px;
+	}
 </style>
-<body class="ng-cloak" ng-app="The.Power.Soul" ng-controller="mainCtrl">
+<body class="root-page ng-cloak" ng-app="The.Power.Soul" ng-controller="mainCtrl">
 	<md-toolbar layout="row" layout-align="center">
       	<div class="md-toolbar-tools home-page-toolbar">
 	        <md-button ng-click="goToIntroduction()" aria-label="介绍">
-	          	本站介绍
+	          	进站须知
 	        </md-button>
 	        <md-button ng-click="goToCaculator()" aria-label="计划">
 				身体指标测量
@@ -35,7 +45,11 @@
 			</md-button>
 			<md-button ng-click="goToMall()" aria-label="优质商品推荐">
 				优质品牌推荐
-	        </md-button>
+			</md-button>
+			<div class="search-input-container" layout="row" layout-align="start center">
+				<input class="md-body-1 search-input" placeholder="请输入搜索关键字" ng-keypress="searchTopicKeyboard($event)" ng-model="user.firstName">
+				<i class="fa fa-search search-icon-button" aria-hidden="true" ng-click="searchTopic()"></i>
+			</div>
 			<div flex></div>
 			<md-button ng-click="listPrivateMessage($event)" ng-show="showMessageEntrance" layout="row" layout-align="start center">
 				我的私信&nbsp;
