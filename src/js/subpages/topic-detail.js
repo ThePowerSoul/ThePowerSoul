@@ -32,6 +32,8 @@
 			function($scope, $stateParams, $mdDialog, $http,
 				 BaseUrl, localStorageService, alertService) {
 			$scope.user = localStorageService.get('userInfo');
+			$scope.followButtonText = "";
+			$scope.isFollowing = false;
 			var topic_id = $stateParams.id;
 
     		/*
@@ -46,9 +48,17 @@
 			$scope.isChangingLikeStauts = false;
 			$scope.isChangingTopicLikeStauts = false;
 			$scope.topic = {};
+			$scope.topicAuthor = {
+				ID: '',
+				TopicNumber: 0,
+				ArticleNumber: 0
+			};
 			$scope.commentList = [];
 			$scope.newCommentContent = "";
 
+			/*
+				评论帖子 
+			*/
 			$scope.addNewCommentToTopic = function(ev) {
 				$scope.isPostingNewComment = true;
 				$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topic_id,
@@ -70,7 +80,7 @@
 			};
 
 			/*
-				评论帖子
+				打开回复评论的对话框
 			*/
 			$scope.commentReply = function(comment, ev) {
 				$mdDialog.show({ 
@@ -89,6 +99,9 @@
 				});
 			};
 			
+			/*
+				查看对话
+			*/
 			$scope.seeConversation = function(comment, ev) {
 				$mdDialog.show({ 
 					controller: 'seeCommentConversationCtrl',
@@ -108,6 +121,9 @@
 				});
 			};
 
+			/*
+				收藏这个话题
+			*/
 			$scope.goAddTopicToFav = function(ev) {
 				$http.put(BaseUrl + '/user-topic-fav/' + $scope.user._id + '/' + topic_id)
 					.then(function(response) {
@@ -123,6 +139,55 @@
 					});
 			};
 
+			/*
+				举报这个话题
+			*/
+			$scope.reportTheTopic = function(ev) {
+				$mdDialog.show({ 
+					controller: 'addReportCtrl',
+					templateUrl: 'dist/pages/add-report.html',
+					parent: angular.element(document.body),
+					targetEvent: ev,
+					clickOutsideToClose: false,
+					fullscreen: false,
+					locals: {
+						target: $scope.topic
+					}
+				})
+				.then(function(data) {
+					postNewReportMessage(data);
+				}, function() {
+					// canceled
+				});
+			};
+
+			/*
+				关注发帖人
+			*/
+			$scope.addToFollowingUsers = function() {
+				
+			};
+
+			/*
+				给发帖人发私信
+			*/
+			$scope.sendPrivateMessage = function() {
+
+			};
+
+			function postNewReportMessage(data) {
+				var body = {};
+				$http.post(BaseUrl + '/complaint-message/' + $scope.user._id, body)
+					.then(function(response) {
+						alertService.showAlert('举报成功，请耐心等待处理结果', ev);
+					}, function(error) {
+						alertService.showAlert('举报失败，请重试', ev);
+					});
+			}
+
+			/*
+				点赞帖子
+			*/
 			$scope.likeTheTopic = function(ev) {
 				$scope.isChangingTopicLikeStauts = true;
 				$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/up')
@@ -144,6 +209,9 @@
 					});
 			};
 
+			/*
+				踩帖子
+			*/
 			$scope.dislikeTheTopic = function(ev) {
 				$scope.isChangingTopicLikeStauts = true;
 				$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/down')
@@ -165,6 +233,9 @@
 					});
 			};
 
+			/*
+				点赞评论
+			*/
 			$scope.likeTheComment = function(comment, ev) {
 				$scope.isChangingLikeStauts = true;
 				$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/up')
@@ -186,6 +257,9 @@
 					});
 			};
 
+			/*
+				踩评论
+			*/
 			$scope.dislikeTheComment = function(comment, ev) {
 				$scope.isChangingLikeStauts = true;
 				$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/down')
@@ -207,10 +281,16 @@
 					});
 			};
 
+			/*
+				收起，展开帖子内容
+			*/
 			$scope.changeExpandState = function() {
 				$scope.topic.Expand = !$scope.topic.Expand;
 			};
 
+			/*
+				加载更多
+			*/
 			$scope.loadMore = function() {
 				loadTopicComments();
 			};
@@ -246,6 +326,58 @@
 					});
 			}
 
+			function getTopicAuthorInfo() {
+				$scope.isLoadingUserInfo = true;
+				return $http.get(BaseUrl + '/get-publish-number/' + $scope.topic.UserID)
+					.then(function(response) {
+						$scope.isLoadingUserInfo = false;
+						$scope.topicAuthor.ID = $scope.topic.UserID;
+						$scope.topicAuthor.TopicNumber = response.data.TopicNumber;
+						$scope.topicAuthor.ArticleNumber = response.data.ArticleNumber;
+						checkFollowingState();
+					}, function(error) {
+						$scope.isLoadingUserInfo = false;
+						$scope.isLoadingUserInfoHasError = true;
+					});
+			}
+
+			function checkFollowingState() {
+				$http.get(BaseUrl + '/user-detail/' + $scope.user._id + '/' + $scope.topic.UserID)
+					.then(function(response) {
+						$scope.isLoading = false;
+						$scope.isFollowing = response.data.IsFollowing;
+						$scope.followButtonText = $scope.isFollowing ? "取消关注" : '关注';
+					}, function(error) {
+						$scope.isLoading = false;
+						$scope.isLoadingHasError = true;
+					});
+			}
+
+			$scope.followOperation = function(ev) {
+                $scope.isOperating = true;
+                if ($scope.isFollowing) {
+                    $http.put(BaseUrl + '/user-unfollow/' + $scope.user._id + '/' + $scope.topic.UserID)
+                        .then(function(response) {
+                            $scope.followButtonText = "关注";
+                            $scope.isOperating = false;
+                            $scope.isFollowing = false;
+                        }, function(error) {
+                            alertService.showAlert('取消关注失败', ev);
+                            $scope.isOperating = false;
+                        });
+                } else {
+                    $http.put(BaseUrl + '/user-follow/' + $scope.user._id + '/' + $scope.topic.UserID)
+                        .then(function(response) {
+                            $scope.followButtonText = "取消关注";
+                            $scope.isOperating = false;
+                            $scope.isFollowing = true;
+                        }, function(error) {
+                            alertService.showAlert('关注失败', ev);
+                            $scope.isOperating = false;
+                        });
+				}
+			};
+
 			function loadTopicComments(loadMoreSignal) {
 				$scope.isLoadingComments = true;
 				$http.get(BaseUrl + '/comment/' + topic_id)
@@ -263,7 +395,8 @@
 			}
 
 			loadTopicDetail()
-				.then(loadTopicComments());
+				.then(getTopicAuthorInfo()
+					.then(loadTopicComments()));
 
     	}])
 }());

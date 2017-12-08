@@ -22,11 +22,6 @@
 		.controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService',
 			'localStorageService', '$http', 'BaseUrl',
 			function($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-<<<<<<< HEAD
-    			$scope.selectedItem = "ALL";
-    			$scope.selectorItems = selectorItems;
-=======
->>>>>>> dad236db9484c5a76d7f0b970d7a023ee2cf2568
 				$scope.searchContext = "";
 				$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
     			$scope.isLoadingTopic = false;

@@ -15,6 +15,7 @@
         'The.Power.Soul.Fav.List',
         'The.Power.Soul.Message.Detail',
         'The.Power.Soul.All.Messages',
+        'The.Power.Soul.Report',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))

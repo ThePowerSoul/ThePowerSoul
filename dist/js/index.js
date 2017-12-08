@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Square', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'LocalStorageModule'];
+    var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Square', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'The.Power.Soul.Report', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -418,6 +418,29 @@
     }]);
 })();
 (function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
+            }
+        };
+    }]);
+})();
+(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
@@ -522,6 +545,198 @@
 		}
 		loadArticleDraft();
 	}]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Report', ['ngMaterial']).directive('unitTree', function () {
+        function link($scope, $element, $attrs) {
+            function addParent(arr, parentNode) {
+                for (var i = 0; i < arr.length; i++) {
+                    if (parentNode === undefined) {
+                        arr[i].ParentNode = null;
+                    } else {
+                        arr[i].ParentNode = parentNode;
+                    }
+                    arr[i].Belonging = arr;
+                    arr[i].Selected = false;
+                    if (arr[i].Children.length !== 0) {
+                        addParent(arr[i].Children, arr[i]);
+                    }
+                }
+            };
+
+            addParent($scope.unitTreeItems);
+
+            $scope.getNodePath = function (node) {
+                var arr = [];
+                while (node.ParentNode !== null) {
+                    arr.unshift(node.ParentNode.Title);
+                    node = node.ParentNode;
+                }
+                return arr.join('/');
+            };
+
+            $scope.backToLastLayer = function (node) {
+                if (node.ParentNode) {
+                    $scope.unitTreeItems = node.ParentNode.Belonging;
+                }
+                if ($scope.currentSelectedNode.ParentNode !== null) {
+                    $scope.currentSelectedNode.Selected = false;
+                    $scope.currentSelectedNode = $scope.currentSelectedNode.ParentNode;
+                    angular.forEach($scope.unitTreeItems, function (item) {
+                        if (item.ID === $scope.currentSelectedNode.ID) {
+                            item.Selected = true;
+                        }
+                    });
+                }
+                // $scope.currentSelectedNode = null;
+            };
+
+            $scope.showBackButton = function () {
+                var flag = true;
+                if ($scope.currentSelectedNode) {
+                    angular.forEach($scope.unitTreeItems, function (item) {
+                        if ($scope.currentSelectedNode.ID === item.ID && $scope.currentSelectedNode.ParentNode === null) {
+                            flag = false;
+                        }
+                    });
+                } else {
+                    flag = false;
+                }
+                return flag;
+            };
+
+            $scope.expandUnit = function (node) {
+                if ($scope.currentSelectedNode !== null) {
+                    $scope.currentSelectedNode.Selected = false;
+                    $scope.currentSelectedNode = null;
+                }
+                if (node.Children.length !== 0) {
+                    $scope.unitTreeItems = node.Children;
+                } else {}
+                node.Selected = true;
+                $scope.currentSelectedNode = node;
+            };
+        }
+        return {
+            priority: 1,
+            restrict: 'EA',
+            replace: false,
+            scope: false,
+            templateUrl: "dist/pages/unit-tree-template.html",
+            link: link
+        };
+    }).constant('Identities', [{
+        ID: '01',
+        Title: '侵犯我的权益',
+        Children: [{
+            ID: '01-1',
+            Title: '骚扰我',
+            Children: []
+        }, {
+            ID: '01-2',
+            Title: '辱骂我，歧视我，挑衅等（不友善）',
+            Children: []
+        }, {
+            ID: '01-3',
+            Title: '抄袭了我的内容',
+            Children: []
+        }, {
+            ID: '01-4',
+            Title: '侵犯了我企业的权益',
+            Children: []
+        }, {
+            ID: '01-5',
+            Title: '侵犯了我个人的权益',
+            Children: []
+        }]
+    }, {
+        ID: '02',
+        Title: '对社区有害的内容',
+        Children: [{
+            ID: '02-1',
+            Title: '垃圾广告信息',
+            Children: []
+        }, {
+            ID: '02-2',
+            Title: '色情，暴力，血腥等违反法律法规的内容',
+            Children: []
+        }, {
+            ID: '02-3',
+            Title: '不规范转载',
+            Children: []
+        }, {
+            ID: '02-4',
+            Title: '政治敏感',
+            Children: []
+        }, {
+            ID: '02-5',
+            Title: '辱骂，歧视，挑衅',
+            Children: []
+        }]
+    }]).controller('addReportCtrl', ['$scope', '$mdDialog', 'localStorageService', 'Identities', 'target', function ($scope, $mdDialog, localStorageService, Identities, target) {
+        var user = localStorageService.get('userInfo');
+        $scope.reportObj = {
+            Content: '',
+            Author: user.DisplayName,
+            TargetID: '',
+            TargetLink: '',
+            Category: {}
+        };
+        $scope.currentSelectedNode = null;
+        $scope.unitTreeItems = addChildrenAttribute(Identities, null);
+
+        function addChildrenAttribute(data, parentNode) {
+            for (var i = 0; i < data.length; i++) {
+                data[i].ParentNode = parentNode;
+                if (data[i].Children.length > 0) {
+                    addChildrenAttribute(data[i].Children, data[i]);
+                }
+            }
+            return data;
+        }
+
+        $scope.getNewestPath = function () {
+            var flag = false;
+            var node = $scope.currentSelectedNode;
+            if (!node) {
+                return "--";
+            } else {
+                angular.forEach($scope.unitTreeItems, function (item) {
+                    if (item.ID === $scope.currentSelectedNode.ID) {
+                        flag = true;
+                    }
+                });
+                var arr = [];
+                if (node) {
+                    arr.push(node.Title);
+                    while (node && node.ParentNode !== null && node.ParentNode !== undefined) {
+                        arr.unshift(node.ParentNode.Title);
+                        node = node.ParentNode;
+                    }
+                }
+            }
+            if (flag) {
+                return arr.join(' / ');
+            } else {
+                return arr.join(' / ') + " / -- ";
+            }
+        };
+
+        $scope.disableSubmitButtonOrNot = function () {
+            return $scope.reportObj.Content !== '' && $scope.reportObj.Category.ParentNode !== null;
+        };
+
+        $scope.closeDialog = function (ev) {
+            $mdDialog.cancel();
+        };
+
+        $scope.submit = function () {
+            $scope.reportObj.Category = $scope.currentSelectedNode;
+            $mdDialog.hide($scope.reportObj);
+        };
+    }]);
 })();
 (function () {
     'use strict';
@@ -815,11 +1030,6 @@
 			$mdDialog.hide($scope.topic);
 		};
 	}]).controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService', 'localStorageService', '$http', 'BaseUrl', function ($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-<<<<<<< HEAD
-		$scope.selectedItem = "ALL";
-		$scope.selectorItems = selectorItems;
-=======
->>>>>>> dad236db9484c5a76d7f0b970d7a023ee2cf2568
 		$scope.searchContext = "";
 		$rootScope.$broadcast('$SHOWMESSAGEENTRANCE');
 		$scope.isLoadingTopic = false;
@@ -992,7 +1202,7 @@
 (function () {
     'use strict';
 
-    angular.module('The.Power.Soul.Fav.List', ['ngMaterial']).controller('favListCtrl', ['$scope', '$http', 'localStorageService', 'BaseUrl', function ($scope, $http, localStorageService, BaseUrl) {
+    angular.module('The.Power.Soul.Fav.List', ['ngMaterial']).controller('favListCtrl', ['$scope', '$http', 'localStorageService', 'BaseUrl', '$rootScope', '$state', function ($scope, $http, localStorageService, BaseUrl, $rootScope, $state) {
         $scope.isLoading = false;
         $scope.isLoadingHasError = false;
         $scope.isLoadingArticlesHasError = false;
@@ -1000,6 +1210,48 @@
         $scope.favTopics = [];
         $scope.favArticles = [];
         var user = localStorageService.get('userInfo');
+
+        $scope.goToTopicDetail = function (topic) {
+            if (localStorageService.get('userInfo')) {
+                var url = $state.href('topic-detail', { id: topic._id });
+                window.open(url, '_blank');
+            } else {
+                $mdDialog.show({
+                    controller: 'loginOrSignupCtrl',
+                    templateUrl: 'dist/pages/login-and-signup.html',
+                    parent: angular.element(document.body),
+                    targetEvent: ev,
+                    clickOutsideToClose: false,
+                    fullscreen: false
+                }).then(function (data) {
+                    $rootScope.$broadcast('$USERLOGGEDIN');
+                }, function () {
+                    // canceled
+                });
+            }
+        };
+
+        $scope.goToArticleDetail = function (article) {
+            if (localStorageService.get('userInfo')) {
+                var url = $state.href('article-detail', { id: article._id });
+                window.open(url, '_blank');
+            } else {
+                $mdDialog.show({
+                    controller: 'loginOrSignupCtrl',
+                    templateUrl: 'dist/pages/login-and-signup.html',
+                    parent: angular.element(document.body),
+                    targetEvent: ev,
+                    clickOutsideToClose: false,
+                    fullscreen: false
+                }).then(function (data) {
+                    $rootScope.$broadcast('$USERLOGGEDIN');
+                }, function () {
+                    // canceled
+                });
+            }
+        };
+
+        $scope.goToArticleDetail = function (article) {};
 
         function loadFavTopics() {
             $scope.isLoading = true;
@@ -1178,54 +1430,171 @@
     }]);
 })();
 (function () {
-    'use strict';
+	'use strict';
 
-    angular.module('The.Power.Soul.Square', ['ngMaterial']).constant('selectorItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }, {
-        Title: "全部",
-        Value: "ALL"
-    }]).controller('squareCtrl', ['$scope', '$http', '$stateParams', 'BaseUrl', 'selectorItems', function ($scope, $http, $stateParams, BaseUrl, selectorItems) {
-        $scope.selectedItem = "ALL";
-        $scope.selectorItems = selectorItems;
-        $scope.topicList = [];
-        $scope.isLoadingTopic = false;
-        $scope.isLoadingHasError = true;
+	angular.module('The.Power.Soul.Square', ['ngMaterial']).constant('selectorItems', [{
+		Title: "力量训练",
+		Value: "STRENGTH"
+	}, {
+		Title: "瑜伽训练",
+		Value: "YOGA"
+	}, {
+		Title: "形体训练",
+		Value: "FITNESS"
+	}, {
+		Title: "跑步训练",
+		Value: "RUNNING"
+	}, {
+		Title: "全部",
+		Value: "ALL"
+	}]).controller('squareCtrl', ['$scope', '$http', '$rootScope', '$stateParams', '$state', 'BaseUrl', 'selectorItems', 'localStorageService', 'alertService', function ($scope, $http, $rootScope, $stateParams, $state, BaseUrl, selectorItems, localStorageService, alertService) {
+		$scope.selectedItem = "ALL";
+		$scope.selectorItems = selectorItems;
+		$scope.topicList = [];
+		$scope.isLoadingTopic = false;
+		$scope.isLoadingHasError = true;
+		var user = localStorageService.get('userInfo');
 
-        /********************** 初始化加载帖子信息 ********************/
-        function loadTopics(pageNum, category, keyword, loadMoreSignal) {
-            var body = {
-                Page: pageNum,
-                Category: category,
-                Keyword: keyword,
-                LoadAll: false
-            };
-            if (category === 'ALL') {
-                body.LoadAll = true;
-            }
-            $scope.isLoadingTopic = true;
-            $http.post(BaseUrl + "/topic", body).then(function (response) {
-                if (loadMoreSignal) {
-                    $scope.topicList = $scope.topicList.concat(response.data);
-                } else {
-                    $scope.topicList = response.data;
-                }
-            }, function (error) {
-                $scope.isLoadingHasError = true;
-            });
-        }
-        loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
-    }]);
+		/********************** 页面新建文章按钮操作 ********************/
+		$scope.addNewArticle = function (ev) {
+			if (localStorageService.get('userInfo')) {
+				generateNewArticleDraft();
+			} else {
+				$mdDialog.show({
+					controller: 'loginOrSignupCtrl',
+					templateUrl: 'dist/pages/login-and-signup.html',
+					parent: angular.element(document.body),
+					targetEvent: ev,
+					clickOutsideToClose: false,
+					fullscreen: false
+				}).then(function (data) {
+					// handle user data
+				}, function () {
+					// canceled
+				});
+			}
+		};
+
+		/********************** 查看帖子详情 ********************/
+		$scope.goTopicDetail = function (topic, ev) {
+			if (localStorageService.get('userInfo')) {
+				var url = $state.href('topic-detail', { id: topic._id });
+				window.open(url, '_blank');
+			} else {
+				$mdDialog.show({
+					controller: 'loginOrSignupCtrl',
+					templateUrl: 'dist/pages/login-and-signup.html',
+					parent: angular.element(document.body),
+					targetEvent: ev,
+					clickOutsideToClose: false,
+					fullscreen: false
+				}).then(function (data) {
+					$rootScope.$broadcast('$USERLOGGEDIN');
+				}, function () {
+					// canceled
+				});
+			}
+		};
+
+		/********************** 发表新帖 ********************/
+		$scope.addNewTopic = function (ev) {
+			if (localStorageService.get('userInfo')) {
+				var user = localStorageService.get('userInfo');
+				$mdDialog.show({
+					controller: 'addNewTopicCtrl',
+					templateUrl: 'dist/pages/add-new-topic.html',
+					parent: angular.element(document.body),
+					targetEvent: ev,
+					clickOutsideToClose: false,
+					fullscreen: false
+				}).then(function (data) {
+					// 发表新贴
+					$scope.isSubmittingTopic = false;
+					$http.post(BaseUrl + '/topic/' + user._id, {
+						Author: user.DisplayName,
+						Topic: data
+					}).then(function (response) {
+						$scope.isSubmittingTopic = false;
+						loadTopics(1, $scope.selectedItem, $scope.searchContext, '');
+						alertService.showAlert('发表帖子成功。', ev);
+					}, function (error) {
+						$scope.isSubmittingTopic = false;
+						alertService.showAlert('发表帖子失败，请重试。', ev);
+					});
+				}, function () {
+					// dialog canceled
+				});
+			} else {
+				$mdDialog.show({
+					controller: 'loginOrSignupCtrl',
+					templateUrl: 'dist/pages/login-and-signup.html',
+					parent: angular.element(document.body),
+					targetEvent: ev,
+					clickOutsideToClose: false,
+					fullscreen: false
+				}).then(function (data) {
+					// handle user data
+				}, function () {
+					// canceled
+				});
+			}
+		};
+
+		/********************** 添加帖子到我的收藏 ********************/
+		$scope.goAddTopicToFav = function (topic, ev) {
+			$http.put(BaseUrl + '/user-topic-fav/' + user._id + '/' + topic._id).then(function (response) {
+				alertService.showAlert('收藏成功', ev);
+			}, function (error) {
+				if (error.status === 404 && error.data === 'UserNotFound') {
+					alertService.showAlert('用户不存在，请重新登录', ev);
+				} else if (error.status === 400 && error.data === 'Added') {
+					alertService.showAlert('请勿重复收藏', ev);
+				} else {
+					alertService.showAlert('收藏失败，请重试', ev);
+				}
+			});
+		};
+
+		/********************** 创建新的文章草稿对象并保存 ********************/
+		function generateNewArticleDraft(ev) {
+			var body = {
+				Title: "",
+				Category: "",
+				Author: user.DisplayName,
+				Content: ""
+			};
+			$http.post(BaseUrl + '/article-draft/' + user._id, body).then(function (response) {
+				var url = $state.href('new-article', { id: response.data._id });
+				window.open(url, '_blank');
+			}, function (error) {
+				alertService.showAlert('新建文章模板失败，请重试', ev);
+			});
+		}
+
+		/********************** 初始化加载帖子信息 ********************/
+		function loadTopics(pageNum, category, keyword, loadMoreSignal) {
+			var body = {
+				Page: pageNum,
+				Category: category,
+				Keyword: keyword,
+				LoadAll: false
+			};
+			if (category === 'ALL') {
+				body.LoadAll = true;
+			}
+			$scope.isLoadingTopic = true;
+			$http.post(BaseUrl + "/topic", body).then(function (response) {
+				if (loadMoreSignal) {
+					$scope.topicList = $scope.topicList.concat(response.data);
+				} else {
+					$scope.topicList = response.data;
+				}
+			}, function (error) {
+				$scope.isLoadingHasError = true;
+			});
+		}
+		loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
+	}]);
 })();
 (function () {
 	'use strict';
@@ -1254,6 +1623,8 @@
 		};
 	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $stateParams, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
 		$scope.user = localStorageService.get('userInfo');
+		$scope.followButtonText = "";
+		$scope.isFollowing = false;
 		var topic_id = $stateParams.id;
 
 		/*
@@ -1268,9 +1639,17 @@
 		$scope.isChangingLikeStauts = false;
 		$scope.isChangingTopicLikeStauts = false;
 		$scope.topic = {};
+		$scope.topicAuthor = {
+			ID: '',
+			TopicNumber: 0,
+			ArticleNumber: 0
+		};
 		$scope.commentList = [];
 		$scope.newCommentContent = "";
 
+		/*
+  	评论帖子 
+  */
 		$scope.addNewCommentToTopic = function (ev) {
 			$scope.isPostingNewComment = true;
 			$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topic_id, {
@@ -1290,7 +1669,7 @@
 		};
 
 		/*
-  	评论帖子
+  	打开回复评论的对话框
   */
 		$scope.commentReply = function (comment, ev) {
 			$mdDialog.show({
@@ -1308,6 +1687,9 @@
 			});
 		};
 
+		/*
+  	查看对话
+  */
 		$scope.seeConversation = function (comment, ev) {
 			$mdDialog.show({
 				controller: 'seeCommentConversationCtrl',
@@ -1324,6 +1706,9 @@
 			});
 		};
 
+		/*
+  	收藏这个话题
+  */
 		$scope.goAddTopicToFav = function (ev) {
 			$http.put(BaseUrl + '/user-topic-fav/' + $scope.user._id + '/' + topic_id).then(function (response) {
 				alertService.showAlert('收藏成功', ev);
@@ -1338,6 +1723,49 @@
 			});
 		};
 
+		/*
+  	举报这个话题
+  */
+		$scope.reportTheTopic = function (ev) {
+			$mdDialog.show({
+				controller: 'addReportCtrl',
+				templateUrl: 'dist/pages/add-report.html',
+				parent: angular.element(document.body),
+				targetEvent: ev,
+				clickOutsideToClose: false,
+				fullscreen: false,
+				locals: {
+					target: $scope.topic
+				}
+			}).then(function (data) {
+				postNewReportMessage(data);
+			}, function () {
+				// canceled
+			});
+		};
+
+		/*
+  	关注发帖人
+  */
+		$scope.addToFollowingUsers = function () {};
+
+		/*
+  	给发帖人发私信
+  */
+		$scope.sendPrivateMessage = function () {};
+
+		function postNewReportMessage(data) {
+			var body = {};
+			$http.post(BaseUrl + '/complaint-message/' + $scope.user._id, body).then(function (response) {
+				alertService.showAlert('举报成功，请耐心等待处理结果', ev);
+			}, function (error) {
+				alertService.showAlert('举报失败，请重试', ev);
+			});
+		}
+
+		/*
+  	点赞帖子
+  */
 		$scope.likeTheTopic = function (ev) {
 			$scope.isChangingTopicLikeStauts = true;
 			$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/up').then(function (response) {
@@ -1358,6 +1786,9 @@
 			});
 		};
 
+		/*
+  	踩帖子
+  */
 		$scope.dislikeTheTopic = function (ev) {
 			$scope.isChangingTopicLikeStauts = true;
 			$http.put(BaseUrl + '/topic/' + $scope.user._id + '/' + $scope.topic._id + '/down').then(function (response) {
@@ -1378,6 +1809,9 @@
 			});
 		};
 
+		/*
+  	点赞评论
+  */
 		$scope.likeTheComment = function (comment, ev) {
 			$scope.isChangingLikeStauts = true;
 			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/up').then(function (response) {
@@ -1398,6 +1832,9 @@
 			});
 		};
 
+		/*
+  	踩评论
+  */
 		$scope.dislikeTheComment = function (comment, ev) {
 			$scope.isChangingLikeStauts = true;
 			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/down').then(function (response) {
@@ -1418,10 +1855,16 @@
 			});
 		};
 
+		/*
+  	收起，展开帖子内容
+  */
 		$scope.changeExpandState = function () {
 			$scope.topic.Expand = !$scope.topic.Expand;
 		};
 
+		/*
+  	加载更多
+  */
 		$scope.loadMore = function () {
 			loadTopicComments();
 		};
@@ -1454,6 +1897,54 @@
 			});
 		}
 
+		function getTopicAuthorInfo() {
+			$scope.isLoadingUserInfo = true;
+			return $http.get(BaseUrl + '/get-publish-number/' + $scope.topic.UserID).then(function (response) {
+				$scope.isLoadingUserInfo = false;
+				$scope.topicAuthor.ID = $scope.topic.UserID;
+				$scope.topicAuthor.TopicNumber = response.data.TopicNumber;
+				$scope.topicAuthor.ArticleNumber = response.data.ArticleNumber;
+				checkFollowingState();
+			}, function (error) {
+				$scope.isLoadingUserInfo = false;
+				$scope.isLoadingUserInfoHasError = true;
+			});
+		}
+
+		function checkFollowingState() {
+			$http.get(BaseUrl + '/user-detail/' + $scope.user._id + '/' + $scope.topic.UserID).then(function (response) {
+				$scope.isLoading = false;
+				$scope.isFollowing = response.data.IsFollowing;
+				$scope.followButtonText = $scope.isFollowing ? "取消关注" : '关注';
+			}, function (error) {
+				$scope.isLoading = false;
+				$scope.isLoadingHasError = true;
+			});
+		}
+
+		$scope.followOperation = function (ev) {
+			$scope.isOperating = true;
+			if ($scope.isFollowing) {
+				$http.put(BaseUrl + '/user-unfollow/' + $scope.user._id + '/' + $scope.topic.UserID).then(function (response) {
+					$scope.followButtonText = "关注";
+					$scope.isOperating = false;
+					$scope.isFollowing = false;
+				}, function (error) {
+					alertService.showAlert('取消关注失败', ev);
+					$scope.isOperating = false;
+				});
+			} else {
+				$http.put(BaseUrl + '/user-follow/' + $scope.user._id + '/' + $scope.topic.UserID).then(function (response) {
+					$scope.followButtonText = "取消关注";
+					$scope.isOperating = false;
+					$scope.isFollowing = true;
+				}, function (error) {
+					alertService.showAlert('关注失败', ev);
+					$scope.isOperating = false;
+				});
+			}
+		};
+
 		function loadTopicComments(loadMoreSignal) {
 			$scope.isLoadingComments = true;
 			$http.get(BaseUrl + '/comment/' + topic_id).then(function (response) {
@@ -1467,7 +1958,7 @@
 			});
 		}
 
-		loadTopicDetail().then(loadTopicComments());
+		loadTopicDetail().then(getTopicAuthorInfo().then(loadTopicComments()));
 	}]);
 })();
 (function () {
@@ -1520,29 +2011,6 @@
                     alertService.showAlert('关注失败', ev);
                     $scope.isOperating = false;
                 });
-            }
-        };
-    }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
             }
         };
     }]);
