@@ -152,9 +152,9 @@
             $scope.reportObj = {
                 Content: '',
                 Author: user.DisplayName,
-                TargetID: '',
-                TargetLink: '',
-                Category: {}
+                TargetID: target._id,
+                TargetLink: window.location.href,
+                Category: null
             };
             $scope.currentSelectedNode = null;
             $scope.unitTreeItems = addChildrenAttribute(Identities, null);
@@ -197,7 +197,8 @@
             };
 
             $scope.disableSubmitButtonOrNot = function() {
-                return $scope.reportObj.Content !== '' && $scope.reportObj.Category.ParentNode !== null;
+                $scope.reportObj.Category = $scope.currentSelectedNode;
+                return $scope.reportObj.Content === '' || $scope.reportObj.Category.ParentNode === null;
             };
 
             $scope.closeDialog = function(ev) {

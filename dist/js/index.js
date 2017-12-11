@@ -17,7 +17,8 @@
         }).state('bbs', {
             url: '/bbs',
             templateUrl: 'dist/pages/bbs.html',
-            controller: 'bbsCtrl'
+            controller: 'bbsCtrl',
+            reload: true
         }).state('topic-detail', {
             url: '/topic-detail/{id}',
             templateUrl: 'dist/pages/topic-detail.html',
@@ -418,29 +419,6 @@
     }]);
 })();
 (function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
-            }
-        };
-    }]);
-})();
-(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
@@ -680,9 +658,9 @@
         $scope.reportObj = {
             Content: '',
             Author: user.DisplayName,
-            TargetID: '',
-            TargetLink: '',
-            Category: {}
+            TargetID: target._id,
+            TargetLink: window.location.href,
+            Category: null
         };
         $scope.currentSelectedNode = null;
         $scope.unitTreeItems = addChildrenAttribute(Identities, null);
@@ -725,7 +703,8 @@
         };
 
         $scope.disableSubmitButtonOrNot = function () {
-            return $scope.reportObj.Content !== '' && $scope.reportObj.Category.ParentNode !== null;
+            $scope.reportObj.Category = $scope.currentSelectedNode;
+            return $scope.reportObj.Content === '' || $scope.reportObj.Category.ParentNode === null;
         };
 
         $scope.closeDialog = function (ev) {
@@ -1447,7 +1426,7 @@
 	}, {
 		Title: "全部",
 		Value: "ALL"
-	}]).controller('squareCtrl', ['$scope', '$http', '$rootScope', '$stateParams', '$state', 'BaseUrl', 'selectorItems', 'localStorageService', 'alertService', function ($scope, $http, $rootScope, $stateParams, $state, BaseUrl, selectorItems, localStorageService, alertService) {
+	}]).controller('squareCtrl', ['$scope', '$http', '$rootScope', '$stateParams', '$state', 'BaseUrl', 'selectorItems', 'localStorageService', 'alertService', '$mdDialog', function ($scope, $http, $rootScope, $stateParams, $state, BaseUrl, selectorItems, localStorageService, alertService, $mdDialog) {
 		$scope.selectedItem = "ALL";
 		$scope.selectorItems = selectorItems;
 		$scope.topicList = [];
@@ -1494,6 +1473,23 @@
 					// canceled
 				});
 			}
+		};
+
+		/********************** 删除帖子 ********************/
+		$scope.deleteTopic = function (topic, ev) {
+			var confirm = $mdDialog.confirm().title('提示').textContent('确定删除这条帖子？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
+
+			$mdDialog.show(confirm).then(function () {
+				$scope.isDeleting = true;
+				$http.delete(BaseUrl + '/topic/' + topic._id).then(function (data) {
+					alertService.showAlert('删除成功', ev);
+					$state.go('bbs');
+				}, function (error) {
+					alertService.showAlert('删除失败', ev);
+				});
+			}, function () {
+				// canceled
+			});
 		};
 
 		/********************** 发表新帖 ********************/
@@ -1607,10 +1603,11 @@
 		$scope.closeDialog = function () {
 			$mdDialog.cancel();
 		};
-	}]).controller('seeCommentConversationCtrl', ['$scope', '$mdDialog', 'Comment', 'BaseUrl', 'alertService', '$http', function ($scope, $mdDialog, Comment, BaseUrl, alertService, $http) {
+	}]).controller('seeCommentConversationCtrl', ['$scope', '$mdDialog', 'Comment', 'BaseUrl', 'alertService', '$http', 'localStorageService', function ($scope, $mdDialog, Comment, BaseUrl, alertService, $http, localStorageService) {
 		$scope.isLoading = false;
 		$scope.isLoadingHasError = false;
 		$scope.commentList = [];
+		$scope.user = localStorageService.get('userInfo');
 		$http.get(BaseUrl + '/comment/' + Comment.UserID + '/' + Comment.TargetUserID + '/' + Comment.TargetContextID).then(function (response) {
 			$scope.isLoading = false;
 			$scope.commentList = response.data;
@@ -1618,10 +1615,57 @@
 			$scope.isLoading = false;
 			$scope.isLoadingHasError = false;
 		});
+
+		/*
+  	点赞评论
+  */
+		$scope.likeTheComment = function (comment, ev) {
+			$scope.isChangingLikeStauts = true;
+			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/up').then(function (response) {
+				var index = comment.LikeUser.indexOf($scope.user._id);
+				var indexDis = comment.DislikeUser.indexOf($scope.user._id);
+				if (indexDis >= 0) {
+					comment.DislikeUser.splice(index, 1);
+				}
+				if (index < 0) {
+					comment.LikeUser.push($scope.user._id);
+				}
+				$scope.isChangingLikeStauts = false;
+			}, function (error) {
+				$scope.isChangingLikeStauts = false;
+				if (error.status === 400 && error.data === "Added") {
+					return;
+				}
+			});
+		};
+
+		/*
+  	踩评论
+  */
+		$scope.dislikeTheComment = function (comment, ev) {
+			$scope.isChangingLikeStauts = true;
+			$http.put(BaseUrl + '/comment/' + $scope.user._id + '/' + comment._id + '/down').then(function (response) {
+				var index = comment.LikeUser.indexOf($scope.user._id);
+				var indexDis = comment.DislikeUser.indexOf($scope.user._id);
+				if (index >= 0) {
+					comment.LikeUser.splice(index, 1);
+				}
+				if (indexDis < 0) {
+					comment.DislikeUser.push($scope.user._id);
+				}
+				$scope.isChangingLikeStauts = false;
+			}, function (error) {
+				$scope.isChangingLikeStauts = false;
+				if (error.status === 400 && error.data === "Removed") {
+					return;
+				}
+			});
+		};
+
 		$scope.closeDialog = function () {
 			$mdDialog.cancel();
 		};
-	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $stateParams, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
+	}]).controller('topicDetailCtrl', ['$scope', '$stateParams', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', '$state', function ($scope, $stateParams, $mdDialog, $http, BaseUrl, localStorageService, alertService, $state) {
 		$scope.user = localStorageService.get('userInfo');
 		$scope.followButtonText = "";
 		$scope.isFollowing = false;
@@ -1738,24 +1782,48 @@
 					target: $scope.topic
 				}
 			}).then(function (data) {
-				postNewReportMessage(data);
+				postNewReportMessage(data, 'Topic', ev);
+			}, function () {
+				// canceled
+			});
+		};
+
+		$scope.reportTheComment = function (comment, ev) {
+			$mdDialog.show({
+				controller: 'addReportCtrl',
+				templateUrl: 'dist/pages/add-report.html',
+				parent: angular.element(document.body),
+				targetEvent: ev,
+				clickOutsideToClose: false,
+				fullscreen: false,
+				locals: {
+					target: comment
+				}
+			}).then(function (data) {
+				postNewReportMessage(data, 'Comment', ev);
 			}, function () {
 				// canceled
 			});
 		};
 
 		/*
-  	关注发帖人
-  */
-		$scope.addToFollowingUsers = function () {};
-
-		/*
   	给发帖人发私信
   */
 		$scope.sendPrivateMessage = function () {};
 
-		function postNewReportMessage(data) {
+		$scope.goToUserDetail = function () {
+			var url = $state.href('user-detail', { id: $scope.topic.UserID });
+			window.open(url, '_blank');
+		};
+
+		function postNewReportMessage(data, signal, ev) {
 			var body = {};
+			body.Author = data.Author;
+			body.Category = data.Category.ID;
+			body.Content = data.Content;
+			body.TargetLink = data.TargetLink;
+			body.TargetID = data.TargetID;
+			body.Type = signal;
 			$http.post(BaseUrl + '/complaint-message/' + $scope.user._id, body).then(function (response) {
 				alertService.showAlert('举报成功，请耐心等待处理结果', ev);
 			}, function (error) {
@@ -1806,6 +1874,42 @@
 				if (error.status === 400 && error.data === "Removed") {
 					return;
 				}
+			});
+		};
+
+		/*
+  	删除帖子
+  */
+		$scope.deleteTopic = function (ev) {
+			var confirm = $mdDialog.confirm().title('提示').textContent('确定删除这条帖子？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
+
+			$mdDialog.show(confirm).then(function () {
+				$scope.isDeleting = true;
+				$http.delete(BaseUrl + '/topic/' + $scope.topic._id).then(function (data) {
+					alertService.showAlert('删除成功', ev);
+					$state.go('bbs');
+				}, function (error) {
+					alertService.showAlert('删除失败', ev);
+				});
+			}, function () {
+				// canceled
+			});
+		};
+
+		/*
+  	删除评论
+  */
+		$scope.deleteComment = function (comment, ev) {
+			var confirm = $mdDialog.confirm().title('提示').textContent('确定删除这条评论？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
+
+			$mdDialog.show(confirm).then(function () {
+				$http.delete(BaseUrl + '/comment/' + comment._id).then(function (response) {
+					$scope.commentList.splice($scope.commentList.indexOf(comment), 1);
+				}, function (error) {
+					alertService.showAlert('删除评论成功', ev);
+				});
+			}, function () {
+				// canceled
 			});
 		};
 
@@ -1891,6 +1995,7 @@
 			return $http.get(BaseUrl + '/topic/' + $scope.user._id + '/' + topic_id).then(function (response) {
 				$scope.isLoading = false;
 				angular.extend($scope.topic, response.data);
+				getTopicAuthorInfo();
 			}, function (error) {
 				$scope.isLoading = false;
 				$scope.isLoadingHasError = true;
@@ -1958,7 +2063,7 @@
 			});
 		}
 
-		loadTopicDetail().then(getTopicAuthorInfo().then(loadTopicComments()));
+		loadTopicDetail().then(loadTopicComments());
 	}]);
 })();
 (function () {
@@ -2011,6 +2116,29 @@
                     alertService.showAlert('关注失败', ev);
                     $scope.isOperating = false;
                 });
+            }
+        };
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
             }
         };
     }]);

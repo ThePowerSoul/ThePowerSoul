@@ -40,7 +40,8 @@
 	            .state('bbs', {
 	                url: '/bbs',
 	                templateUrl: 'dist/pages/bbs.html',
-	                controller: 'bbsCtrl',
+                    controller: 'bbsCtrl',
+                    reload: true
 	            })
                 .state('topic-detail', {
                     url: '/topic-detail/{id}',

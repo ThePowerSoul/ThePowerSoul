@@ -76,7 +76,8 @@
 		color: #2196f3;
 	}
 	.topic-detail-container .reply-comment, .topic-detail-container .check-conversation-comment {
-		margin-left: 16px;
+		margin-right: 16px;
+		margin-top: 16px;
 		font-size: 14px;
 		color: rgba(0, 0, 0, 0.54);
 		outline: none;
@@ -116,11 +117,20 @@
 		line-height: 32px;
 		font-size: 16px;
 	}
-	.topic-description-container .report-button {
+	.topic-description-container .report-button, .comment-card .report-comment-button {
 		color: rgba(0, 0, 0, 0.54);
 		outline: none;
 	}
-	.topic-description-container .report-button:hover {
+	.topic-description-container .report-button:hover, .comment-card .report-comment-button:hover {
+		color: lightblue;
+		cursor: pointer;
+	}
+	.topic-description-container .topic-delete {
+		color: rgba(0, 0, 0, 0.54);
+		outline: none;
+		margin-left: 16px;
+	}
+	.topic-description-container .topic-delete:hover {
 		color: lightblue;
 		cursor: pointer;
 	}
@@ -144,6 +154,22 @@
 	.topic-author-description .author-other-info {
 		margin-top: 8px;
 	}
+	.topic-author-description .author-name {
+		outline: none;
+	}
+	.topic-author-description .author-name:hover {
+		color: lightblue;
+		cursor: pointer;
+	}
+	.comment-card .comment-delete-button {
+		color: rgba(0, 0, 0, 0.54);
+		margin-left: 16px;
+		outline: none;
+	}
+	.comment-card .comment-delete-button:hover {
+		color: lightblue;
+		cursor: pointer;
+	}
 </style>
 <div class="topic-detail-container">
 	<div class="topic-description-container" layout="column">
@@ -164,6 +190,9 @@
 					<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
 					<span class="md-body-1 dislike-number">{{'&nbsp;' + topic.DislikeUser.length}}</span>
 				</md-button>
+			</div>
+			<div layout="row" layout-align="start center" ng-show="user._id === topic.UserID">
+				<span class="topic-delete md-body-1" ng-click="deleteTopic($event)">删除</span>
 			</div>
 			<div flex></div>
 			<div class="md-body-1 report-button" layout="row" layout-align="start center" ng-click="reportTheTopic(ev)">举报</div>
@@ -207,14 +236,21 @@
 							<span class="md-body-1 dislike-number">{{'&nbsp;' + comment.DislikeUser.length}}</span>
 						</md-button>
 					</div>
+					<div layout="row" layout-align="start center" ng-show="comment.UserID === user._id">
+						<span class="md-body-1 comment-delete-button" ng-click="deleteComment(comment, $event)">删除</span>
+					</div>
+					<div flex></div>
+					<div layout="row" layout-align="start center">
+						<span class="md-body-1 report-comment-button" ng-click="reportTheComment(comment, $event);">举报</span>
+					</div>
 				</div>
 				<div class="comment-content-container">
 					<span class="md-body-1">{{comment.Content}}</span>
 				</div>
 				<div class="comment-operation-container" layout="row" layout-align="start center">
-						<div layout="row" layout-align="start center" ng-show="comment.TargetUserID !== ''">
+					<div layout="row" layout-align="start center">
 						<span class="reply-comment" ng-click="commentReply(comment, $event)">回复</span>
-						<span class="check-conversation-comment" ng-click="seeConversation(comment, $event)">查看对话</span>
+						<span class="check-conversation-comment" ng-show="comment.TargetUserID !== ''" ng-click="seeConversation(comment, $event)">查看对话</span>
 					</div>
 				</div>
 			</div>
@@ -230,7 +266,7 @@
 			</div>
 			<md-divider></md-divider>
 			<div class="author-basic-info">
-				<span class="md-body-1">{{topic.Author}}</span>
+				<span class="md-body-1 author-name" ng-click="goToUserDetail()">{{topic.Author}}</span>
 				<div class="author-other-info" layout="row" layout-align="start center">
 					<span class="md-body-1">发帖数：</span>
 					<span class="number-tip">{{topicAuthor.TopicNumber}}</span>

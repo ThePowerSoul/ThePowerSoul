@@ -24,8 +24,9 @@
             }
         ])
         .controller('squareCtrl', ['$scope', '$http', '$rootScope', '$stateParams', '$state', 'BaseUrl', 'selectorItems', 'localStorageService', 
-        'alertService',
-        function($scope, $http, $rootScope, $stateParams, $state, BaseUrl, selectorItems, localStorageService, alertService) {
+        'alertService', '$mdDialog',
+		function($scope, $http, $rootScope, $stateParams, $state, BaseUrl, selectorItems, localStorageService, 
+			alertService, $mdDialog) {
             $scope.selectedItem = "ALL";
             $scope.selectorItems = selectorItems;
             $scope.topicList = [];
@@ -74,7 +75,31 @@
 							// canceled
 						});
 					}
-    			};
+				};
+
+				/********************** 删除帖子 ********************/
+				$scope.deleteTopic = function(topic, ev) {
+					var confirm = $mdDialog.confirm()
+					.title('提示')
+					.textContent('确定删除这条帖子？')
+					.ariaLabel('')
+					.targetEvent(ev)
+					.ok('确定')
+					.cancel('取消');
+			
+					$mdDialog.show(confirm).then(function() {
+						$scope.isDeleting = true;
+						$http.delete(BaseUrl + '/topic/' + topic._id)
+							.then(function(data) {
+								alertService.showAlert('删除成功', ev);
+								$state.go('bbs');
+							}, function(error) {
+								alertService.showAlert('删除失败', ev);
+							});
+					}, function() {
+						// canceled
+					});
+				};
 
 				/********************** 发表新帖 ********************/
 	    		$scope.addNewTopic = function(ev) {
@@ -166,7 +191,7 @@
                 if (category === 'ALL') {
                     body.LoadAll = true;
                 }
-                $scope.isLoadingTopic = true;
+				$scope.isLoadingTopic = true;
                 $http.post(BaseUrl + "/topic", body)
                     .then(function(response) {
                         if (loadMoreSignal) {
