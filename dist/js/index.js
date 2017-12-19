@@ -110,6 +110,7 @@
                 $mdDialog.cancel();
             }, function (error) {
                 alertService.showAlert('发送私信失败', ev);
+                $mdDialog.cancel();
             });
         };
     }]).controller('listPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', '$state', 'BaseUrl', 'localStorageService', '$rootScope', function ($scope, $mdDialog, $http, $state, BaseUrl, localStorageService, $rootScope) {
@@ -207,6 +208,13 @@
             } else if (signal === "login") {
                 $scope.flag = false;
             }
+        };
+
+        $scope.verifyEmail = function () {
+            var body = {
+                Email: $scope.newUser.Email
+            };
+            $http.post(BaseUrl + '/verify-email', body).then(function (response) {}, function (error) {});
         };
 
         $scope.login = function (ev) {
@@ -1669,7 +1677,6 @@
 		$scope.user = localStorageService.get('userInfo');
 		$scope.followButtonText = "";
 		$scope.isFollowing = false;
-		var topic_id = $stateParams.id;
 
 		/*
   loading state
@@ -1690,6 +1697,7 @@
 		};
 		$scope.commentList = [];
 		$scope.newCommentContent = "";
+		var topic_id = $stateParams.id;
 
 		/*
   	评论帖子 
@@ -1809,7 +1817,26 @@
 		/*
   	给发帖人发私信
   */
-		$scope.sendPrivateMessage = function () {};
+		$scope.sendPrivateMessage = function (ev) {
+			var topicAuthor = {
+				_id: $scope.topic.UserID,
+				DisplayName: $scope.topic.Author
+			};
+			$mdDialog.show({
+				controller: 'sendSpecificMessageCtrl',
+				templateUrl: 'dist/pages/send-specific-message.html',
+				parent: angular.element(document.body),
+				targetEvent: ev,
+				clickOutsideToClose: false,
+				fullscreen: false,
+				locals: {
+					targetUser: topicAuthor,
+					user: $scope.user
+				}
+			}).then(function (data) {}, function () {
+				// canceled mdDialog
+			});
+		};
 
 		$scope.goToUserDetail = function () {
 			var url = $state.href('user-detail', { id: $scope.topic.UserID });
@@ -2069,7 +2096,31 @@
 (function () {
     'use strict';
 
-    angular.module('The.Power.Soul.UserDetail', ['ngMaterial']).controller('userDetailCtrl', ['$scope', '$http', '$stateParams', 'localStorageService', 'BaseUrl', 'alertService', function ($scope, $http, $stateParams, localStorageService, BaseUrl, alertService) {
+    angular.module('The.Power.Soul.UserDetail', ['ngMaterial']).controller('sendSpecificMessageCtrl', ['$scope', '$mdDialog', '$http', 'targetUser', 'user', 'BaseUrl', 'alertService', function ($scope, $mdDialog, $http, targetUser, user, BaseUrl, alertService) {
+        $scope.targetUserInfo = null;
+        $scope.newMessage = "";
+        var user = user;
+        $scope.targetUserInfo = targetUser;
+
+        $scope.submit = function (ev) {
+            var body = {
+                Content: $scope.newMessage,
+                UserName: user.DisplayName,
+                TargetUserName: $scope.targetUserInfo.DisplayName
+            };
+            $http.post(BaseUrl + '/private-message/' + user._id + '/' + $scope.targetUserInfo._id, body).then(function (data) {
+                alertService.showAlert('发送私信成功', ev);
+                $mdDialog.cancel();
+            }, function (error) {
+                alertService.showAlert('发送私信失败', ev);
+                $mdDialog.cancel();
+            });
+        };
+
+        $scope.closeDialog = function () {
+            $mdDialog.cancel();
+        };
+    }]).controller('userDetailCtrl', ['$scope', '$http', '$stateParams', 'localStorageService', 'BaseUrl', 'alertService', '$mdDialog', function ($scope, $http, $stateParams, localStorageService, BaseUrl, alertService, $mdDialog) {
         $scope.isLoading = false;
         $scope.isLoadingHasError = false;
         $scope.user = null;
@@ -2095,6 +2146,23 @@
                 $scope.isLoadingHasError = true;
             });
         }
+
+        $scope.sendPrivateMessage = function (ev) {
+            $mdDialog.show({
+                controller: 'sendSpecificMessageCtrl',
+                templateUrl: 'dist/pages/send-specific-message.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: false,
+                fullscreen: false,
+                locals: {
+                    targetUser: $scope.user,
+                    user: loggedUser
+                }
+            }).then(function (data) {}, function () {
+                // canceled mdDialog
+            });
+        };
 
         $scope.followOperation = function (ev) {
             $scope.isOperating = true;

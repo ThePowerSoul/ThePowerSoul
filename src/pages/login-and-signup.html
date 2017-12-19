@@ -70,7 +70,8 @@
 			    </md-input-container>
 
 			    <md-input-container md-no-float class="md-block">
-			      	<input ng-model="newUser.Email" placeholder="请输入符合格式的邮箱..." ng-disabled="isSigningup" type="text" placeholder="邮箱">
+					  <input ng-model="newUser.Email" placeholder="请输入符合格式的邮箱..." ng-disabled="isSigningup" type="text" placeholder="邮箱">
+					  <md-button class="md-raised md-primary" ng-disabled="newUser.Email === ''" ng-click="verifyEmail()">验证邮箱</md-button>
 			    </md-input-container>
 
 			    <md-input-container md-no-float class="md-block">

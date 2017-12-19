@@ -149,6 +149,7 @@
                         $mdDialog.cancel();
                     }, function(error) {
                         alertService.showAlert('发送私信失败', ev);
+                        $mdDialog.cancel();
                     });
             };
         }])
@@ -259,6 +260,18 @@
                 } else if(signal === "login") {
                     $scope.flag = false;
                 }
+            };  
+
+            $scope.verifyEmail = function() {
+                var body = {
+                    Email: $scope.newUser.Email
+                }
+                $http.post(BaseUrl + '/verify-email', body)
+                    .then(function(response) {
+
+                    }, function(error) {
+                        
+                    })
             };  
 
             $scope.login = function(ev) {

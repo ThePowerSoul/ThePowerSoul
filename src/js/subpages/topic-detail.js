@@ -85,7 +85,6 @@
 			$scope.user = localStorageService.get('userInfo');
 			$scope.followButtonText = "";
 			$scope.isFollowing = false;
-			var topic_id = $stateParams.id;
 
     		/*
 			loading state
@@ -106,6 +105,7 @@
 			};
 			$scope.commentList = [];
 			$scope.newCommentContent = "";
+			var topic_id = $stateParams.id;
 
 			/*
 				评论帖子 
@@ -234,8 +234,28 @@
 			/*
 				给发帖人发私信
 			*/
-			$scope.sendPrivateMessage = function() {
-
+			$scope.sendPrivateMessage = function(ev) {
+				var topicAuthor = {
+					_id: $scope.topic.UserID,
+					DisplayName: $scope.topic.Author
+				}
+				$mdDialog.show({ 
+                    controller: 'sendSpecificMessageCtrl',
+                    templateUrl: 'dist/pages/send-specific-message.html',
+                    parent: angular.element(document.body),
+                    targetEvent: ev,
+                    clickOutsideToClose: false,
+                    fullscreen: false,
+                    locals: {
+                        targetUser: topicAuthor,
+                        user: $scope.user
+                    }
+                })
+                .then(function(data) {
+                    
+                }, function(){
+                    // canceled mdDialog
+                });
 			};
 
 			$scope.goToUserDetail = function() {
