@@ -182,24 +182,49 @@
         $scope.closeDialog = function () {
             $mdDialog.cancel();
         };
-    }]).controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService) {
+    }]).controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService', '$timeout', function ($scope, $http, $mdDialog, $state, BaseUrl, localStorageService, alertService, $timeout) {
         var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
+        var waitSeconds = 120;
+        $scope.sendButtonText = "发送验证码";
+        $scope.isCountingDown = false;
         $scope.flag = true;
         $scope.signupButtonText = "";
         $scope.loginButtonText = "";
         $scope.isLogining = false;
         $scope.isSigningup = false;
+        $scope.isSendingEmail = false;
+        $scope.isSendingEmailHasError = false;
         $scope.loginErrorText = "";
         $scope.newUser = {
             Name: "",
             DisplayName: "",
             Email: "",
             Password: "",
-            ConfirmPassword: ""
+            ConfirmPassword: "",
+            EmailVerifyCode: ""
         };
         $scope.user = {
             Email: "",
             Password: ""
+        };
+
+        function time() {
+            if (waitSeconds <= 0) {
+                $scope.isCountingDown = false;
+                $scope.sendButtonText = "发送验证码";
+                waitSeconds = 60;
+            } else {
+                $scope.isCountingDown = true;
+                $scope.sendButtonText = "重新发送(" + waitSeconds + ")";
+                waitSeconds--;
+                $timeout(function () {
+                    time();
+                }, 1000);
+            }
+        }
+
+        $scope.disableVerifyEmailButtonOrNot = function () {
+            return $scope.isSendingEmail || $scope.isCountingDown || $scope.newUser.EmailVerifyCode !== '';
         };
 
         $scope.changePanel = function (signal) {
@@ -210,11 +235,24 @@
             }
         };
 
-        $scope.verifyEmail = function () {
+        $scope.verifyEmail = function (ev) {
+            $scope.isSendingEmail = true;
             var body = {
                 Email: $scope.newUser.Email
             };
-            $http.post(BaseUrl + '/verify-email', body).then(function (response) {}, function (error) {});
+            $http.post(BaseUrl + '/verify-email', body).then(function (response) {
+                $scope.isSendingEmail = false;
+                if (response.status === 200 && response.data.Message !== "请勿短时间内重复索取验证码") {
+                    $scope.newUser.EmailVerifyCode = body.Code;
+                    time();
+                } else if (response.status === 200 && response.data.Message === "请勿短时间内重复索取验证码") {
+                    $scope.sendButtonText = response.data.Message;
+                    $scope.newUser.EmailVerifyCode = response.data.Code;
+                }
+            }, function (error) {
+                $scope.isSendingEmail = false;
+                $scope.isSendingEmailHasError = true;
+            });
         };
 
         $scope.login = function (ev) {
@@ -249,6 +287,8 @@
                     $scope.newUser.Email = "邮箱已存在，请重新输入";
                 } else if (error.status === 400 && error.data === "显示名已被占用") {
                     $scope.newUser.DisplayName = "显示名已被占用，请重新输入";
+                } else if (error.status === 400) {
+                    $scope.newUser.Emaiul = "邮箱验证码错误，请重新发送或填写";
                 } else {
                     alertService.showAlert('注册发生错误，请重试', ev);
                 }
