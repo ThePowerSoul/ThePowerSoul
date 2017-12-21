@@ -24,6 +24,44 @@
             localStorageServiceProvider
                 .setPrefix('thepowersoul');
         })
+        .factory('authorizationService', function($http, $q, $rootScope, BaseUrl, localStorageService, $state) {
+            return {
+                permissionModel: {permission: {}, isPermissionLoaded: false},
+                permissionCheck: function() {
+                    var body = {}
+                    if (localStorageService.get('token')) {
+                        body = localStorageService.get('token');
+                    } else {
+                        $state.go('introduction');
+                    }
+                    var defer = $q.defer();
+                    var pointer = this;
+                    if (this.permissionModel.isPermissionLoaded) {
+                        
+                    } else {
+                        $http.post(BaseUrl + '/permission-service', body)
+                            .then(function(response) {
+                                pointer.permissionModel.permission = response;
+                                pointer.permissionModel.isPermissionLoaded = true;
+                                pointer.getPermission(pointer.permissionModel, defer);
+                            }, function(error) {
+                                $state.go('introduction');
+                            });
+                    }
+                    return defer;
+                },
+                getPermission: function(model, defer) {
+                    var isPermissionPassed = false;
+                    if (model.permission !== {} && model.isPermissionLoaded === true) {
+                        isPermissionPassed = true;
+                    }
+                    if (!isPermissionPassed) {
+                        $state.go('introduction');
+                    } 
+                    defer.resolve();
+                }
+            }
+        })
         .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
             $urlRouterProvider.when('', 'introduction');
             $stateProvider
@@ -36,6 +74,11 @@
                     url: '/square',
                     templateUrl: 'dist/pages/square.html',
                     controller: 'squareCtrl',
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('bbs', {
                     url: '/bbs',
@@ -315,6 +358,8 @@
                         .then(function (response) {
                             $scope.isLogining = false;
                             localStorageService.set('userInfo', response.data);
+                            console.log(response.data);
+                            localStorageService.set('token', {Email: response.data.Email, Token: response.data.SessionID});
                             $mdDialog.hide();
                             $state.go('bbs');
                             // location.reload();

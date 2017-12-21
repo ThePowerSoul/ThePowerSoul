@@ -4,6 +4,40 @@
     var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Square', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'The.Power.Soul.Report', 'LocalStorageModule'];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
+    }).factory('authorizationService', function ($http, $q, $rootScope, BaseUrl, localStorageService, $state) {
+        return {
+            permissionModel: { permission: {}, isPermissionLoaded: false },
+            permissionCheck: function () {
+                var body = {};
+                if (localStorageService.get('token')) {
+                    body = localStorageService.get('token');
+                } else {
+                    $state.go('introduction');
+                }
+                var defer = $q.defer();
+                var pointer = this;
+                if (this.permissionModel.isPermissionLoaded) {} else {
+                    $http.post(BaseUrl + '/permission-service', body).then(function (response) {
+                        pointer.permissionModel.permission = response;
+                        pointer.permissionModel.isPermissionLoaded = true;
+                        pointer.getPermission(pointer.permissionModel, defer);
+                    }, function (error) {
+                        $state.go('introduction');
+                    });
+                }
+                return defer;
+            },
+            getPermission: function (model, defer) {
+                var isPermissionPassed = false;
+                if (model.permission !== {} && model.isPermissionLoaded === true) {
+                    isPermissionPassed = true;
+                }
+                if (!isPermissionPassed) {
+                    $state.go('introduction');
+                }
+                defer.resolve();
+            }
+        };
     }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
         $urlRouterProvider.when('', 'introduction');
         $stateProvider.state('introduction', {
@@ -13,7 +47,12 @@
         }).state('square', {
             url: '/square',
             templateUrl: 'dist/pages/square.html',
-            controller: 'squareCtrl'
+            controller: 'squareCtrl',
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('bbs', {
             url: '/bbs',
             templateUrl: 'dist/pages/bbs.html',
@@ -260,6 +299,8 @@
             $http.post(BaseUrl + '/login', $scope.user).then(function (response) {
                 $scope.isLogining = false;
                 localStorageService.set('userInfo', response.data);
+                console.log(response.data);
+                localStorageService.set('token', { Email: response.data.Email, Token: response.data.SessionID });
                 $mdDialog.hide();
                 $state.go('bbs');
                 // location.reload();
