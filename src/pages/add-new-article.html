@@ -56,8 +56,9 @@
 			<input class="new-article-title" type="text" ng-model="article.Title" placeholder="请输入文章标题">
 		</div>
 		<div>
-			<div class="rich-text-input" text-angular ng-model="article.Content">
-			</div>
+			<div id="editor" ng-model="article.Content"></div>
+			<!-- <div class="rich-text-input" ng-model="article.Content">
+			</div> -->
 		</div>
 	</div>
 	<div ng-bind-html="richTextContent"></div>

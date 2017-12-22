@@ -2,27 +2,34 @@
     'use strict';
 
     var subModules = ['The.Power.Soul.Introduction', 'The.Power.Soul.BBS', 'The.Power.Soul.Square', 'The.Power.Soul.Tools', 'The.Power.Soul.Topic.Detail', 'The.Power.Soul.NewArticle', 'The.Power.Soul.UserDetail', 'The.Power.Soul.Mall', 'The.Power.Soul.Search.For.Users', 'The.Power.Soul.Article.List', 'The.Power.Soul.Article.Detail', 'The.Power.Soul.Fav.List', 'The.Power.Soul.Message.Detail', 'The.Power.Soul.All.Messages', 'The.Power.Soul.Report', 'LocalStorageModule'];
-    angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider) {
+    angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules)).constant('BaseUrl', "http://localhost:3030").config(function (localStorageServiceProvider, $locationProvider) {
         localStorageServiceProvider.setPrefix('thepowersoul');
-    }).factory('authorizationService', function ($http, $q, $rootScope, BaseUrl, localStorageService, $state) {
+    }).factory('authorizationService', function ($http, $q, $rootScope, BaseUrl, localStorageService, $state, alertService) {
         return {
             permissionModel: { permission: {}, isPermissionLoaded: false },
             permissionCheck: function () {
-                var body = {};
+                var token;
                 if (localStorageService.get('token')) {
-                    body = localStorageService.get('token');
+                    token = localStorageService.get('token').Token;
                 } else {
                     $state.go('introduction');
                 }
                 var defer = $q.defer();
                 var pointer = this;
-                if (this.permissionModel.isPermissionLoaded) {} else {
-                    $http.post(BaseUrl + '/permission-service', body).then(function (response) {
+                if (this.permissionModel.isPermissionLoaded) {
+                    // auth successful
+                } else {
+                    $http.post(BaseUrl + '/permission-service', null, {
+                        headers: { 'Authorization': token }
+                    }).then(function (response) {
                         pointer.permissionModel.permission = response;
                         pointer.permissionModel.isPermissionLoaded = true;
                         pointer.getPermission(pointer.permissionModel, defer);
                     }, function (error) {
                         $state.go('introduction');
+                        if (error.status === 400) {
+                            alertService.showAlert(error.data);
+                        }
                     });
                 }
                 return defer;
@@ -38,9 +45,17 @@
                 defer.resolve();
             }
         };
-    }).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-        $urlRouterProvider.when('', 'introduction');
-        $stateProvider.state('introduction', {
+    }).config(['$stateProvider', '$urlRouterProvider', '$locationProvider', function ($stateProvider, $urlRouterProvider, $locationProvider) {
+        $urlRouterProvider.when('/', 'introduction').otherwise(function ($injector) {
+            var state = $injector.get('$state');
+            state.go('404');
+        });
+        // $locationProvider.html5Mode(true);
+        $stateProvider.state('404', {
+            url: '/error',
+            templateUrl: 'dist/pages/not-found.html',
+            controller: 'notFoundCtrl'
+        }).state('introduction', {
             url: '/introduction',
             templateUrl: 'dist/pages/introduction.html',
             controller: 'introductionCtrl'
@@ -48,6 +63,7 @@
             url: '/square',
             templateUrl: 'dist/pages/square.html',
             controller: 'squareCtrl',
+            reload: true,
             resolve: {
                 permission: function (authorizationService) {
                     return authorizationService.permissionCheck();
@@ -57,44 +73,107 @@
             url: '/bbs',
             templateUrl: 'dist/pages/bbs.html',
             controller: 'bbsCtrl',
-            reload: true
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('topic-detail', {
             url: '/topic-detail/{id}',
             templateUrl: 'dist/pages/topic-detail.html',
-            controller: 'topicDetailCtrl'
+            controller: 'topicDetailCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('new-article', {
             url: '/new-article/{id}',
             templateUrl: 'dist/pages/add-new-article.html',
-            controller: 'addNewArticleCtrl'
+            controller: 'addNewArticleCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('user-detail', {
             url: '/user-detail/{id}',
             templateUrl: 'dist/pages/user-detail.html',
-            controller: 'userDetailCtrl'
+            controller: 'userDetailCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('mall', {
             url: '/mall',
             templateUrl: 'dist/pages/mall.html',
-            controller: 'mallCtrl'
+            controller: 'mallCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('article-list', {
             url: '/article-list',
             templateUrl: 'dist/pages/article-list.html',
-            controller: 'articleListCtrl'
+            controller: 'articleListCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('article-detail', {
             url: '/article-detail/{id}',
             templateUrl: 'dist/pages/article-detail.html',
-            controller: 'articleDetailCtrl'
+            controller: 'articleDetailCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('fav-list', {
             url: '/fav-list',
             templateUrl: 'dist/pages/fav-list.html',
-            controller: 'favListCtrl'
+            controller: 'favListCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('message-detail', {
             url: '/message-detail/{id}',
             templateUrl: 'dist/pages/message-detail.html',
-            controller: 'messageDetailCtrl'
+            controller: 'messageDetailCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         }).state('all-messages', {
             url: '/all-messages/{id}',
             templateUrl: 'dist/pages/all-messages.html',
-            controller: 'allMessagesCtrl'
+            controller: 'allMessagesCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         });
+    }]).controller('notFoundCtrl', ['$scope', '$state', function ($scope, $state) {
+        $scope.goBackToIntroduction = function () {
+            $state.go('introduction');
+        };
     }]).controller('sendNewPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService', 'alertService', function ($scope, $mdDialog, $http, BaseUrl, localStorageService, alertService) {
         $scope.newMessage = "";
         $scope.emailKeyword = "";
@@ -300,7 +379,7 @@
                 $scope.isLogining = false;
                 localStorageService.set('userInfo', response.data);
                 console.log(response.data);
-                localStorageService.set('token', { Email: response.data.Email, Token: response.data.SessionID });
+                localStorageService.set('token', { Token: response.data.SessionID });
                 $mdDialog.hide();
                 $state.go('bbs');
                 // location.reload();
@@ -363,7 +442,7 @@
                 $mdDialog.cancel();
             }
         };
-    }]).controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService', 'BaseUrl', function ($scope, $state, $http, $rootScope, $mdDialog, localStorageService, BaseUrl) {
+    }]).controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService', 'BaseUrl', 'authorizationService', 'alertService', function ($scope, $state, $http, $rootScope, $mdDialog, localStorageService, BaseUrl, authorizationService, alertService) {
         $scope.loggedIn = false;
         $scope.loggedInUser = null;
         $scope.hasNewMessage = false;
@@ -445,6 +524,10 @@
         };
 
         $scope.listPrivateMessage = function (ev) {
+            if (!authorizationService.permissionModel.isPermissionLoaded) {
+                alertService.showAlert('请先登录');
+                return;
+            }
             $mdDialog.show({
                 controller: 'listPrivateMessageCtrl',
                 templateUrl: 'dist/pages/list-private-message.html',
@@ -510,47 +593,14 @@
 (function () {
 	'use strict';
 
-	angular.module('The.Power.Soul.NewArticle', ['ngMaterial', 'textAngular']).config(['$provide', function ($provide) {
-		// this demonstrates how to register a new tool and add it to the default toolbar
-		$provide.decorator('taOptions', ['$delegate', function (taOptions) {
-			// $delegate is the taOptions we are decorating
-			// here we override the default toolbars and classes specified in taOptions.
-			taOptions.forceTextAngularSanitize = true; // set false to allow the textAngular-sanitize provider to be replaced
-			taOptions.keyMappings = []; // allow customizable keyMappings for specialized key boards or languages
-			taOptions.toolbar = [['bold', 'italics', 'underline', 'ul', 'ol']];
-			taOptions.classes = {
-				focussed: 'focussed',
-				toolbar: 'btn-toolbar',
-				toolbarGroup: 'btn-group',
-				toolbarButton: 'btn btn-default',
-				toolbarButtonActive: 'active',
-				disabled: 'disabled',
-				textEditor: 'form-control',
-				htmlEditor: 'form-control'
-			};
-			return taOptions; // whatever you return will be the taOptions
-		}]);
-		// this demonstrates changing the classes of the icons for the tools for font-awesome v3.x
-		$provide.decorator('taTools', ['$delegate', function (taTools) {
-			taTools.bold.iconclass = 'fa fa-bold';
-			taTools.italics.iconclass = 'fa fa-italic';
-			taTools.underline.iconclass = 'fa fa-underline';
-			taTools.ul.iconclass = 'fa fa-list-ul';
-			taTools.ol.iconclass = 'fa fa-list-ol';
-			taTools.undo.iconclass = 'icon-undo';
-			taTools.redo.iconclass = 'icon-repeat';
-			taTools.justifyLeft.iconclass = 'icon-align-left';
-			taTools.justifyRight.iconclass = 'icon-align-right';
-			taTools.justifyCenter.iconclass = 'icon-align-center';
-			taTools.clear.iconclass = 'icon-ban-circle';
-			taTools.insertLink.iconclass = 'icon-link';
-			taTools.insertImage.iconclass = 'icon-picture';
-			// there is no quote icon in old font-awesome so we change to text as follows
-			delete taTools.quote.iconclass;
-			taTools.quote.buttontext = 'quote';
-			return taTools;
-		}]);
-	}]).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
+	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
+		// init simditor
+		var editor = new Simditor({
+			textarea: $('#editor')
+		});
+
+		$scope.simditorContent = $('.simditor-body')[0].innerHTML;
+
 		var article_id = $stateParams.id;
 		$scope.categories = categoryItems;
 		$scope.user = localStorageService.get('userInfo');
@@ -562,6 +612,7 @@
 		};
 		$scope.publishArticle = function (ev) {
 			removeBlankSpace();
+			$scope.article.Content = $('.simditor-body')[0].innerHTML;
 			$scope.isPublishing = true;
 			$http.post(BaseUrl + '/article/' + $scope.user._id, $scope.article).then(function (response) {
 				$scope.isPublishing = false;
@@ -589,6 +640,8 @@
 		}
 
 		function saveDraft() {
+			$scope.article.Content = $('.simditor-body')[0].innerHTML;
+			console.log($scope.article.Content);
 			$http.put(BaseUrl + '/article-draft/' + article_id, $scope.article).then(function (response) {
 				alertSuccessMsg('保存草稿成功');
 			}, function (error) {});
@@ -605,6 +658,7 @@
 			$http.get(BaseUrl + '/article-draft/' + article_id).then(function (response) {
 				$scope.isLoading = false;
 				$scope.article = response.data;
+				$('.simditor-body')[0].innerHTML = $scope.article.Content;
 			}, function (error) {
 				$scope.isLoading = false;
 				$scope.isLoadingHasError = true;
@@ -1039,7 +1093,7 @@
             $state.go('article-detail', { id: article._id });
         };
 
-        // 生成新草稿，内容为正文内容，成功后删除正文内容
+        // 生成新草稿，内容为正文内容，成功后删除正文
         $scope.editArticle = function (article, ev) {
             $http.post(BaseUrl + '/article-draft/' + $scope.user._id, article).then(function (response) {
                 removeFromArticleList(article, response.data, ev);
@@ -1047,6 +1101,10 @@
                 alertService.showAlert('生成编辑内容失败，请重试', ev);
             });
         };
+
+        $scope.deleteArticleDraft = function (article) {};
+
+        $scope.deleteArticle = function (article) {};
 
         function removeFromArticleList(article, data, ev) {
             $http.delete(BaseUrl + '/article/' + article._id).then(function (response) {
@@ -2287,7 +2345,7 @@
     }]).service('alertService', ['$mdDialog', function ($mdDialog) {
         return {
             showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent(ev));
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
             }
         };
     }]);

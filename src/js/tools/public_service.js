@@ -30,7 +30,7 @@
                         .textContent(text)
                         .ariaLabel('Alert Dialog Demo')
                         .ok('好的')
-                        .targetEvent(ev)
+                        .targetEvent()
                 );
             }
         }

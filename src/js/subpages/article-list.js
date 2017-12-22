@@ -18,7 +18,7 @@
                 $state.go('article-detail', {id: article._id});
             };
 
-            // 生成新草稿，内容为正文内容，成功后删除正文内容
+            // 生成新草稿，内容为正文内容，成功后删除正文
             $scope.editArticle = function(article, ev) {
                 $http.post(BaseUrl + '/article-draft/' + $scope.user._id, article)
                     .then(function(response) {
@@ -26,6 +26,14 @@
                     }, function(error) {
                         alertService.showAlert('生成编辑内容失败，请重试', ev);
                     });     
+            };
+
+            $scope.deleteArticleDraft = function(article) {
+                
+            };
+
+            $scope.deleteArticle = function(article) {
+
             };
             
             function removeFromArticleList(article, data,  ev) {

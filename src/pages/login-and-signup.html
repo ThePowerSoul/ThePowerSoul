@@ -98,9 +98,9 @@
 			<span class="input-tip" ng-bind="loginErrorText"></span>
 		</div>
 	</div>
-	<div layout="row" layout-align="center center">
+	<!-- <div layout="row" layout-align="center center">
 		<span class="input-tip">如果按钮没有变亮，那一定是因为有地方填错了！</span>
-	</div>
+	</div> -->
     <md-button class="md-raised md-primary" ng-show="!flag" ng-disabled="disableLoginButtonOrNot() || isLogining" ng-click="login($event)">{{loginButtonText}}</md-button>
     <md-button class="md-raised md-primary" ng-show="flag" ng-disabled="disableSignupButtonOrNot() || isSigningup" ng-click="signup($event)">{{signupButtonText}}</md-button>
 </md-dialog>

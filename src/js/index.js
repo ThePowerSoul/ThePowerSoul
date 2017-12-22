@@ -20,32 +20,37 @@
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
         .constant('BaseUrl', "http://localhost:3030")
-        .config(function (localStorageServiceProvider) {
+        .config(function (localStorageServiceProvider, $locationProvider) {
             localStorageServiceProvider
                 .setPrefix('thepowersoul');
         })
-        .factory('authorizationService', function($http, $q, $rootScope, BaseUrl, localStorageService, $state) {
+        .factory('authorizationService', function($http, $q, $rootScope, BaseUrl, localStorageService, $state, alertService) {
             return {
                 permissionModel: {permission: {}, isPermissionLoaded: false},
                 permissionCheck: function() {
-                    var body = {}
+                    var token;
                     if (localStorageService.get('token')) {
-                        body = localStorageService.get('token');
+                        token = localStorageService.get('token').Token;
                     } else {
                         $state.go('introduction');
                     }
                     var defer = $q.defer();
                     var pointer = this;
                     if (this.permissionModel.isPermissionLoaded) {
-                        
+                        // auth successful
                     } else {
-                        $http.post(BaseUrl + '/permission-service', body)
+                        $http.post(BaseUrl + '/permission-service', null, {
+                                headers : {'Authorization' : token}
+                            })
                             .then(function(response) {
                                 pointer.permissionModel.permission = response;
                                 pointer.permissionModel.isPermissionLoaded = true;
                                 pointer.getPermission(pointer.permissionModel, defer);
                             }, function(error) {
                                 $state.go('introduction');
+                                if (error.status === 400) {
+                                    alertService.showAlert(error.data);
+                                }
                             });
                     }
                     return defer;
@@ -62,9 +67,21 @@
                 }
             }
         })
-        .config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-            $urlRouterProvider.when('', 'introduction');
+        .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', 
+            function ($stateProvider, $urlRouterProvider, $locationProvider) {
+            $urlRouterProvider
+                .when('/', 'introduction')
+                .otherwise(function($injector){
+                    var state = $injector.get('$state');
+                    state.go('404');
+                 });
+            // $locationProvider.html5Mode(true);
             $stateProvider
+                .state('404', {
+                    url: '/error',
+                    templateUrl: 'dist/pages/not-found.html',
+                    controller: 'notFoundCtrl'
+                })
                 .state('introduction', {
                     url: '/introduction',
                     templateUrl: 'dist/pages/introduction.html',
@@ -74,6 +91,7 @@
                     url: '/square',
                     templateUrl: 'dist/pages/square.html',
                     controller: 'squareCtrl',
+                    reload: true,
                     resolve: {
                         permission: function(authorizationService) {
                             return authorizationService.permissionCheck();
@@ -84,53 +102,117 @@
                     url: '/bbs',
                     templateUrl: 'dist/pages/bbs.html',
                     controller: 'bbsCtrl',
-                    reload: true
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('topic-detail', {
                     url: '/topic-detail/{id}',
                     templateUrl: 'dist/pages/topic-detail.html',
                     controller: 'topicDetailCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('new-article', {
                     url: '/new-article/{id}',
                     templateUrl: 'dist/pages/add-new-article.html',
                     controller: 'addNewArticleCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('user-detail', {
                     url: '/user-detail/{id}',
                     templateUrl: 'dist/pages/user-detail.html',
                     controller: 'userDetailCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('mall', {
                     url: '/mall',
                     templateUrl: 'dist/pages/mall.html',
                     controller: 'mallCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('article-list', {
                     url: '/article-list',
                     templateUrl: 'dist/pages/article-list.html',
                     controller: 'articleListCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('article-detail', {
                     url: '/article-detail/{id}',
                     templateUrl: 'dist/pages/article-detail.html',
                     controller: 'articleDetailCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('fav-list', {
                     url: '/fav-list',
                     templateUrl: 'dist/pages/fav-list.html',
                     controller: 'favListCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('message-detail', {
                     url: '/message-detail/{id}',
                     templateUrl: 'dist/pages/message-detail.html',
                     controller: 'messageDetailCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 })
                 .state('all-messages', {
                     url: '/all-messages/{id}',
                     templateUrl: 'dist/pages/all-messages.html',
                     controller: 'allMessagesCtrl',
+                    reload: true,
+                    resolve: {
+                        permission: function(authorizationService) {
+                            return authorizationService.permissionCheck();
+                        }
+                    }
                 });
+        }])
+        .controller('notFoundCtrl', ['$scope', '$state', function($scope, $state) {
+            $scope.goBackToIntroduction = function() {
+                $state.go('introduction');
+            };  
         }])
         .controller('sendNewPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService',
             'alertService',
@@ -359,7 +441,7 @@
                             $scope.isLogining = false;
                             localStorageService.set('userInfo', response.data);
                             console.log(response.data);
-                            localStorageService.set('token', {Email: response.data.Email, Token: response.data.SessionID});
+                            localStorageService.set('token', {Token: response.data.SessionID});
                             $mdDialog.hide();
                             $state.go('bbs');
                             // location.reload();
@@ -429,7 +511,9 @@
                 };
             }])
         .controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService', 'BaseUrl',
-            function ($scope, $state, $http, $rootScope, $mdDialog, localStorageService, BaseUrl) {
+            'authorizationService', 'alertService',
+            function ($scope, $state, $http, $rootScope, $mdDialog, localStorageService, BaseUrl, authorizationService
+            ,alertService) {
                 $scope.loggedIn = false;
                 $scope.loggedInUser = null;
                 $scope.hasNewMessage = false;
@@ -513,6 +597,10 @@
                 };
 
                 $scope.listPrivateMessage = function (ev) {
+                    if (!authorizationService.permissionModel.isPermissionLoaded) {
+                        alertService.showAlert('请先登录');
+                        return; 
+                    }
                     $mdDialog.show({
                         controller: 'listPrivateMessageCtrl',
                         templateUrl: 'dist/pages/list-private-message.html',
