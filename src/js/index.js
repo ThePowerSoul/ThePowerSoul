@@ -18,12 +18,17 @@
         'The.Power.Soul.Report',
         'LocalStorageModule'
     ];
-    angular.module('The.Power.Soul', ['ngMaterial', 'ui.router'].concat(subModules))
+    angular.module('The.Power.Soul', ['ngMaterial', 'ui.router', 'ngSanitize'].concat(subModules))
         .constant('BaseUrl', "http://localhost:3030")
         .config(function (localStorageServiceProvider, $locationProvider) {
             localStorageServiceProvider
                 .setPrefix('thepowersoul');
         })
+        .filter('to_trusted', ['$sce', function ($sce) {
+            return function (text) {
+                return $sce.trustAsHtml(text);
+            };
+        }])
         .factory('authorizationService', function($http, $q, $rootScope, BaseUrl, localStorageService, $state, alertService) {
             return {
                 permissionModel: {permission: {}, isPermissionLoaded: false},
@@ -50,6 +55,9 @@
                                 $state.go('introduction');
                                 if (error.status === 400) {
                                     alertService.showAlert(error.data);
+                                    localStorageService.remove('userInfo');
+                                    localStorageService.remove('token');
+                                    $rootScope.$broadcast('$ONSESSIONEXPIRED');
                                 }
                             });
                     }
@@ -415,6 +423,7 @@
 
                 $scope.verifyEmail = function (ev) {
                     $scope.isSendingEmail = true;
+                    $scope.isSendingEmailHasError = false;
                     var body = {
                         Email: $scope.newUser.Email
                     }
@@ -440,11 +449,9 @@
                         .then(function (response) {
                             $scope.isLogining = false;
                             localStorageService.set('userInfo', response.data);
-                            console.log(response.data);
                             localStorageService.set('token', {Token: response.data.SessionID});
                             $mdDialog.hide();
-                            $state.go('bbs');
-                            // location.reload();
+                            $state.go('square');
                         }, function (error) {
                             $scope.isLogining = false;
                             if (error.status === 400) {
@@ -525,6 +532,10 @@
                     loadMessages();
                 }
 
+                var sessionExpired = $rootScope.$on('$ONSESSIONEXPIRED', function() {
+                    $scope.loggedIn = false;
+                });
+
                 var hideMessageEntrance = $rootScope.$on('$HIDEMESSAGEENTRANCE', function () {
                     $scope.showMessageEntrance = false;
                 });
@@ -563,10 +574,25 @@
 
                 //　登出
                 $scope.logOut = function () {
-                    $scope.loggedIn = false;
-                    localStorageService.remove('userInfo');
-                    $state.go('bbs');
-                    // location.reload();
+                    var token;
+                    if (localStorageService.get('token')) {
+                        token = localStorageService.get('token').Token;
+                    } else {
+                        localStorageService.remove('userInfo');
+                        localStorageService.remove('token');
+                        alertService.showAlert('登出异常');
+                    }
+                    $http.post(BaseUrl + '/remove-session', null, {
+                        headers : {'Authorization' : token}
+                    })
+                        .then(function(response) {
+                            $scope.loggedIn = false;
+                            localStorageService.remove('userInfo');
+                            localStorageService.remove('token');
+                            $state.go('introduction');
+                        }, function(error) {
+                            alertService.showAlert('清楚登陆数据失败，请重试');
+                        })
                 };
 
                 /**

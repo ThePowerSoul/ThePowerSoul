@@ -53,7 +53,6 @@
 
 				function saveDraft() {
 					$scope.article.Content = $('.simditor-body')[0].innerHTML;
-					console.log($scope.article.Content);
 					$http.put(BaseUrl + '/article-draft/' + article_id, $scope.article)
 						.then(function (response) {
 							alertSuccessMsg('保存草稿成功');

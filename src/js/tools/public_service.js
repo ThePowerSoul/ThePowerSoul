@@ -18,7 +18,27 @@
 				Title: "跑步训练",
 				Value: "RUNNING"
 			}
-		])
+        ])
+        .filter('categoryFilter', function() {
+            return function(str) {
+                var result = "";
+                switch (str) {
+                    case 'STRENGTH':
+                        result = "力量训练";
+                        break;
+                    case 'YOGA':
+                        result = "瑜伽训练";
+                        break;
+                    case 'FITNESS':
+                        result = "形体训练";
+                        break;
+                    case 'RUNNING':
+                        result = "跑步训练";
+                        break;
+                }
+                return result;
+            }
+        })
         .service('alertService', ['$mdDialog', function($mdDialog) {
             return {
                 showAlert: function(text, ev) {

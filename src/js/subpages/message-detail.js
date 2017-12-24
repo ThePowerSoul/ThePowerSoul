@@ -10,10 +10,12 @@
             $scope.isSettingStatusHasError = false;
             $scope.newMessageContent = "";
             $scope.user = localStorageService.get('userInfo');
-            $rootScope.$broadcast('$HIDEMESSAGEENTRANCE');
+            $scope.disableLoadingMore = false;
+            $scope.messages = [];
             var sender_id = $stateParams.id;
             var targetUser = null;
-            $scope.messages = [];
+            var pageNum = 1;
+            $rootScope.$broadcast('$HIDEMESSAGEENTRANCE');
 
             $scope.postNewMessage = function(ev) {
                 $scope.isPosting = true;
@@ -67,6 +69,10 @@
                 });                
             };
 
+            $scope.loadMore = function() {
+                getConversation(++pageNum, true);
+            };
+
             function setReadStatus() {
                 return $http.put(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id)
                     .then(function(response) {
@@ -76,12 +82,22 @@
                     });
             }
 
-            function getConversation() {
+            function getConversation(pageNum, isLoadingMore) {
+                var body = {
+                    PageNum: pageNum
+                }
                 $scope.isLoading = true;
-                return $http.get(BaseUrl + '/private-message/' + $scope.user._id + '/' + sender_id)
+                return $http.post(BaseUrl + '/private-messages/' + $scope.user._id + '/' + sender_id, body)
                     .then(function(response) {
                         $scope.isLoading = false;
-                        $scope.messages = response.data;
+                        if (isLoadingMore) {
+                            $scope.messages = $scope.messages.concat(response.data);
+                            if (response.data.length < 5) {
+                                $scope.disableLoadingMore = true;
+                            }
+                        } else {
+                            $scope.messages = response.data;
+                        }
                     }, function(error) {
                         $scope.isLoading = false;
                         $scope.isLoadingHasError = true;
@@ -98,7 +114,7 @@
             } 
 
             setReadStatus()
-                .then(getConversation()
+                .then(getConversation(1, false)
                     .then(getTargetUserName()));
     	}])
 }());

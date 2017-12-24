@@ -85,6 +85,8 @@
 			$scope.user = localStorageService.get('userInfo');
 			$scope.followButtonText = "";
 			$scope.isFollowing = false;
+			$scope.disableLoadingMore = false;
+			var pageNum = 1;
 
     		/*
 			loading state
@@ -122,7 +124,7 @@
 					})
 					.then(function(response) {
 						$scope.newCommentContent = "";
-						$scope.commentList.push(response.data);
+						$scope.commentList.unshift(response.data);
 						$scope.isPostingNewComment = false;
 					}, function(error) {
 						$scope.isPostingNewComment = false;
@@ -436,8 +438,21 @@
 				加载更多
 			*/
 			$scope.loadMore = function() {
-				loadTopicComments();
+				loadTopicComments(++pageNum, true);
 			};
+
+			function loadTopicDetail() {
+				$scope.isLoading = true;
+				return $http.get(BaseUrl + '/topic/' + $scope.user._id + '/' + topic_id)
+					.then(function(response) {
+						$scope.isLoading = false;
+						angular.extend($scope.topic, response.data);
+						getTopicAuthorInfo();
+					}, function(error) {
+						$scope.isLoading = false;
+						$scope.isLoadingHasError = true;
+					});
+			}
 
 			/*
 				回复评论
@@ -455,19 +470,6 @@
 						$scope.commentList.push(response.data);
 					}, function(error) {
 						alertService.showAlert('回复评论失败，请重试', ev);
-					});
-			}
-
-			function loadTopicDetail() {
-				$scope.isLoading = true;
-				return $http.get(BaseUrl + '/topic/' + $scope.user._id + '/' + topic_id)
-					.then(function(response) {
-						$scope.isLoading = false;
-						angular.extend($scope.topic, response.data);
-						getTopicAuthorInfo();
-					}, function(error) {
-						$scope.isLoading = false;
-						$scope.isLoadingHasError = true;
 					});
 			}
 
@@ -523,13 +525,19 @@
 				}
 			};
 
-			function loadTopicComments(loadMoreSignal) {
+			function loadTopicComments(pageNum, isLoadingMore) {
 				$scope.isLoadingComments = true;
-				$http.get(BaseUrl + '/comment/' + topic_id)
+				var body = {
+					PageNum: pageNum
+				}
+				$http.post(BaseUrl + '/comment/' + topic_id, body)
 					.then(function(response) {
 						$scope.isLoadingComments = false;
-						if (loadMoreSignal === 'load-more') {
-							
+						if (isLoadingMore) {
+							$scope.commentList = $scope.commentList.concat(response.data);
+							if (response.data.length < 5) {
+								$scope.disableLoadingMore = true;
+							}
 						} else {
 							$scope.commentList = response.data;
 						}
@@ -539,7 +547,7 @@
 					});
 			}
 
-			loadTopicDetail().then(loadTopicComments());
+			loadTopicDetail().then(loadTopicComments(1, false));
 
     	}])
 }());

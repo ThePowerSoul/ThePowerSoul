@@ -36,6 +36,7 @@
                             <span class="md-body-1 article-title" ng-click="goToArticleDetail(article)">{{ article.Title !== '' ? article.Title : '未命名' }}</span>
                             <span class="md-body-1">{{ article.Author }}</span>
                             <span class="md-body-1 edit-article" ng-click="editArticle(article, $event)">编辑</span>
+                            <i class="fa fa-trash article-list-operation" ng-click="deleteArticle(article, $event)" aria-hidden="true"></i>
                             </div>
                         </md-list-item>
                     </md-list>

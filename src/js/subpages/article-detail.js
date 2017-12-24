@@ -9,15 +9,17 @@
             $scope.isLoadingComments = false;
             $scope.isLoadingCommentsHasError = false;
             $scope.isPosingNewComment = false;
+            $scope.disableLoadingMore = false;
             $scope.article = {};
             $scope.comments = [];
             $scope.newComment = "";
             $scope.isChangingLikeStauts = false;
             var user = localStorageService.get('userInfo');
             var article_id = $stateParams.id;
+            var pageNum = 1;
 
             $scope.goAddArticleToFav = function(ev) {
-                $http.put(BaseUrl + '/user-article-fav/' + user._id + '/' + $scope.article._id)
+                $http.put(BaseUrl + '/user-article-fav/' + user._id + '/' + article_id)
                     .then(function(response) {
                         alertService.showAlert('收藏成功', ev);
                     }, function(error) {
@@ -43,7 +45,7 @@
                 $http.post(BaseUrl + '/comment/' + user._id + '/' + article_id, body)
                     .then(function(response) {
                         $scope.isPosingNewComment = false;
-                        $scope.comments.push(response.data);
+                        $scope.comments.unshift(response.data);
                         $scope.newComment = "";
                     }, function(error) {
                         $scope.isPosingNewComment = false;
@@ -69,7 +71,7 @@
             };  
 
             $scope.likeTheArticle = function(ev) {
-                $http.put(BaseUrl + '/article/' + user._id + '/' + $scope.article._id)
+                $http.put(BaseUrl + '/article/' + user._id + '/' + article_id)
                     .then(function(response) {
                         $scope.article.LikeUser.push(user._id);
                     }, function(error) {
@@ -121,6 +123,10 @@
 					});
             };  
 
+            $scope.loadMore = function() {
+                getComments(++pageNum, true);
+            };
+
             function sendCommentReply(comment, newComment, ev) {
                 $http.post(BaseUrl + '/comment/' + user._id + '/' + article_id, 
                     {
@@ -137,12 +143,22 @@
                     });
             }
 
-            function getComments() {
+            function getComments(pageNum, isLoadingMore) {
+                var body = {
+                    PageNum: pageNum
+                }
                 $scope.isLoadingComments = true;
-                $http.get(BaseUrl + '/comment/' + article_id)
+                $http.post(BaseUrl + '/comment/' + article_id, body)
                     .then(function(response) {
                         $scope.isLoadingComments = false;
-                        $scope.comments = response.data;
+                        if (isLoadingMore) {
+                            $scope.comments = $scope.comments.concat(response.data);
+                            if (response.data.length < 5) {
+                                $scope.disableLoadingMore = true;
+                            }
+                        } else {
+                            $scope.comments = response.data;
+                        }
                     }, function(error) {
                         $scope.isLoadingComments = false;
                         $scope.isLoadingCommentsHasError = true;
@@ -159,7 +175,7 @@
                         $scope.isLoading = false;
                     });
             }
-            getArticle().then(getComments());
+            getArticle().then(getComments(1, false));
 
     	}])
 }());
