@@ -2463,8 +2463,10 @@
         $scope.showActionButton = false;
         $scope.isFollowing = false;
         $scope.followButtonText = "";
+        $scope.profilePictureSrc = "";
         var user_id = $stateParams.id;
         var accessid = 'LTAILjmmB1fnhHlx';
+        var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
         var loggedUser = localStorageService.get('userInfo');
         if (loggedUser._id === user_id) {
             // 进入当前页面的是登录用户本人
@@ -2487,7 +2489,7 @@
         function set_upload_param(up, data) {
             up.setOption({
                 'multipart_params': {
-                    'Filename': 'thepowersoul-profile/' + '${filename}',
+                    'Filename': '${filename}',
                     'key': '${filename}',
                     'policy': data.PolicyText,
                     'OSSAccessKeyId': accessid,
@@ -2504,19 +2506,33 @@
             container: document.getElementById('profilePictureContainer'),
             flash_swf_url: 'lib/plupload-2.1.2/js/Moxie.swf',
             silverlight_xap_url: 'lib/plupload-2.1.2/js/Moxie.xap',
-            url: 'http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com',
+            url: host,
             init: {
-                BeforeUpload: function (up, file) {
+                PostInit: function () {
+                    //
+                },
+                FilesAdded: function (up, files) {
                     $http.get(BaseUrl + '/get-upload-policy').then(function (response) {
                         set_upload_param(uploader, response.data);
                     }, function (error) {});
                 },
-                PostInit: function () {},
+                BeforeUpload: function (up, file) {},
+
+                UploadProgress: function (up, file) {},
+
                 FileUploaded: function (up, file, info) {
                     if (info.status == 200) {
-                        console.log(file, info);
+                        var body = {
+                            Key: file.name
+                        };
+                        $http.put(BaseUrl + '/set-picture-public', body).then(function (response) {
+                            $scope.profilePictureSrc = response.data.Src;
+                        }, function (error) {
+                            alertService.showAlert('获取头像失败，请联系管理员');
+                        });
                     } else {}
                 },
+
                 Error: function (up, err) {
                     console.log(err);
                 }
@@ -2524,8 +2540,6 @@
             }
         });
         uploader.init();
-
-        $scope.changeProfilePicture = function () {};
 
         $scope.sendPrivateMessage = function (ev) {
             $mdDialog.show({
