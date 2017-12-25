@@ -9,6 +9,7 @@
   "author": "Yue",
   "license": "ISC",
   "devDependencies": {
+    "ali-oss": "^4.11.3",
     "angular-local-storage": "^0.7.1",
     "babel-core": "^6.26.0",
     "browser-sync": "^2.18.13",
@@ -22,6 +23,7 @@
     "gulp-rev": "^8.1.0",
     "gulp-rev-collector": "^1.2.3",
     "gulp-uglify": "^3.0.0",
+    "plupload": "^2.3.6",
     "simditor": "^2.3.6",
     "simple-module": "^3.0.3",
     "simple-uploader": "^3.0.0",

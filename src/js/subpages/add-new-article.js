@@ -6,7 +6,17 @@
 			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
 				// init simditor
 				var editor = new Simditor({
-					textarea: $('#editor')
+					textarea: $('#editor'),
+					upload: {
+						url : 'http://up.qiniu.com/', //文件上传的接口地址
+						params: null, //键值对,指定文件上传接口的额外参数,上传的时候随文件一起提交
+						fileKey: 'file', //服务器端获取文件数据的参数名
+						connectionCount: 3,
+						leaveConfirm: '正在上传图片，确定离开？'
+					},
+					success: function(data) {
+						alert(data);
+					}
 				});
 
 				$scope.simditorContent = $('.simditor-body')[0].innerHTML;

@@ -517,7 +517,10 @@
                 localStorageService.remove('token');
                 $state.go('introduction');
             }, function (error) {
-                alertService.showAlert('清楚登陆数据失败，请重试');
+                $scope.loggedIn = false;
+                localStorageService.remove('userInfo');
+                localStorageService.remove('token');
+                $state.go('introduction');
             });
         };
 
@@ -620,7 +623,17 @@
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
 		// init simditor
 		var editor = new Simditor({
-			textarea: $('#editor')
+			textarea: $('#editor'),
+			upload: {
+				url: 'http://up.qiniu.com/', //文件上传的接口地址
+				params: null, //键值对,指定文件上传接口的额外参数,上传的时候随文件一起提交
+				fileKey: 'file', //服务器端获取文件数据的参数名
+				connectionCount: 3,
+				leaveConfirm: '正在上传图片，确定离开？'
+			},
+			success: function (data) {
+				alert(data);
+			}
 		});
 
 		$scope.simditorContent = $('.simditor-body')[0].innerHTML;
@@ -2451,6 +2464,7 @@
         $scope.isFollowing = false;
         $scope.followButtonText = "";
         var user_id = $stateParams.id;
+        var accessid = 'LTAILjmmB1fnhHlx';
         var loggedUser = localStorageService.get('userInfo');
         if (loggedUser._id === user_id) {
             // 进入当前页面的是登录用户本人
@@ -2469,6 +2483,49 @@
                 $scope.isLoadingHasError = true;
             });
         }
+
+        function set_upload_param(up, data) {
+            up.setOption({
+                'multipart_params': {
+                    'Filename': 'thepowersoul-profile/' + '${filename}',
+                    'key': '${filename}',
+                    'policy': data.PolicyText,
+                    'OSSAccessKeyId': accessid,
+                    'success_action_status': '200', //让服务端返回200，不然，默认会返回204
+                    'signature': data.Signature
+                }
+            });
+            up.start();
+        }
+
+        var uploader = new plupload.Uploader({
+            runtimes: 'html5,flash,silverlight,html4',
+            browse_button: 'selectPicture',
+            container: document.getElementById('profilePictureContainer'),
+            flash_swf_url: 'lib/plupload-2.1.2/js/Moxie.swf',
+            silverlight_xap_url: 'lib/plupload-2.1.2/js/Moxie.xap',
+            url: 'http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com',
+            init: {
+                BeforeUpload: function (up, file) {
+                    $http.get(BaseUrl + '/get-upload-policy').then(function (response) {
+                        set_upload_param(uploader, response.data);
+                    }, function (error) {});
+                },
+                PostInit: function () {},
+                FileUploaded: function (up, file, info) {
+                    if (info.status == 200) {
+                        console.log(file, info);
+                    } else {}
+                },
+                Error: function (up, err) {
+                    console.log(err);
+                }
+
+            }
+        });
+        uploader.init();
+
+        $scope.changeProfilePicture = function () {};
 
         $scope.sendPrivateMessage = function (ev) {
             $mdDialog.show({

@@ -591,7 +591,10 @@
                             localStorageService.remove('token');
                             $state.go('introduction');
                         }, function(error) {
-                            alertService.showAlert('清楚登陆数据失败，请重试');
+                            $scope.loggedIn = false;
+                            localStorageService.remove('userInfo');
+                            localStorageService.remove('token');
+                            $state.go('introduction');
                         })
                 };
 
