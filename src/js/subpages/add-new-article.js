@@ -2,12 +2,12 @@
 	'use strict';
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial'])
 		.controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems',
-			'$stateParams', 'randomString',
-			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString) {
+			'$stateParams', 'randomString', '$mdDialog', 'alertService',
+			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString,
+				 $mdDialog, alertService) {
 				var accessid = 'LTAILjmmB1fnhHlx';
-				var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
+				var host = "http://thepowersoul-richtexteditor.oss-cn-beijing.aliyuncs.com";
 				var params = {}
-
 				// init simditor
 				// var editor = new Simditor({
 				// 	textarea: $('#editor'),
@@ -40,6 +40,7 @@
 				$scope.simditorContent = $('.simditor-body')[0].innerHTML;
 
 				var article_id = $stateParams.id;
+				$scope.videoSrc = "";
 				$scope.categories = categoryItems;
 				$scope.user = localStorageService.get('userInfo');
 				$scope.article = {
@@ -133,5 +134,85 @@
 					);
 				}
 
+				var randomKey;
+				function set_upload_param(up, data, name) {
+					randomKey = randomString.getRandomString(10) + '_' + $scope.user._id;					
+                    up.setOption({
+                        'multipart_params': {
+                            'Filename': '${filename}',
+                            'key': randomKey + '${filename}',
+                            'policy': data.PolicyText,
+                            'OSSAccessKeyId': accessid,
+                            'success_action_status': '200', //让服务端返回200，不然，默认会返回204
+                            'signature': data.Signature,
+                        }
+                    });
+                    up.start();
+                    $scope.showProgress = true;
+				}
+				
+				var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
+
+				var videoUploader = new plupload.Uploader({
+					runtimes: 'html5,flash,silverlight,html4',
+					browse_button: 'videoUpload',
+					flash_swf_url: 'lib/plupload-2.1.2/js/Moxie.swf',
+					silverlight_xap_url: 'lib/plupload-2.1.2/js/Moxie.xap',
+					url: host,
+					init: {
+						PostInit: function () {
+							//
+						},
+						FilesAdded: function (up, files) {
+							var fileType = files[0].type;
+							var fileSize = files[0].size;
+							$scope.progressBarProgress = 0;
+							if (videoTypes.indexOf(fileType) < 0) {
+								alertService.showAlert('目前只支持ogg, webm, mpeg4格式的视频');
+								videoUploader.stop();
+								return;
+							} else if (fileSize > 15728640) {
+								alertService.showAlert('请传输小于15Mb的视频');
+								videoUploader.stop();
+								return;
+							} else {
+								$http.get(BaseUrl + '/get-upload-policy')
+									.then(function (response) {
+										set_upload_param(videoUploader, response.data, files[0].name);
+									}, function (error) {
+	
+									});
+							}
+	
+						},
+						BeforeUpload: function (up, file) {
+	
+						},
+						UploadProgress: function (up, file) {
+							$scope.progressBarProgress = file.percent;
+						},
+						FileUploaded: function (up, file, info) {
+							if (info.status == 200) {
+								var body = {
+									Key: randomKey +  file.name
+								}
+								$http.put(BaseUrl + '/set-video-public', body)
+									.then(function (response) {
+										$scope.videoSrc = response.data.Src;
+									}, function (error) {
+										alertService.showAlert('更换头像失败，请联系管理员');
+									});
+							}
+							else {
+	
+							}
+							$scope.showProgress = false;
+						},
+						Error: function (up, err) {
+							console.log(err);
+						}
+					}
+				});
+				videoUploader.init();
 			}])
 }());

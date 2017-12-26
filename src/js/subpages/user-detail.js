@@ -34,7 +34,7 @@
             function ($scope, $http, $stateParams, localStorageService, BaseUrl, alertService, $mdDialog) {
                 var user_id = $stateParams.id;
                 var accessid = 'LTAILjmmB1fnhHlx';
-                var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
+                var host = "http://thepowersoul2018.oss-cn-qingdao-internal.aliyuncs.com";
                 var loggedUser = localStorageService.get('userInfo');
                 var imageTypes = ['image/jpg', 'image/jpeg', 'image/png'];
                 $scope.isLoading = false;

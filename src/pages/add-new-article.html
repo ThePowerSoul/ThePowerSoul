@@ -35,6 +35,10 @@
 	.dialog-content-container .dialog-close-button:hover {
 		color: rgba(0, 0, 0, 0.12);
 	}
+	.upload-video {
+		width: 200px;
+		height: 200px;
+	}
 </style>
 <div  class="new-article-container">
 	<div class="new-article-widget" layout="row" layout-align="start center">
@@ -61,5 +65,14 @@
 			</div> -->
 		</div>
 	</div>
-	<div ng-bind-html="richTextContent"></div>
+	
+	<!-- test video upload -->
+	<div layout"column">
+		<md-button id="videoUpload" class="md-raised md-primary">
+			上传视频
+		</md-button>
+		<div>
+			<video class="upload-video" ng-src="{{videoSrc | to_trusted_video}}" controls="controls" autoplay="autoplay"></video>
+		</div>
+	</div>
 </div>

@@ -29,6 +29,11 @@
                 return $sce.trustAsHtml(text);
             };
         }])
+        .filter('to_trusted_video', ['$sce', function($sce) {
+            return function (text) {
+                return $sce.trustAsResourceUrl(text);
+            }
+        }])
         .factory('authorizationService', function($http, $q, $rootScope, BaseUrl, localStorageService, $state, alertService) {
             return {
                 permissionModel: {permission: {}, isPermissionLoaded: false},
