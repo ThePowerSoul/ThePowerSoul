@@ -620,19 +620,37 @@
 (function () {
 	'use strict';
 
-	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
+	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', 'randomString', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString) {
+		var accessid = 'LTAILjmmB1fnhHlx';
+		var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
+		var params = {};
+
 		// init simditor
+		// var editor = new Simditor({
+		// 	textarea: $('#editor'),
+		// 	upload: {
+		// 		url : host, //文件上传的接口地址
+		// 		params: params, //键值对,指定文件上传接口的额外参数,上传的时候随文件一起提交
+		// 		fileKey: params.Filename, //服务器端获取文件数据的参数名
+		// 		connectionCount: 3,
+		// 		leaveConfirm: '正在上传图片，确定离开？'
+		// 	},
+		// 	success: function(data) {
+		// 		console.log(data);
+		// 	}
+		// });
+
 		var editor = new Simditor({
 			textarea: $('#editor'),
 			upload: {
-				url: 'http://up.qiniu.com/', //文件上传的接口地址
+				url: BaseUrl + '/upload-picture-rich-text', //文件上传的接口地址
 				params: null, //键值对,指定文件上传接口的额外参数,上传的时候随文件一起提交
-				fileKey: 'file', //服务器端获取文件数据的参数名
+				fileKey: 'upload_file', //服务器端获取文件数据的参数名
 				connectionCount: 3,
 				leaveConfirm: '正在上传图片，确定离开？'
 			},
 			success: function (data) {
-				alert(data);
+				console.log(data);
 			}
 		});
 
@@ -683,15 +701,28 @@
 			}, function (error) {});
 		}
 
-		// 等待添加定时保存草稿的代码
-		function autoSendSaveRequest() {}
+		function setUploadParams(data) {
+			var randomFileName = randomString.getRandomString(10);
+			params = {
+				'Filename': '${filename}',
+				'key': '${filename}',
+				'policy': data.PolicyText,
+				'OSSAccessKeyId': accessid,
+				'success_action_status': '200', //让服务端返回200，不然，默认会返回204
+				'signature': data.Signature
+			};
+		}
 
-		function alertSuccessMsg(content) {
-			$mdToast.show($mdToast.simple().textContent(content).highlightClass('md-primary').position('top right'));
+		function getUploadPolicy() {
+			$http.get(BaseUrl + '/get-upload-policy').then(function (response) {
+				setUploadParams(response.data);
+			}, function (error) {
+				alertService.showAlert('获取上传文件信息失败，请重试');
+			});
 		}
 
 		function loadArticleDraft() {
-			$http.get(BaseUrl + '/article-draft/' + article_id).then(function (response) {
+			return $http.get(BaseUrl + '/article-draft/' + article_id).then(function (response) {
 				$scope.isLoading = false;
 				$scope.article = response.data;
 				$('.simditor-body')[0].innerHTML = $scope.article.Content;
@@ -700,7 +731,12 @@
 				$scope.isLoadingHasError = true;
 			});
 		}
+		// loadArticleDraft().then(getUploadPolicy());
 		loadArticleDraft();
+
+		function alertSuccessMsg(content) {
+			$mdToast.show($mdToast.simple().textContent(content).highlightClass('md-primary').position('top right'));
+		}
 	}]);
 })();
 (function () {
@@ -2457,6 +2493,11 @@
             $mdDialog.cancel();
         };
     }]).controller('userDetailCtrl', ['$scope', '$http', '$stateParams', 'localStorageService', 'BaseUrl', 'alertService', '$mdDialog', function ($scope, $http, $stateParams, localStorageService, BaseUrl, alertService, $mdDialog) {
+        var user_id = $stateParams.id;
+        var accessid = 'LTAILjmmB1fnhHlx';
+        var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
+        var loggedUser = localStorageService.get('userInfo');
+        var imageTypes = ['image/jpg', 'image/jpeg', 'image/png'];
         $scope.isLoading = false;
         $scope.isLoadingHasError = false;
         $scope.user = null;
@@ -2464,13 +2505,13 @@
         $scope.isFollowing = false;
         $scope.followButtonText = "";
         $scope.profilePictureSrc = "";
-        var user_id = $stateParams.id;
-        var accessid = 'LTAILjmmB1fnhHlx';
-        var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
-        var loggedUser = localStorageService.get('userInfo');
+        $scope.progressBarProgress = 0;
+        $scope.showProgress = false;
+        $scope.profilePictureSrc = loggedUser.AvatarID;
+
         if (loggedUser._id === user_id) {
             // 进入当前页面的是登录用户本人
-            $scope.user = localStorageService.get('userInfo');
+            $scope.user = loggedUser;
         } else {
             // 查看其它人的页面
             $scope.isLoading = true;
@@ -2490,7 +2531,7 @@
             up.setOption({
                 'multipart_params': {
                     'Filename': '${filename}',
-                    'key': '${filename}',
+                    'key': loggedUser._id + '${filename}',
                     'policy': data.PolicyText,
                     'OSSAccessKeyId': accessid,
                     'success_action_status': '200', //让服务端返回200，不然，默认会返回204
@@ -2498,6 +2539,22 @@
                 }
             });
             up.start();
+            $scope.showProgress = true;
+        }
+
+        function saveImgSrcToUserProfile(src) {
+            var body = {
+                Src: src
+            };
+            $http.put(BaseUrl + '/user-update-picture/' + loggedUser._id, body).then(function (response) {
+                // 更换localStorage中的头像信息
+                loggedUser.AvatarID = src;
+                localStorageService.remove('userInfo');
+                localStorageService.set('userInfo', loggedUser);
+                alertService.showAlert('更换头像成功');
+            }, function (error) {
+                alertService.showAlert('更换用户头像失败，请重试');
+            });
         }
 
         var uploader = new plupload.Uploader({
@@ -2512,31 +2569,44 @@
                     //
                 },
                 FilesAdded: function (up, files) {
-                    $http.get(BaseUrl + '/get-upload-policy').then(function (response) {
-                        set_upload_param(uploader, response.data);
-                    }, function (error) {});
+                    var fileType = files[0].type;
+                    var fileSize = files[0].size;
+                    $scope.progressBarProgress = 0;
+                    if (imageTypes.indexOf(fileType) < 0) {
+                        alertService.showAlert('目前只支持png, jpg, jpeg格式的图片');
+                        uploader.stop();
+                        return;
+                    } else if (fileSize > 1048576) {
+                        alertService.showAlert('请传输小于1Mb的图片');
+                        uploader.stop();
+                        return;
+                    } else {
+                        $http.get(BaseUrl + '/get-upload-policy').then(function (response) {
+                            set_upload_param(uploader, response.data);
+                        }, function (error) {});
+                    }
                 },
                 BeforeUpload: function (up, file) {},
-
-                UploadProgress: function (up, file) {},
-
+                UploadProgress: function (up, file) {
+                    $scope.progressBarProgress = file.percent;
+                },
                 FileUploaded: function (up, file, info) {
                     if (info.status == 200) {
                         var body = {
-                            Key: file.name
+                            Key: loggedUser._id + file.name
                         };
                         $http.put(BaseUrl + '/set-picture-public', body).then(function (response) {
                             $scope.profilePictureSrc = response.data.Src;
+                            saveImgSrcToUserProfile(response.data.Src);
                         }, function (error) {
-                            alertService.showAlert('获取头像失败，请联系管理员');
+                            alertService.showAlert('更换头像失败，请联系管理员');
                         });
                     } else {}
+                    $scope.showProgress = false;
                 },
-
                 Error: function (up, err) {
                     console.log(err);
                 }
-
             }
         });
         uploader.init();
@@ -2622,5 +2692,18 @@
                 $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
             }
         };
-    }]);
+    }]).service('randomString', function () {
+        return {
+            getRandomString: function (len) {
+                len = len || 32;
+                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
+                var maxPos = chars.length;
+                var result = '';
+                for (var i = 0; i < len; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * maxPos));
+                }
+                return result;
+            }
+        };
+    });
 })();

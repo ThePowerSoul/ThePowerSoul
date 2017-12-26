@@ -16,6 +16,7 @@
 		margin-top: 16px;
 		background-color: rgb(255, 255, 255);
 		box-shadow: 1.5px 1.5px 5px rgba(152, 152, 152, 0.5);
+		position: relative;
 	}
 
 	.user-detail-container .user-detail-info {
@@ -47,10 +48,19 @@
 		margin-left: 100px;
 		margin-bottom: 24px;
 	}
+	.profile-pic-progress {
+		position: absolute;
+		top: 62px;
+		left: 224px;;
+		width: 100px;
+		font-size: 24px;
+		color: darkblue;
+	}
 </style>
 <div class="user-detail-container">
 	<div class="user-detail-bar"></div>
 	<div class="user-detail-info">
+		<span class="profile-pic-progress" ng-show="showProgress" layout="row" layout-align="center">{{progressBarProgress + '%'}}</span>
 		<div id="profilePictureContainer" class="picture-info-panel" layout="row" layout-align="start center">
 			<div layout="row" layout-align="start center" flex>
 				<img class="profile-picture" ng-src="{{profilePictureSrc}}" alt="">

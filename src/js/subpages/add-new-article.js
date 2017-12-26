@@ -2,20 +2,38 @@
 	'use strict';
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial'])
 		.controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems',
-			'$stateParams',
-			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams) {
+			'$stateParams', 'randomString',
+			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString) {
+				var accessid = 'LTAILjmmB1fnhHlx';
+				var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
+				var params = {}
+
 				// init simditor
+				// var editor = new Simditor({
+				// 	textarea: $('#editor'),
+				// 	upload: {
+				// 		url : host, //文件上传的接口地址
+				// 		params: params, //键值对,指定文件上传接口的额外参数,上传的时候随文件一起提交
+				// 		fileKey: params.Filename, //服务器端获取文件数据的参数名
+				// 		connectionCount: 3,
+				// 		leaveConfirm: '正在上传图片，确定离开？'
+				// 	},
+				// 	success: function(data) {
+				// 		console.log(data);
+				// 	}
+				// });
+
 				var editor = new Simditor({
 					textarea: $('#editor'),
 					upload: {
-						url : 'http://up.qiniu.com/', //文件上传的接口地址
+						url: BaseUrl + '/upload-picture-rich-text', //文件上传的接口地址
 						params: null, //键值对,指定文件上传接口的额外参数,上传的时候随文件一起提交
-						fileKey: 'file', //服务器端获取文件数据的参数名
+						fileKey: 'upload_file', //服务器端获取文件数据的参数名
 						connectionCount: 3,
 						leaveConfirm: '正在上传图片，确定离开？'
 					},
-					success: function(data) {
-						alert(data);
+					success: function (data) {
+						console.log(data);
 					}
 				});
 
@@ -71,22 +89,29 @@
 						});
 				}
 
-				// 等待添加定时保存草稿的代码
-				function autoSendSaveRequest() {
-
+				function setUploadParams(data) {
+					var randomFileName = randomString.getRandomString(10);
+					params = {
+						'Filename': '${filename}',
+						'key': '${filename}',
+						'policy': data.PolicyText,
+						'OSSAccessKeyId': accessid,
+						'success_action_status': '200', //让服务端返回200，不然，默认会返回204
+						'signature': data.Signature,
+					}
 				}
 
-				function alertSuccessMsg(content) {
-					$mdToast.show(
-						$mdToast.simple()
-							.textContent(content)
-							.highlightClass('md-primary')
-							.position('top right')
-					);
+				function getUploadPolicy() {
+					$http.get(BaseUrl + '/get-upload-policy')
+						.then(function (response) {
+							setUploadParams(response.data);
+						}, function (error) {
+							alertService.showAlert('获取上传文件信息失败，请重试');
+						});
 				}
 
 				function loadArticleDraft() {
-					$http.get(BaseUrl + '/article-draft/' + article_id)
+					return $http.get(BaseUrl + '/article-draft/' + article_id)
 						.then(function (response) {
 							$scope.isLoading = false;
 							$scope.article = response.data;
@@ -96,7 +121,17 @@
 							$scope.isLoadingHasError = true;
 						});
 				}
+				// loadArticleDraft().then(getUploadPolicy());
 				loadArticleDraft();
+
+				function alertSuccessMsg(content) {
+					$mdToast.show(
+						$mdToast.simple()
+							.textContent(content)
+							.highlightClass('md-primary')
+							.position('top right')
+					);
+				}
 
 			}])
 }());
