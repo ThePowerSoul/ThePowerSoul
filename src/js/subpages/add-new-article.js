@@ -153,15 +153,28 @@
 
 				// 记录光标上次的位置、
 				var cursorPosition = -1;
+				var range;
 				$(document).ready(function() {
 					var contentBox = document.getElementsByClassName('simditor-body');
 					contentBox[0].addEventListener('blur', function() {
 						var selection = window.getSelection();
-						var range = selection.getRangeAt(0).cloneRange();
+						range = selection.getRangeAt(0).cloneRange();
 						// range为鼠标离开时所属的元素，可以直接根据元素的内容性质，判断是按照位置插入还是直接append到后面
-						console.log(range); 
+						
 					});
 				});
+
+				function appendVideoIntoEditor(src) {
+					console.log(range);
+					var newVideo = document.createElement('video');
+					newVideo.src = src;
+					newVideo.style.height = '200px';
+					newVideo.style.width = '300px';
+					newVideo.autoplay = 'true';
+					newVideo.controls = 'true';
+					$(newVideo).insertAfter($(range.startContainer));
+					$('<br/>').insertBefore($(newVideo));
+				}
 
 				var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
 
@@ -210,7 +223,9 @@
 								}
 								$http.put(BaseUrl + '/set-video-public', body)
 									.then(function (response) {
-										$scope.videoSrc = response.data.Src;
+										// 收到返回的视频url
+										appendVideoIntoEditor(response.data.Src);
+										// $scope.videoSrc = response.data.Src;
 									}, function (error) {
 										alertService.showAlert('更换头像失败，请联系管理员');
 									});
