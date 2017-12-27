@@ -814,11 +814,23 @@
 			$scope.showProgress = true;
 		}
 
+		// 记录光标上次的位置、
+		var cursorPosition = -1;
+		$(document).ready(function () {
+			var contentBox = document.getElementsByClassName('simditor-body');
+			contentBox[0].addEventListener('blur', function () {
+				var selection = window.getSelection();
+				var range = selection.getRangeAt(0).cloneRange();
+				// range为鼠标离开时所属的元素，可以直接根据元素的内容性质，判断是按照位置插入还是直接append到后面
+				console.log(range);
+			});
+		});
+
 		var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
 
 		var videoUploader = new plupload.Uploader({
 			runtimes: 'html5,flash,silverlight,html4',
-			browse_button: 'videoUpload',
+			browse_button: 'videoUploader',
 			flash_swf_url: 'lib/plupload-2.1.2/js/Moxie.swf',
 			silverlight_xap_url: 'lib/plupload-2.1.2/js/Moxie.xap',
 			url: host,

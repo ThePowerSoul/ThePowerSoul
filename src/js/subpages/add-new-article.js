@@ -4,7 +4,7 @@
 		.controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems',
 			'$stateParams', 'randomString', '$mdDialog', 'alertService',
 			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString,
-				 $mdDialog, alertService) {
+				$mdDialog, alertService) {
 				var accessid = 'LTAILjmmB1fnhHlx';
 				var host = "http://thepowersoul-richtexteditor.oss-cn-beijing.aliyuncs.com";
 				var params = {}
@@ -136,26 +136,38 @@
 
 				var randomKey;
 				function set_upload_param(up, data, name) {
-					randomKey = randomString.getRandomString(10) + '_' + $scope.user._id;					
-                    up.setOption({
-                        'multipart_params': {
-                            'Filename': '${filename}',
-                            'key': randomKey + '${filename}',
-                            'policy': data.PolicyText,
-                            'OSSAccessKeyId': accessid,
-                            'success_action_status': '200', //让服务端返回200，不然，默认会返回204
-                            'signature': data.Signature,
-                        }
-                    });
-                    up.start();
-                    $scope.showProgress = true;
+					randomKey = randomString.getRandomString(10) + '_' + $scope.user._id;
+					up.setOption({
+						'multipart_params': {
+							'Filename': '${filename}',
+							'key': randomKey + '${filename}',
+							'policy': data.PolicyText,
+							'OSSAccessKeyId': accessid,
+							'success_action_status': '200', //让服务端返回200，不然，默认会返回204
+							'signature': data.Signature,
+						}
+					});
+					up.start();
+					$scope.showProgress = true;
 				}
-				
+
+				// 记录光标上次的位置、
+				var cursorPosition = -1;
+				$(document).ready(function() {
+					var contentBox = document.getElementsByClassName('simditor-body');
+					contentBox[0].addEventListener('blur', function() {
+						var selection = window.getSelection();
+						var range = selection.getRangeAt(0).cloneRange();
+						// range为鼠标离开时所属的元素，可以直接根据元素的内容性质，判断是按照位置插入还是直接append到后面
+						console.log(range); 
+					});
+				});
+
 				var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
 
 				var videoUploader = new plupload.Uploader({
 					runtimes: 'html5,flash,silverlight,html4',
-					browse_button: 'videoUpload',
+					browse_button: 'videoUploader',
 					flash_swf_url: 'lib/plupload-2.1.2/js/Moxie.swf',
 					silverlight_xap_url: 'lib/plupload-2.1.2/js/Moxie.xap',
 					url: host,
@@ -180,13 +192,13 @@
 									.then(function (response) {
 										set_upload_param(videoUploader, response.data, files[0].name);
 									}, function (error) {
-	
+
 									});
 							}
-	
+
 						},
 						BeforeUpload: function (up, file) {
-	
+
 						},
 						UploadProgress: function (up, file) {
 							$scope.progressBarProgress = file.percent;
@@ -194,7 +206,7 @@
 						FileUploaded: function (up, file, info) {
 							if (info.status == 200) {
 								var body = {
-									Key: randomKey +  file.name
+									Key: randomKey + file.name
 								}
 								$http.put(BaseUrl + '/set-video-public', body)
 									.then(function (response) {
@@ -204,7 +216,7 @@
 									});
 							}
 							else {
-	
+
 							}
 							$scope.showProgress = false;
 						},
