@@ -622,61 +622,6 @@
     }]);
 })();
 (function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).filter('categoryFilter', function () {
-        return function (str) {
-            var result = "";
-            switch (str) {
-                case 'STRENGTH':
-                    result = "力量训练";
-                    break;
-                case 'YOGA':
-                    result = "瑜伽训练";
-                    break;
-                case 'FITNESS':
-                    result = "形体训练";
-                    break;
-                case 'RUNNING':
-                    result = "跑步训练";
-                    break;
-            }
-            return result;
-        };
-    }).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
-            }
-        };
-    }]).service('randomString', function () {
-        return {
-            getRandomString: function (len) {
-                len = len || 32;
-                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
-                var maxPos = chars.length;
-                var result = '';
-                for (var i = 0; i < len; i++) {
-                    result += chars.charAt(Math.floor(Math.random() * maxPos));
-                }
-                return result;
-            }
-        };
-    });
-})();
-(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', 'randomString', '$mdDialog', 'alertService', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString, $mdDialog, alertService) {
@@ -1285,12 +1230,16 @@
             });
         }
 
+        function addArticleView() {
+            $http.put(BaseUrl + '/article/' + article_id).then(function (response) {}, function (error) {});
+        }
+
         function getComments(pageNum, isLoadingMore) {
             var body = {
                 PageNum: pageNum
             };
             $scope.isLoadingComments = true;
-            $http.post(BaseUrl + '/comment/' + article_id, body).then(function (response) {
+            return $http.post(BaseUrl + '/comment/' + article_id, body).then(function (response) {
                 $scope.isLoadingComments = false;
                 if (isLoadingMore) {
                     $scope.comments = $scope.comments.concat(response.data);
@@ -1315,7 +1264,7 @@
                 $scope.isLoading = false;
             });
         }
-        getArticle().then(getComments(1, false));
+        getArticle().then(getComments(1, false).then(addArticleView()));
     }]);
 })();
 (function () {
@@ -1866,6 +1815,8 @@
 		$scope.selectorItems = selectorItems;
 		$scope.topicList = [];
 		$scope.articleList = [];
+		$scope.hotTopics = [];
+		$scope.hotArticles = [];
 		$scope.isLoadingTopic = false;
 		$scope.isLoadingArticle = false;
 		$scope.isLoadingTopicHasError = false;
@@ -2052,16 +2003,28 @@
 
 		$scope.changeCategoryFilter = function () {
 			pageNum = 1;
-			loadTopics(pageNum, $scope.selectedItem, '', false);
+			if ($scope.showTopic) {
+				loadTopics(pageNum, $scope.selectedItem, '', false);
+			} else {
+				loadArticles(pageNum, $scope.selectedItem, '', false);
+			}
 		};
 
 		$scope.loadMore = function () {
-			loadTopics(++pageNum, $scope.selectedItem, '', true);
+			loadTopics(++pageNum, $scope.selectedItem, '', true).then(loadHotTopics().then(loadHotArticles()));
 		};
 
 		$scope.loadMoreArticle = function () {
-			loadArticles(++articlePageNum, $scope.selectedItem, '', true);
+			loadArticles(++articlePageNum, $scope.selectedItem, '', true).then(loadHotTopics().then(loadHotArticles()));
 		};
+
+		function loadHotTopics() {
+			return $http.get(BaseUrl + '/topic').then(function (response) {}, function (error) {});
+		}
+
+		function loadHotArticles() {
+			$http.get(BaseUrl + '/article').then(function (response) {}, function (error) {});
+		}
 
 		function loadArticles(pageNum, category, keyword, isLoadingMore) {
 			var body = {
@@ -2088,7 +2051,7 @@
 				$scope.isLoadingArticle = false;
 			});
 		}
-		loadArticles(1, 'ALL', '', false);
+		// loadArticles(1, 'ALL', '', false);
 
 		/********************** 初始化加载帖子信息 ********************/
 		function loadTopics(pageNum, category, keyword, loadMoreSignal) {
@@ -2115,7 +2078,9 @@
 				$scope.isLoadingHasError = true;
 			});
 		}
-		loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
+		// loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
+
+		loadTopics(1, 'ALL', '', false).then(loadArticles(1, 'ALL', '', false).then(loadHotTopics().then(loadHotArticles())));
 	}]);
 })();
 (function () {
@@ -2532,6 +2497,10 @@
 			});
 		}
 
+		function addTopicView() {
+			$http.put(BaseUrl + '/topic/' + topic_id).then(function (response) {}, function (error) {});
+		}
+
 		/*
   	回复评论
   */
@@ -2602,7 +2571,7 @@
 			var body = {
 				PageNum: pageNum
 			};
-			$http.post(BaseUrl + '/comment/' + topic_id, body).then(function (response) {
+			return $http.post(BaseUrl + '/comment/' + topic_id, body).then(function (response) {
 				$scope.isLoadingComments = false;
 				if (isLoadingMore) {
 					$scope.commentList = $scope.commentList.concat(response.data);
@@ -2618,7 +2587,7 @@
 			});
 		}
 
-		loadTopicDetail().then(loadTopicComments(1, false));
+		loadTopicDetail().then(loadTopicComments(1, false).then(addTopicView()));
 	}]);
 })();
 (function () {
@@ -2807,4 +2776,59 @@
             }
         };
     }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).filter('categoryFilter', function () {
+        return function (str) {
+            var result = "";
+            switch (str) {
+                case 'STRENGTH':
+                    result = "力量训练";
+                    break;
+                case 'YOGA':
+                    result = "瑜伽训练";
+                    break;
+                case 'FITNESS':
+                    result = "形体训练";
+                    break;
+                case 'RUNNING':
+                    result = "跑步训练";
+                    break;
+            }
+            return result;
+        };
+    }).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
+            }
+        };
+    }]).service('randomString', function () {
+        return {
+            getRandomString: function (len) {
+                len = len || 32;
+                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
+                var maxPos = chars.length;
+                var result = '';
+                for (var i = 0; i < len; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * maxPos));
+                }
+                return result;
+            }
+        };
+    });
 })();

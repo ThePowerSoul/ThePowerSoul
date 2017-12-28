@@ -31,6 +31,8 @@
 				$scope.selectorItems = selectorItems;
 				$scope.topicList = [];
 				$scope.articleList = [];
+				$scope.hotTopics = [];
+				$scope.hotArticles = [];
 				$scope.isLoadingTopic = false;
 				$scope.isLoadingArticle = false;
 				$scope.isLoadingTopicHasError = false;
@@ -43,7 +45,7 @@
 				var articlePageNum = 1;
 				var user = localStorageService.get('userInfo');
 
-				$scope.switchDisplay = function(evt) {
+				$scope.switchDisplay = function (evt) {
 					$scope.showTopic = !$scope.showTopic;
 					$scope.switchButtonText = '看帖子';
 				};
@@ -198,7 +200,7 @@
 						});
 				};
 
-				$scope.goAddArticleToFav = function(article, ev) {
+				$scope.goAddArticleToFav = function (article, ev) {
 					$http.put(BaseUrl + '/user-article-fav/' + user._id + '/' + article._id)
 						.then(function (response) {
 							alertService.showAlert('收藏成功', ev);
@@ -230,18 +232,44 @@
 						});
 				}
 
-				$scope.changeCategoryFilter = function() {
+				$scope.changeCategoryFilter = function () {
 					pageNum = 1;
-					loadTopics(pageNum, $scope.selectedItem, '', false);
+					if ($scope.showTopic) {
+						loadTopics(pageNum, $scope.selectedItem, '', false);
+					} else {
+						loadArticles(pageNum, $scope.selectedItem, '', false);
+					}
 				};
 
-				$scope.loadMore = function() {
-					loadTopics(++pageNum, $scope.selectedItem, '', true);
+				$scope.loadMore = function () {
+					loadTopics(++pageNum, $scope.selectedItem, '', true)
+						.then(loadHotTopics()
+							.then(loadHotArticles()));
 				};
 
-				$scope.loadMoreArticle = function() {
-					loadArticles(++articlePageNum, $scope.selectedItem, '', true);
+				$scope.loadMoreArticle = function () {
+					loadArticles(++articlePageNum, $scope.selectedItem, '', true)
+						.then(loadHotTopics()
+							.then(loadHotArticles()));
 				};
+
+				function loadHotTopics() {
+					return $http.get(BaseUrl + '/topic')
+						.then(function (response) {
+
+						}, function (error) {
+
+						});
+				}
+
+				function loadHotArticles() {
+					$http.get(BaseUrl + '/article')
+						.then(function (response) {
+
+						}, function (error) {
+
+						});
+				}
 
 				function loadArticles(pageNum, category, keyword, isLoadingMore) {
 					var body = {
@@ -255,7 +283,7 @@
 					}
 					$scope.isLoadingArticle = true;
 					$http.post(BaseUrl + '/articles', body)
-						.then(function(response) {
+						.then(function (response) {
 							$scope.isLoadingArticle = false;
 							if (isLoadingMore) {
 								$scope.articleList = $scope.articleList.concat(response.data);
@@ -265,11 +293,11 @@
 							} else {
 								$scope.articleList = response.data;
 							}
-						}, function(error) {
+						}, function (error) {
 							$scope.isLoadingArticle = false;
 						});
 				}
-				loadArticles(1, 'ALL', '', false);
+				// loadArticles(1, 'ALL', '', false);
 
 				/********************** 初始化加载帖子信息 ********************/
 				function loadTopics(pageNum, category, keyword, loadMoreSignal) {
@@ -297,7 +325,12 @@
 							$scope.isLoadingHasError = true;
 						});
 				}
-				loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
+				// loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
+
+				loadTopics(1, 'ALL', '', false)
+					.then(loadArticles(1, 'ALL', '', false)
+						.then(loadHotTopics()
+							.then(loadHotArticles())));
 
 			}])
 }());

@@ -143,12 +143,21 @@
                     });
             }
 
+            function addArticleView() {
+                $http.put(BaseUrl + '/article/' + article_id)
+                    .then(function(response) {
+
+                    }, function(error) {
+
+                    });
+            }
+
             function getComments(pageNum, isLoadingMore) {
                 var body = {
                     PageNum: pageNum
                 }
                 $scope.isLoadingComments = true;
-                $http.post(BaseUrl + '/comment/' + article_id, body)
+                return $http.post(BaseUrl + '/comment/' + article_id, body)
                     .then(function(response) {
                         $scope.isLoadingComments = false;
                         if (isLoadingMore) {
@@ -175,7 +184,7 @@
                         $scope.isLoading = false;
                     });
             }
-            getArticle().then(getComments(1, false));
+            getArticle().then(getComments(1, false).then(addArticleView()));
 
     	}])
 }());
