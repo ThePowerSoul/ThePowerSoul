@@ -50,6 +50,16 @@
 					$scope.switchButtonText = '看帖子';
 				};
 
+				$scope.goTopicDetail = function(topic) {
+					var url = $state.href('topic-detail', { id: topic._id });
+					window.open(url, '_blank');
+				};	
+
+				$scope.goArticleDetail = function(article) {
+					var url = $state.href('article-detail', { id: article._id });
+					window.open(url, '_blank');
+				};
+
 				/********************** 页面新建文章按钮操作 ********************/
 				$scope.addNewArticle = function (ev) {
 					if (localStorageService.get('userInfo')) {
