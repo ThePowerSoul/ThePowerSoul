@@ -38,6 +38,8 @@
 				});
 
 				$scope.simditorContent = $('.simditor-body')[0].innerHTML;
+				$scope.isUploading = false;
+				$scope.uploadingProgress = 0;
 
 				var article_id = $stateParams.id;
 				$scope.videoSrc = "";
@@ -154,26 +156,31 @@
 				// 记录光标上次的位置、
 				var cursorPosition = -1;
 				var range;
-				$(document).ready(function() {
+				$(document).ready(function () {
 					var contentBox = document.getElementsByClassName('simditor-body');
-					contentBox[0].addEventListener('blur', function() {
+					contentBox[0].addEventListener('blur', function () {
 						var selection = window.getSelection();
 						range = selection.getRangeAt(0).cloneRange();
 						// range为鼠标离开时所属的元素，可以直接根据元素的内容性质，判断是按照位置插入还是直接append到后面
-						
+
 					});
 				});
 
 				function appendVideoIntoEditor(src) {
-					console.log(range);
 					var newVideo = document.createElement('video');
 					newVideo.src = src;
 					newVideo.style.height = '200px';
 					newVideo.style.width = '300px';
-					newVideo.autoplay = 'true';
+					newVideo.autoplay = 'false';
 					newVideo.controls = 'true';
 					$(newVideo).insertAfter($(range.startContainer));
 					$('<br/>').insertBefore($(newVideo));
+					var newRange = document.createRange();
+					var selection = window.getSelection();
+					newRange.setStartBefore(newVideo);
+					newRange.setEndAfter(newVideo);
+					selection.removeAllRanges();
+					selection.addRange(newRange);
 				}
 
 				var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
@@ -203,6 +210,7 @@
 							} else {
 								$http.get(BaseUrl + '/get-upload-policy')
 									.then(function (response) {
+										$scope.isUploading = true;
 										set_upload_param(videoUploader, response.data, files[0].name);
 									}, function (error) {
 
@@ -214,7 +222,8 @@
 
 						},
 						UploadProgress: function (up, file) {
-							$scope.progressBarProgress = file.percent;
+							$scope.uploadingProgress = file.percent;
+							$scope.$apply();
 						},
 						FileUploaded: function (up, file, info) {
 							if (info.status == 200) {
@@ -224,18 +233,19 @@
 								$http.put(BaseUrl + '/set-video-public', body)
 									.then(function (response) {
 										// 收到返回的视频url
+										$scope.isUploading = false;
 										appendVideoIntoEditor(response.data.Src);
 										// $scope.videoSrc = response.data.Src;
 									}, function (error) {
 										alertService.showAlert('更换头像失败，请联系管理员');
 									});
-							}
-							else {
+							} else {
 
 							}
 							$scope.showProgress = false;
 						},
 						Error: function (up, err) {
+							$scope.isUploading = false;
 							console.log(err);
 						}
 					}

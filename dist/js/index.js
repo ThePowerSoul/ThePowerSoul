@@ -611,6 +611,10 @@
             $state.go('mall');
         };
 
+        $scope.reload = function () {
+            location.reload();
+        };
+
         $scope.$on('destroy', function () {
             userLoggedInListener();
             userLoggedInListener = null;
@@ -658,6 +662,8 @@
 		});
 
 		$scope.simditorContent = $('.simditor-body')[0].innerHTML;
+		$scope.isUploading = false;
+		$scope.uploadingProgress = 0;
 
 		var article_id = $stateParams.id;
 		$scope.videoSrc = "";
@@ -772,15 +778,20 @@
 		});
 
 		function appendVideoIntoEditor(src) {
-			console.log(range);
 			var newVideo = document.createElement('video');
 			newVideo.src = src;
 			newVideo.style.height = '200px';
 			newVideo.style.width = '300px';
-			newVideo.autoplay = 'true';
+			newVideo.autoplay = 'false';
 			newVideo.controls = 'true';
 			$(newVideo).insertAfter($(range.startContainer));
 			$('<br/>').insertBefore($(newVideo));
+			var newRange = document.createRange();
+			var selection = window.getSelection();
+			newRange.setStartBefore(newVideo);
+			newRange.setEndAfter(newVideo);
+			selection.removeAllRanges();
+			selection.addRange(newRange);
 		}
 
 		var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
@@ -809,13 +820,15 @@
 						return;
 					} else {
 						$http.get(BaseUrl + '/get-upload-policy').then(function (response) {
+							$scope.isUploading = true;
 							set_upload_param(videoUploader, response.data, files[0].name);
 						}, function (error) {});
 					}
 				},
 				BeforeUpload: function (up, file) {},
 				UploadProgress: function (up, file) {
-					$scope.progressBarProgress = file.percent;
+					$scope.uploadingProgress = file.percent;
+					$scope.$apply();
 				},
 				FileUploaded: function (up, file, info) {
 					if (info.status == 200) {
@@ -824,6 +837,7 @@
 						};
 						$http.put(BaseUrl + '/set-video-public', body).then(function (response) {
 							// 收到返回的视频url
+							$scope.isUploading = false;
 							appendVideoIntoEditor(response.data.Src);
 							// $scope.videoSrc = response.data.Src;
 						}, function (error) {
@@ -833,6 +847,7 @@
 					$scope.showProgress = false;
 				},
 				Error: function (up, err) {
+					$scope.isUploading = false;
 					console.log(err);
 				}
 			}
@@ -1834,6 +1849,16 @@
 			$scope.switchButtonText = '看帖子';
 		};
 
+		$scope.goTopicDetail = function (topic) {
+			var url = $state.href('topic-detail', { id: topic._id });
+			window.open(url, '_blank');
+		};
+
+		$scope.goArticleDetail = function (article) {
+			var url = $state.href('article-detail', { id: article._id });
+			window.open(url, '_blank');
+		};
+
 		/********************** 页面新建文章按钮操作 ********************/
 		$scope.addNewArticle = function (ev) {
 			if (localStorageService.get('userInfo')) {
@@ -2019,11 +2044,15 @@
 		};
 
 		function loadHotTopics() {
-			return $http.get(BaseUrl + '/topic').then(function (response) {}, function (error) {});
+			return $http.get(BaseUrl + '/topic').then(function (response) {
+				$scope.hotTopics = response.data;
+			}, function (error) {});
 		}
 
 		function loadHotArticles() {
-			$http.get(BaseUrl + '/article').then(function (response) {}, function (error) {});
+			$http.get(BaseUrl + '/article').then(function (response) {
+				$scope.hotArticles = response.data;
+			}, function (error) {});
 		}
 
 		function loadArticles(pageNum, category, keyword, isLoadingMore) {
@@ -2037,7 +2066,7 @@
 				body.LoadAll = true;
 			}
 			$scope.isLoadingArticle = true;
-			$http.post(BaseUrl + '/articles', body).then(function (response) {
+			return $http.post(BaseUrl + '/articles', body).then(function (response) {
 				$scope.isLoadingArticle = false;
 				if (isLoadingMore) {
 					$scope.articleList = $scope.articleList.concat(response.data);
@@ -2065,7 +2094,7 @@
 				body.LoadAll = true;
 			}
 			$scope.isLoadingTopic = true;
-			$http.post(BaseUrl + "/topic", body).then(function (response) {
+			return $http.post(BaseUrl + "/topic", body).then(function (response) {
 				if (loadMoreSignal) {
 					$scope.topicList = $scope.topicList.concat(response.data);
 				} else {

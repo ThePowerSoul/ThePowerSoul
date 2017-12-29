@@ -286,9 +286,9 @@
         <div class="recommend-panel">
             <div>
                 <span class="recommend-title md-body-1">热帖</span>
-                <div class="topic-recommend" layout="row" layout-align="start center">
-                    <span class="md-body-1">当前没有推荐的帖子</span>
-                    <div class="topic-recommendation" layout="row" layout-align="start center" ng-repeat="topic in hotTopics trackBy $index"> 
+                <div class="topic-recommend">
+                    <span class="md-body-1" ng-show="hotTopics.length === 0">当前没有推荐的帖子</span>
+                    <div class="topic-recommendation" layout="row" layout-align="start center" ng-repeat="topic in hotTopics track by $index"> 
                         <span class="md-body-1">{{$index + 1}}</span>
                         <span class="md-body-1" ng-bind="topic.Title" ng-click="goTopicDetail(topic)"></span>
                         <span class="md-body-1">[</span>
@@ -299,9 +299,9 @@
             </div>
             <div>
                 <span class="recommend-title md-body-1">热文</span>
-                <div class="article-recommend" layout="row" layout-align="start center">
-                    <span class="md-body-1">当前没有推荐的文章</span>
-                    <div class="article-recommendation" layout="row" layout-align="start center" ng-repeat="article in hotArticles trackBy $index">
+                <div class="article-recommend">
+                    <span class="md-body-1" ng-show="hotArticles.length === 0">当前没有推荐的文章</span>
+                    <div class="article-recommendation" layout="row" layout-align="start center" ng-repeat="article in hotArticles track by $index">
                         <span class="md-body-1">{{$index + 1}}</span>
                         <span class="md-body-1" ng-bind="article.Title" ng-click="goArticleDetail(article)"></span>
                         <span class="md-body-1">[</span>

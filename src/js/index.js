@@ -689,6 +689,10 @@
                     $state.go('mall');
                 };
 
+                $scope.reload = function() {
+                    location.reload();
+                };
+
                 $scope.$on('destroy', function () {
                     userLoggedInListener();
                     userLoggedInListener = null;

@@ -266,7 +266,7 @@
 				function loadHotTopics() {
 					return $http.get(BaseUrl + '/topic')
 						.then(function (response) {
-
+							$scope.hotTopics = response.data;
 						}, function (error) {
 
 						});
@@ -275,7 +275,7 @@
 				function loadHotArticles() {
 					$http.get(BaseUrl + '/article')
 						.then(function (response) {
-
+							$scope.hotArticles = response.data;
 						}, function (error) {
 
 						});
@@ -292,7 +292,7 @@
 						body.LoadAll = true;
 					}
 					$scope.isLoadingArticle = true;
-					$http.post(BaseUrl + '/articles', body)
+					return $http.post(BaseUrl + '/articles', body)
 						.then(function (response) {
 							$scope.isLoadingArticle = false;
 							if (isLoadingMore) {
@@ -321,7 +321,7 @@
 						body.LoadAll = true;
 					}
 					$scope.isLoadingTopic = true;
-					$http.post(BaseUrl + "/topic", body)
+					return $http.post(BaseUrl + "/topic", body)
 						.then(function (response) {
 							if (loadMoreSignal) {
 								$scope.topicList = $scope.topicList.concat(response.data);

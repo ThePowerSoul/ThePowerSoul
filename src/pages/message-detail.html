@@ -74,7 +74,7 @@
         <span class="md-body-1">&nbsp;&nbsp;正在删除，请稍后...</span>
     </div>
     <div class="message-conversation-container" ng-show="!isDeleting">
-        <div class="message-item" ng-hide="showMessageOrNot(message)" ng-repeat="message in messages | orderBy: message.CreatedAt:true">
+        <div class="message-item" ng-hide="showMessageOrNot(message)" ng-repeat="message in messages">
             <md-divider class="message-item-divider"></md-divider>
             <div layout="row" layout-align="start center">
                 <div flex>
