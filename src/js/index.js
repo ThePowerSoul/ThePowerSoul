@@ -29,15 +29,15 @@
                 return $sce.trustAsHtml(text);
             };
         }])
-        .filter('to_trusted_video', ['$sce', function($sce) {
+        .filter('to_trusted_video', ['$sce', function ($sce) {
             return function (text) {
                 return $sce.trustAsResourceUrl(text);
             }
         }])
-        .factory('authorizationService', function($http, $q, $rootScope, BaseUrl, localStorageService, $state, alertService) {
+        .factory('authorizationService', function ($http, $q, $rootScope, BaseUrl, localStorageService, $state, alertService) {
             return {
-                permissionModel: {permission: {}, isPermissionLoaded: false},
-                permissionCheck: function() {
+                permissionModel: { permission: {}, isPermissionLoaded: false },
+                permissionCheck: function () {
                     var token;
                     if (localStorageService.get('token')) {
                         token = localStorageService.get('token').Token;
@@ -50,13 +50,13 @@
                         // auth successful
                     } else {
                         $http.post(BaseUrl + '/permission-service', null, {
-                                headers : {'Authorization' : token}
-                            })
-                            .then(function(response) {
+                            headers: { 'Authorization': token }
+                        })
+                            .then(function (response) {
                                 pointer.permissionModel.permission = response;
                                 pointer.permissionModel.isPermissionLoaded = true;
                                 pointer.getPermission(pointer.permissionModel, defer);
-                            }, function(error) {
+                            }, function (error) {
                                 $state.go('introduction');
                                 if (error.status === 400) {
                                     alertService.showAlert(error.data);
@@ -68,164 +68,175 @@
                     }
                     return defer;
                 },
-                getPermission: function(model, defer) {
+                getPermission: function (model, defer) {
                     var isPermissionPassed = false;
                     if (model.permission !== {} && model.isPermissionLoaded === true) {
                         isPermissionPassed = true;
                     }
                     if (!isPermissionPassed) {
                         $state.go('introduction');
-                    } 
+                    }
                     defer.resolve();
                 }
             }
         })
-        .config(['$stateProvider', '$urlRouterProvider', '$locationProvider', 
+        .config(['$stateProvider', '$urlRouterProvider', '$locationProvider',
             function ($stateProvider, $urlRouterProvider, $locationProvider) {
-            $urlRouterProvider
-                .when('/', 'introduction')
-                .otherwise(function($injector){
-                    var state = $injector.get('$state');
-                    state.go('404');
-                 });
-            // $locationProvider.html5Mode(true);
-            $stateProvider
-                .state('404', {
-                    url: '/error',
-                    templateUrl: 'dist/pages/not-found.html',
-                    controller: 'notFoundCtrl'
-                })
-                .state('introduction', {
-                    url: '/introduction',
-                    templateUrl: 'dist/pages/introduction.html',
-                    controller: 'introductionCtrl',
-                })
-                .state('square', {
-                    url: '/square',
-                    templateUrl: 'dist/pages/square.html',
-                    controller: 'squareCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                $urlRouterProvider
+                    .when('/', 'introduction')
+                    .otherwise(function ($injector) {
+                        var state = $injector.get('$state');
+                        state.go('404');
+                    });
+                // $locationProvider.html5Mode(true);
+                $stateProvider
+                    .state('404', {
+                        url: '/error',
+                        templateUrl: 'dist/pages/not-found.html',
+                        controller: 'notFoundCtrl'
+                    })
+                    .state('introduction', {
+                        url: '/introduction',
+                        templateUrl: 'dist/pages/introduction.html',
+                        controller: 'introductionCtrl',
+                    })
+                    .state('square', {
+                        url: '/square',
+                        templateUrl: 'dist/pages/square.html',
+                        controller: 'squareCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('bbs', {
-                    url: '/bbs',
-                    templateUrl: 'dist/pages/bbs.html',
-                    controller: 'bbsCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('bbs', {
+                        url: '/bbs',
+                        templateUrl: 'dist/pages/bbs.html',
+                        controller: 'bbsCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('topic-detail', {
-                    url: '/topic-detail/{id}',
-                    templateUrl: 'dist/pages/topic-detail.html',
-                    controller: 'topicDetailCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('topic-detail', {
+                        url: '/topic-detail/{id}',
+                        templateUrl: 'dist/pages/topic-detail.html',
+                        controller: 'topicDetailCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('new-article', {
-                    url: '/new-article/{id}',
-                    templateUrl: 'dist/pages/add-new-article.html',
-                    controller: 'addNewArticleCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('new-article', {
+                        url: '/new-article/{id}',
+                        templateUrl: 'dist/pages/add-new-article.html',
+                        controller: 'addNewArticleCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('user-detail', {
-                    url: '/user-detail/{id}',
-                    templateUrl: 'dist/pages/user-detail.html',
-                    controller: 'userDetailCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('user-detail', {
+                        url: '/user-detail/{id}',
+                        templateUrl: 'dist/pages/user-detail.html',
+                        controller: 'userDetailCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('mall', {
-                    url: '/mall',
-                    templateUrl: 'dist/pages/mall.html',
-                    controller: 'mallCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('mall', {
+                        url: '/mall',
+                        templateUrl: 'dist/pages/mall.html',
+                        controller: 'mallCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('article-list', {
-                    url: '/article-list',
-                    templateUrl: 'dist/pages/article-list.html',
-                    controller: 'articleListCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('article-list', {
+                        url: '/article-list',
+                        templateUrl: 'dist/pages/article-list.html',
+                        controller: 'articleListCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('article-detail', {
-                    url: '/article-detail/{id}',
-                    templateUrl: 'dist/pages/article-detail.html',
-                    controller: 'articleDetailCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('article-detail', {
+                        url: '/article-detail/{id}',
+                        templateUrl: 'dist/pages/article-detail.html',
+                        controller: 'articleDetailCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('fav-list', {
-                    url: '/fav-list',
-                    templateUrl: 'dist/pages/fav-list.html',
-                    controller: 'favListCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('fav-list', {
+                        url: '/fav-list',
+                        templateUrl: 'dist/pages/fav-list.html',
+                        controller: 'favListCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('message-detail', {
-                    url: '/message-detail/{id}',
-                    templateUrl: 'dist/pages/message-detail.html',
-                    controller: 'messageDetailCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('message-detail', {
+                        url: '/message-detail/{id}',
+                        templateUrl: 'dist/pages/message-detail.html',
+                        controller: 'messageDetailCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                })
-                .state('all-messages', {
-                    url: '/all-messages/{id}',
-                    templateUrl: 'dist/pages/all-messages.html',
-                    controller: 'allMessagesCtrl',
-                    reload: true,
-                    resolve: {
-                        permission: function(authorizationService) {
-                            return authorizationService.permissionCheck();
+                    })
+                    .state('all-messages', {
+                        url: '/all-messages/{id}',
+                        templateUrl: 'dist/pages/all-messages.html',
+                        controller: 'allMessagesCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
                         }
-                    }
-                });
-        }])
-        .controller('notFoundCtrl', ['$scope', '$state', function($scope, $state) {
-            $scope.goBackToIntroduction = function() {
+                    })
+                    .state('search-results', {
+                        url: '/search-results/{id}',
+                        templateUrl: 'dist/pages/search-results.html',
+                        controller: 'searchResultsCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
+                        }
+                    });
+            }])
+        .controller('notFoundCtrl', ['$scope', '$state', function ($scope, $state) {
+            $scope.goBackToIntroduction = function () {
                 $state.go('introduction');
-            };  
+            };
         }])
         .controller('sendNewPrivateMessageCtrl', ['$scope', '$mdDialog', '$http', 'BaseUrl', 'localStorageService',
             'alertService',
@@ -403,18 +414,18 @@
                     if (waitSeconds <= 0) {
                         $scope.isCountingDown = false;
                         $scope.sendButtonText = "发送验证码";
-                        waitSeconds = 60;
+                        waitSeconds = 120;
                     } else {
                         $scope.isCountingDown = true;
                         $scope.sendButtonText = "重新发送(" + waitSeconds + ")";
                         waitSeconds--;
-                        $timeout(function() {
+                        $timeout(function () {
                             time();
                         }, 1000);
                     }
                 }
-                
-                $scope.disableVerifyEmailButtonOrNot = function() {
+
+                $scope.disableVerifyEmailButtonOrNot = function () {
                     return $scope.isSendingEmail || $scope.isCountingDown || $scope.newUser.EmailVerifyCode !== '';
                 };
 
@@ -454,7 +465,7 @@
                         .then(function (response) {
                             $scope.isLogining = false;
                             localStorageService.set('userInfo', response.data);
-                            localStorageService.set('token', {Token: response.data.SessionID});
+                            localStorageService.set('token', { Token: response.data.SessionID });
                             $mdDialog.hide();
                             $state.go('square');
                         }, function (error) {
@@ -480,6 +491,7 @@
                             $scope.isSigningup = false;
                             if (error.status === 400 && error.data === "邮箱已存在") {
                                 $scope.newUser.Email = "邮箱已存在，请重新输入";
+                                $scope.isCountingDown = false;
                             } else if (error.status === 400 && error.data === "显示名已被占用") {
                                 $scope.newUser.DisplayName = "显示名已被占用，请重新输入";
                             } else if (error.status === 400) {
@@ -525,7 +537,7 @@
         .controller('mainCtrl', ['$scope', '$state', '$http', '$rootScope', '$mdDialog', 'localStorageService', 'BaseUrl',
             'authorizationService', 'alertService',
             function ($scope, $state, $http, $rootScope, $mdDialog, localStorageService, BaseUrl, authorizationService
-            ,alertService) {
+                , alertService) {
                 $scope.loggedIn = false;
                 $scope.loggedInUser = null;
                 $scope.hasNewMessage = false;
@@ -537,7 +549,7 @@
                     loadMessages();
                 }
 
-                var sessionExpired = $rootScope.$on('$ONSESSIONEXPIRED', function() {
+                var sessionExpired = $rootScope.$on('$ONSESSIONEXPIRED', function () {
                     $scope.loggedIn = false;
                 });
 
@@ -588,14 +600,14 @@
                         alertService.showAlert('登出异常');
                     }
                     $http.post(BaseUrl + '/remove-session', null, {
-                        headers : {'Authorization' : token}
+                        headers: { 'Authorization': token }
                     })
-                        .then(function(response) {
+                        .then(function (response) {
                             $scope.loggedIn = false;
                             localStorageService.remove('userInfo');
                             localStorageService.remove('token');
                             $state.go('introduction');
-                        }, function(error) {
+                        }, function (error) {
                             $scope.loggedIn = false;
                             localStorageService.remove('userInfo');
                             localStorageService.remove('token');
@@ -633,7 +645,7 @@
                 $scope.listPrivateMessage = function (ev) {
                     if (!authorizationService.permissionModel.isPermissionLoaded) {
                         alertService.showAlert('请先登录');
-                        return; 
+                        return;
                     }
                     $mdDialog.show({
                         controller: 'listPrivateMessageCtrl',
@@ -642,12 +654,7 @@
                         targetEvent: ev,
                         clickOutsideToClose: false,
                         fullscreen: false
-                    })
-                        .then(function (data) {
-                            //
-                        }, function () {
-                            // canceled mdDialog
-                        });
+                    });
                 };
 
                 $scope.goToUserDetail = function () {
@@ -689,7 +696,7 @@
                     $state.go('mall');
                 };
 
-                $scope.reload = function() {
+                $scope.reload = function () {
                     location.reload();
                 };
 

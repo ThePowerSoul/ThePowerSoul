@@ -1,0 +1,17 @@
+<style>
+
+</style>
+<div class="search-results-container">
+    <md-button ng-click="switchPanel()" ng-bind="switchButtonText"></md-button>
+    <span class="md-body-1">搜索结果：</span>
+    <div class="search-results-topic" ng-show="showTopicPanel">
+        <div class="search-results-item" ng-repeat="topic in topics">
+
+        </div>
+    </div>
+    <div class="search-results-article" ng-show="!showTopicPanel">
+        <div class="search-results-item" ng-repeat="article in articles">
+
+        </div>
+    </div>
+</div>
