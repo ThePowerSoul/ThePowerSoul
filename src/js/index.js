@@ -16,6 +16,7 @@
         'The.Power.Soul.Message.Detail',
         'The.Power.Soul.All.Messages',
         'The.Power.Soul.Report',
+        'The.Power.Soul.Search.Results',
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router', 'ngSanitize'].concat(subModules))
@@ -24,7 +25,7 @@
             localStorageServiceProvider
                 .setPrefix('thepowersoul');
         })
-        .filter('to_trusted', ['$sce', function ($sce) {
+        .filter('to_trusted_html', ['$sce', function ($sce) {
             return function (text) {
                 return $sce.trustAsHtml(text);
             };
@@ -220,11 +221,9 @@
                                 return authorizationService.permissionCheck();
                             }
                         }
-<<<<<<< HEAD
-=======
                     })
                     .state('search-results', {
-                        url: '/search-results/{id}',
+                        url: '/search-results/{keyword}',
                         templateUrl: 'dist/pages/search-results.html',
                         controller: 'searchResultsCtrl',
                         reload: true,
@@ -233,7 +232,6 @@
                                 return authorizationService.permissionCheck();
                             }
                         }
->>>>>>> 5185151c989802b387b98114627a1012ed15c304
                     });
             }])
         .controller('notFoundCtrl', ['$scope', '$state', function ($scope, $state) {
@@ -549,6 +547,7 @@
                 $scope.searchKeyword = "";
                 $scope.topicSearchResults = [];
                 $scope.articleSearchResults = [];
+                $scope.showSearchPanel = false;
                 // 检查当前是否有用户登录
                 if (localStorageService.get('userInfo')) {
                     updateUserLoginState();
@@ -684,10 +683,31 @@
                 };
 
                 $scope.searchKeyboard = function (ev) {
+                    if (ev.keyCode === 13) {
+                        $scope.showSearchPanel = true;
+                        var body = {
+                            Page: 1,
+                            Category: 'ALL',
+                            Keyword: $scope.searchKeyword,
+                            LoadAll: true
+                        }
+                        $http.post(BaseUrl + "/topic", body)
+                            .then(function (response) {
+                                $scope.topicSearchResults = response.data;
+                            }, function (error) {
 
+                            });
+                        $http.post(BaseUrl + "/articles", body)
+                            .then(function (response) {
+                                $scope.articleSearchResults = response.data;
+                            }, function (error) {
+
+                            });
+                    }
                 };
 
                 $scope.search = function () {
+                    $scope.showSearchPanel = true;
                     var body = {
                         Page: 1,
                         Category: 'ALL',
@@ -700,12 +720,31 @@
                         }, function (error) {
 
                         });
-                    $http.post(BaseUrl + "/article", body)
+                    $http.post(BaseUrl + "/articles", body)
                         .then(function (response) {
                             $scope.articleSearchResults = response.data;
                         }, function (error) {
 
                         });
+                };
+
+                $scope.closeSearch = function () {
+                    $scope.showSearchPanel = false;
+                };
+
+                $scope.seeAllResults = function () {
+                    var url = $state.href('search-results', { keyword: $scope.searchKeyword });
+                    window.open(url, '_blank');
+                };
+
+                $scope.goToTopic = function (topic) {
+                    var url = $state.href('topic-detail', { id: topic._id });
+                    window.open(url, '_blank');
+                };
+
+                $scope.goToArticle = function (article) {
+                    var url = $state.href('article-detail', { id: article._id });
+                    window.open(url, '_blank');
                 };
 
                 /**

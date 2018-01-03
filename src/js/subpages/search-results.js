@@ -4,8 +4,8 @@
         .controller('searchResultsCtrl', ['$scope', '$http', '$stateParams', 'BaseUrl', function ($scope, $http, $stateParams, BaseUrl) {
             $scope.topics = [];
             $scope.articles = [];
-            var keyword = $stateParams.get('keyword');
-            var category = $stateParams.get('category');
+            var keyword = $stateParams.keyword;
+            var category = 'ALL';
             var topicPageNum = 1;
             var articlePageNum = 1;
             $scope.disableLoadMoreTopic = false;
@@ -28,6 +28,16 @@
 
             $scope.loadMoreArticles = function () {
                 getArticleSearchResults(++articlePageNum, category, keyword, true);
+            };
+
+            $scope.goToTopic = function (topic) {
+                var url = $state.href('topic-detail', { id: topic._id });
+                window.open(url, '_blank');
+            };
+
+            $scope.goToArticle = function (article) {
+                var url = $state.href('article-detail', { id: article._id });
+                window.open(url, '_blank');
             };
 
             function getTopicSearchResults(pageNum, category, keyword, isLoadingMore) {

@@ -114,7 +114,7 @@
             {{article.Title}}
         </div>
         <div class="md-body-1" ng-bind="article.Category | categoryFilter"></div>
-        <div class="article-content md-body-1" ng-bind-html="article.Content | to_trusted">
+        <div class="article-content md-body-1" ng-bind-html="article.Content | to_trusted_html">
         </div>
     </div>
     <div class="article-operation-section" layout="row" layout-align="start center">
