@@ -458,6 +458,9 @@
         $scope.hasNewMessage = false;
         $scope.isLoadingMessageHasError = false;
         $scope.showMessageEntrance = true;
+        $scope.searchKeyword = "";
+        $scope.topicSearchResults = [];
+        $scope.articleSearchResults = [];
         // 检查当前是否有用户登录
         if (localStorageService.get('userInfo')) {
             updateUserLoginState();
@@ -590,6 +593,23 @@
             }, function () {
                 // canceled mdDialog
             });
+        };
+
+        $scope.searchKeyboard = function (ev) {};
+
+        $scope.search = function () {
+            var body = {
+                Page: 1,
+                Category: 'ALL',
+                Keyword: $scope.searchKeyword,
+                LoadAll: true
+            };
+            $http.post(BaseUrl + "/topic", body).then(function (response) {
+                $scope.topicSearchResults = response.data;
+            }, function (error) {});
+            $http.post(BaseUrl + "/article", body).then(function (response) {
+                $scope.articleSearchResults = response.data;
+            }, function (error) {});
         };
 
         /**

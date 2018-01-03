@@ -32,6 +32,14 @@
 	.root-page .search-input-container {
 		margin-left: 24px;
 	}
+	.search-input-container .search-result {
+		width: 280px;
+		height: 200px;
+		border: 1px solid rgba(0, 0, 0, 0.12);
+		background-color: rgb(255, 255, 255); 
+		position: absolute;
+		top: 45px;
+	}
 </style>
 <body class="root-page ng-cloak" ng-app="The.Power.Soul" ng-controller="mainCtrl">
 	<md-toolbar layout="row" layout-align="center">
@@ -49,8 +57,23 @@
 				优质品牌推荐
 			</md-button>
 			<div class="search-input-container" layout="row" layout-align="start center">
-				<input class="md-body-1 search-input" placeholder="请输入搜索关键字" ng-keypress="searchTopicKeyboard($event)" ng-model="user.firstName">
-				<i class="fa fa-search search-icon-button" aria-hidden="true" ng-click="searchTopic()"></i>
+				<input class="md-body-1 search-input" placeholder="请输入搜索关键字" ng-keypress="searchKeyboard($event)" ng-model="searchKeyword">
+				<i class="fa fa-search search-icon-button" aria-hidden="true" ng-click="search()"></i>
+				<div class="search-result">
+					<div class="">
+						<div class="search-result-item" ng-repeat="topic in topicSearchResults" layout="row" layout-align="start center">
+							<span class="md-body-1"></span>
+							<span class="md-body-1"></span>
+						</div>
+					</div>
+					<md-divider></md-divider>
+					<div class="">
+						<div class="search-result-item" ng-repeat="article in articleSearchResults" layout="row" layout-align="start center">
+							<span class="md-body-1"></span>
+							<span class="md-body-1"></span>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div flex></div>
 			<md-button ng-click="listPrivateMessage($event)" ng-show="showMessageEntrance" layout="row" layout-align="start center">
