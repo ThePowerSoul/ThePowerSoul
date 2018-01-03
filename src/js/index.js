@@ -220,6 +220,20 @@
                                 return authorizationService.permissionCheck();
                             }
                         }
+<<<<<<< HEAD
+=======
+                    })
+                    .state('search-results', {
+                        url: '/search-results/{id}',
+                        templateUrl: 'dist/pages/search-results.html',
+                        controller: 'searchResultsCtrl',
+                        reload: true,
+                        resolve: {
+                            permission: function (authorizationService) {
+                                return authorizationService.permissionCheck();
+                            }
+                        }
+>>>>>>> 5185151c989802b387b98114627a1012ed15c304
                     });
             }])
         .controller('notFoundCtrl', ['$scope', '$state', function ($scope, $state) {
@@ -403,7 +417,7 @@
                     if (waitSeconds <= 0) {
                         $scope.isCountingDown = false;
                         $scope.sendButtonText = "发送验证码";
-                        waitSeconds = 60;
+                        waitSeconds = 120;
                     } else {
                         $scope.isCountingDown = true;
                         $scope.sendButtonText = "重新发送(" + waitSeconds + ")";
@@ -480,6 +494,7 @@
                             $scope.isSigningup = false;
                             if (error.status === 400 && error.data === "邮箱已存在") {
                                 $scope.newUser.Email = "邮箱已存在，请重新输入";
+                                $scope.isCountingDown = false;
                             } else if (error.status === 400 && error.data === "显示名已被占用") {
                                 $scope.newUser.DisplayName = "显示名已被占用，请重新输入";
                             } else if (error.status === 400) {
@@ -645,12 +660,7 @@
                         targetEvent: ev,
                         clickOutsideToClose: false,
                         fullscreen: false
-                    })
-                        .then(function (data) {
-                            //
-                        }, function () {
-                            // canceled mdDialog
-                        });
+                    });
                 };
 
                 $scope.goToUserDetail = function () {

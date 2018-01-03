@@ -180,6 +180,16 @@
                     return authorizationService.permissionCheck();
                 }
             }
+        }).state('search-results', {
+            url: '/search-results/{id}',
+            templateUrl: 'dist/pages/search-results.html',
+            controller: 'searchResultsCtrl',
+            reload: true,
+            resolve: {
+                permission: function (authorizationService) {
+                    return authorizationService.permissionCheck();
+                }
+            }
         });
     }]).controller('notFoundCtrl', ['$scope', '$state', function ($scope, $state) {
         $scope.goBackToIntroduction = function () {
@@ -341,7 +351,7 @@
             if (waitSeconds <= 0) {
                 $scope.isCountingDown = false;
                 $scope.sendButtonText = "发送验证码";
-                waitSeconds = 60;
+                waitSeconds = 120;
             } else {
                 $scope.isCountingDown = true;
                 $scope.sendButtonText = "重新发送(" + waitSeconds + ")";
@@ -415,6 +425,7 @@
                 $scope.isSigningup = false;
                 if (error.status === 400 && error.data === "邮箱已存在") {
                     $scope.newUser.Email = "邮箱已存在，请重新输入";
+                    $scope.isCountingDown = false;
                 } else if (error.status === 400 && error.data === "显示名已被占用") {
                     $scope.newUser.DisplayName = "显示名已被占用，请重新输入";
                 } else if (error.status === 400) {
@@ -569,10 +580,6 @@
                 targetEvent: ev,
                 clickOutsideToClose: false,
                 fullscreen: false
-            }).then(function (data) {
-                //
-            }, function () {
-                // canceled mdDialog
             });
         };
 
@@ -1825,6 +1832,79 @@
         $scope.closeDialog = function () {
             $mdDialog.cancel();
         };
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Search.Results', ['ngMaterial']).controller('searchResultsCtrl', ['$scope', '$http', '$stateParams', 'BaseUrl', function ($scope, $http, $stateParams, BaseUrl) {
+        $scope.topics = [];
+        $scope.articles = [];
+        var keyword = $stateParams.get('keyword');
+        var category = $stateParams.get('category');
+        var topicPageNum = 1;
+        var articlePageNum = 1;
+        $scope.disableLoadMoreTopic = false;
+        $scope.disableLoadMoreArticle = false;
+        $scope.showTopicPanel = true;
+        $scope.switchButtonText = "看文章";
+
+        $scope.switchPanel = function () {
+            $scope.showTopicPanel = !$scope.showTopicPanel;
+            if ($scope.showTopicPanel) {
+                $scope.switchButtonText = "看文章";
+            } else {
+                $scope.switchButtonText = "看帖子";
+            }
+        };
+
+        $scope.loadMoreTopics = function () {
+            getTopicSearchResults(++topicPageNum, category, keyword, true);
+        };
+
+        $scope.loadMoreArticles = function () {
+            getArticleSearchResults(++articlePageNum, category, keyword, true);
+        };
+
+        function getTopicSearchResults(pageNum, category, keyword, isLoadingMore) {
+            var body = {
+                Page: pageNum,
+                Category: category,
+                Keyword: keyword,
+                LoadAll: false
+            };
+            return $http.get(BaseUrl + '/topic', body).then(function (response) {
+                if (isLoadingMore) {
+                    $scope.topics = $scope.topics.concat(response.data);
+                    if (response.data.length < 5) {
+                        $scope.disableLoadMoreTopic = true;
+                    }
+                } else {
+                    $scope.topics = response.data;
+                }
+            }, function (error) {});
+        }
+
+        function getArticleSearchResults(pageNum, category, keyword, isLoadingMore) {
+            var body = {
+                Page: pageNum,
+                Category: category,
+                Keyword: keyword,
+                LoadAll: false
+            };
+            $http.get(BaseUrl + '/article', body).then(function (response) {
+                if (isLoadingMore) {
+                    $scope.articles = $scope.articles.concat(response.data);
+                    if (response.data.length < 5) {
+                        $scope.disableLoadMoreArticle = true;
+                    }
+                } else {
+                    $scope.articles = response.data;
+                }
+            }, function (error) {});
+        }
+
+        getTopicSearchResults(topicPageNum, category, keyword, false).then(getArticleSearchResults(articlePageNum, category, keyword, false));
     }]);
 })();
 (function () {
