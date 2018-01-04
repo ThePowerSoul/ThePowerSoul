@@ -273,6 +273,7 @@
 					body.TargetLink = data.TargetLink;
 					body.TargetID = data.TargetID;
 					body.Type = signal;
+					body.TargetUserID = data.TargetUserID;
 					$http.post(BaseUrl + '/complaint-message/' + $scope.user._id, body)
 						.then(function (response) {
 							alertService.showAlert('举报成功，请耐心等待处理结果', ev);

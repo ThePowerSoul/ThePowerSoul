@@ -154,7 +154,8 @@
                 Author: user.DisplayName,
                 TargetID: target._id,
                 TargetLink: window.location.href,
-                Category: null
+                Category: null,
+                TargetUserID: target.UserID
             };
             $scope.currentSelectedNode = null;
             $scope.unitTreeItems = addChildrenAttribute(Identities, null);
