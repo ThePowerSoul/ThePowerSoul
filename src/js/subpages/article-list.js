@@ -68,7 +68,6 @@
 				}, function() {
 					// canceled
 				});
-                
             };
             
             function removeFromArticleList(article, data,  ev) {
@@ -82,7 +81,7 @@
 
             function loadArticles() {
                 $scope.isLoading = true;
-                $http.get(BaseUrl + '/articles/' + $scope.user._id)
+                return $http.get(BaseUrl + '/articles/' + $scope.user._id)
                     .then(function(response) {
                         $scope.articles = response.data;
                     }, function(error) {
@@ -100,8 +99,8 @@
                     });
             }
 
-            loadArticles();
-            loadArticleDrafts();
+            loadArticles()
+                .then(loadArticleDrafts());
 
     	}])
 }());

@@ -307,7 +307,6 @@
 							$scope.isLoadingArticle = false;
 						});
 				}
-				// loadArticles(1, 'ALL', '', false);
 
 				/********************** 初始化加载帖子信息 ********************/
 				function loadTopics(pageNum, category, keyword, loadMoreSignal) {
@@ -335,7 +334,6 @@
 							$scope.isLoadingHasError = true;
 						});
 				}
-				// loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
 
 				loadTopics(1, 'ALL', '', false)
 					.then(loadArticles(1, 'ALL', '', false)

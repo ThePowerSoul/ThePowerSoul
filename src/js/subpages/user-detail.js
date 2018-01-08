@@ -105,7 +105,7 @@
                     url: host,
                     init: {
                         PostInit: function () {
-                            //
+                            // 上传初始化操作
                         },
                         FilesAdded: function (up, files) {
                             var fileType = files[0].type;
@@ -127,10 +127,9 @@
 
                                     });
                             }
-
                         },
                         BeforeUpload: function (up, file) {
-
+                            // 上传之前的操作
                         },
                         UploadProgress: function (up, file) {
                             $scope.progressBarProgress = file.percent;
@@ -145,11 +144,12 @@
                                         $scope.profilePictureSrc = response.data.Src;
                                         saveImgSrcToUserProfile(response.data.Src);
                                     }, function (error) {
-                                        alertService.showAlert('更换头像失败，请联系管理员');
+                                        alertService.showAlert('更换头像失败，请重试');
                                     });
                             }
                             else {
-
+                                // 上传失败
+                                alertService.showAlert('更换头像失败，请重试');
                             }
                             $scope.showProgress = false;
                         },
