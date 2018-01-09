@@ -34,7 +34,7 @@
             function ($scope, $http, $stateParams, localStorageService, BaseUrl, alertService, $mdDialog) {
                 var user_id = $stateParams.id;
                 var accessid = 'LTAILjmmB1fnhHlx';
-                var host = "http://thepowersoul2018.oss-cn-qingdao-internal.aliyuncs.com";
+                var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
                 var loggedUser = localStorageService.get('userInfo');
                 var imageTypes = ['image/jpg', 'image/jpeg', 'image/png'];
                 $scope.isLoading = false;
@@ -46,10 +46,13 @@
                 $scope.profilePictureSrc = "";
                 $scope.progressBarProgress = 0;
                 $scope.showProgress = false;
-                $scope.profilePictureSrc = loggedUser.AvatarID;
-                
+                $scope.profilePictureSrc = "";
+                $scope.isUploading = false;
+                $scope.uploadingProgress = 0;
+
                 if (loggedUser._id === user_id) { // 进入当前页面的是登录用户本人
                     $scope.user = loggedUser;
+                    $scope.profilePictureSrc = loggedUser.AvatarID;
                 } else { // 查看其它人的页面
                     $scope.isLoading = true;
                     $http.get(BaseUrl + '/user-detail/' + loggedUser._id + '/' + user_id)
@@ -59,6 +62,7 @@
                             $scope.followButtonText = $scope.isFollowing ? "取消关注" : '关注';
                             $scope.user = response.data.Data;
                             $scope.isLoading = false;
+                            $scope.profilePictureSrc = $scope.user.AvatarID;
                         }, function (error) {
                             $scope.isLoading = false;
                             $scope.isLoadingHasError = true;
@@ -122,6 +126,7 @@
                             } else {
                                 $http.get(BaseUrl + '/get-upload-policy')
                                     .then(function (response) {
+                                        $scope.isUploading = true;
                                         set_upload_param(uploader, response.data);
                                     }, function (error) {
 
@@ -132,7 +137,8 @@
                             // 上传之前的操作
                         },
                         UploadProgress: function (up, file) {
-                            $scope.progressBarProgress = file.percent;
+                            $scope.uploadingProgress = file.percent;
+                            $scope.$apply();
                         },
                         FileUploaded: function (up, file, info) {
                             if (info.status == 200) {
@@ -141,6 +147,7 @@
                                 }
                                 $http.put(BaseUrl + '/set-picture-public', body)
                                     .then(function (response) {
+                                        $scope.isUploading = false;
                                         $scope.profilePictureSrc = response.data.Src;
                                         saveImgSrcToUserProfile(response.data.Src);
                                     }, function (error) {

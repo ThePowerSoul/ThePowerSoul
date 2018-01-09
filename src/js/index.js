@@ -390,14 +390,14 @@
                 var waitSeconds = 120;
                 $scope.sendButtonText = "发送验证码";
                 $scope.isCountingDown = false;
-                $scope.flag = true;
+                $scope.flag = false;
                 $scope.signupButtonText = "";
                 $scope.loginButtonText = "";
+                $scope.loginErrorText = ""
                 $scope.isLogining = false;
                 $scope.isSigningup = false;
                 $scope.isSendingEmail = false;
                 $scope.isSendingEmailHasError = false;
-                $scope.loginErrorText = ""
                 $scope.newUser = {
                     Name: "",
                     DisplayName: "",
@@ -447,10 +447,10 @@
                     $http.post(BaseUrl + '/verify-email', body)
                         .then(function (response) {
                             $scope.isSendingEmail = false;
-                            if (response.status === 200 && response.data.Message !== "请勿短时间内重复索取验证码") {
+                            if (response.status === 200) {
                                 $scope.newUser.EmailVerifyCode = body.Code;
                                 time();
-                            } else if (response.status === 200 && response.data.Message === "请勿短时间内重复索取验证码") {
+                            } else if (response.status === 400) {
                                 $scope.sendButtonText = response.data.Message;
                                 $scope.newUser.EmailVerifyCode = response.data.Code;
                             }
@@ -684,6 +684,10 @@
 
                 $scope.searchKeyboard = function (ev) {
                     if (ev.keyCode === 13) {
+                        if (!authorizationService.permissionModel.isPermissionLoaded) {
+                            alertService.showAlert('请先登录');
+                            return;
+                        }
                         $scope.showSearchPanel = true;
                         var body = {
                             Page: 1,
@@ -707,6 +711,10 @@
                 };
 
                 $scope.search = function () {
+                    if (!authorizationService.permissionModel.isPermissionLoaded) {
+                        alertService.showAlert('请先登录');
+                        return;
+                    }
                     $scope.showSearchPanel = true;
                     var body = {
                         Page: 1,

@@ -29,7 +29,7 @@
 
 	.dialog-content-container {
 		min-width: 500px !important;
-		height: 600px !important;
+		height: 624px !important;
 		padding: 24px;
 	}
 
@@ -55,8 +55,15 @@
 		font-size: 14px;
 		color: #f44336;
 	}
+
+	.dialog-content-container .progress-circle {
+		position: absolute;
+		top: 45%;
+		left: 45%;
+	}
 </style>
 <md-dialog class="dialog-content-container" layout="column">
+	<md-progress-circular class="progress-circle" ng-show="isLogining || isSigningup" md-mode="indeterminate"></md-progress-circular>
 	<div layout="row" layout-align="start center">
 		<div flex></div>
 		<div>
@@ -112,9 +119,6 @@
 			<span class="input-tip" ng-bind="loginErrorText"></span>
 		</div>
 	</div>
-	<!-- <div layout="row" layout-align="center center">
-		<span class="input-tip">如果按钮没有变亮，那一定是因为有地方填错了！</span>
-	</div> -->
 	<md-button class="md-raised md-primary" ng-show="!flag" ng-disabled="disableLoginButtonOrNot() || isLogining" ng-click="login($event)">{{loginButtonText}}</md-button>
 	<md-button class="md-raised md-primary" ng-show="flag" ng-disabled="disableSignupButtonOrNot() || isSigningup" ng-click="signup($event)">{{signupButtonText}}</md-button>
 </md-dialog>

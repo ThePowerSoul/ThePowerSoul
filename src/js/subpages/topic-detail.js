@@ -341,7 +341,6 @@
 						.targetEvent(ev)
 						.ok('确定')
 						.cancel('取消');
-
 					$mdDialog.show(confirm).then(function () {
 						$scope.isDeleting = true;
 						$http.delete(BaseUrl + '/topic/' + $scope.topic._id)
@@ -367,7 +366,6 @@
 						.targetEvent(ev)
 						.ok('确定')
 						.cancel('取消');
-
 					$mdDialog.show(confirm).then(function () {
 						$http.delete(BaseUrl + '/comment/' + comment._id)
 							.then(function (response) {
@@ -458,7 +456,7 @@
 				function addTopicView() {
 					$http.put(BaseUrl + '/topic/' + topic_id)
 						.then(function (response) {
-
+							// 文章浏览加1
 						}, function (error) {
 
 						});

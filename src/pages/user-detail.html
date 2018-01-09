@@ -43,29 +43,35 @@
 		width: 100px;
 		height: 100px;
 	}
+
 	.user-detail-container .picture-info-panel {
 		min-height: 60px;
 		margin-left: 100px;
 		margin-bottom: 24px;
 	}
+
 	.profile-pic-progress {
 		position: absolute;
 		top: 62px;
-		left: 224px;;
+		left: 224px;
+		;
 		width: 100px;
 		font-size: 24px;
 		color: darkblue;
 	}
 </style>
 <div class="user-detail-container">
+	<div class="uber-matte" ng-show="isUploading" layout="row" layout-align="start center">
+		<span class="md-body-1 matte-text" ng-bind="'正在上传 ' + uploadingProgress  + '%'"></span>
+	</div>
 	<div class="user-detail-bar"></div>
 	<div class="user-detail-info">
-		<span class="profile-pic-progress" ng-show="showProgress" layout="row" layout-align="center">{{progressBarProgress + '%'}}</span>
+		<!-- <span class="profile-pic-progress" ng-show="showProgress" layout="row" layout-align="center">{{progressBarProgress + '%'}}</span> -->
 		<div id="profilePictureContainer" class="picture-info-panel" layout="row" layout-align="start center">
 			<div layout="row" layout-align="start center" flex>
 				<img class="profile-picture" ng-src="{{profilePictureSrc}}" alt="">
 			</div>
-			<md-button id="selectPicture" class="md-raised md-primary">更换头像</md-button>
+			<md-button id="selectPicture" class="md-raised md-primary" ng-show="!showActionButton">更换头像</md-button>
 		</div>
 		<div class="info-panel" layout="row" layout-align="start center">
 			<div layout="row" layout-align="start center" flex>

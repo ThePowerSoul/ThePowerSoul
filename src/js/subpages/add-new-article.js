@@ -235,7 +235,6 @@
 										// 收到返回的视频url
 										$scope.isUploading = false;
 										appendVideoIntoEditor(response.data.Src);
-										// $scope.videoSrc = response.data.Src;
 									}, function (error) {
 										alertService.showAlert('更换头像失败，请联系管理员');
 									});

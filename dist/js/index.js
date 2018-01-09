@@ -326,14 +326,14 @@
         var waitSeconds = 120;
         $scope.sendButtonText = "发送验证码";
         $scope.isCountingDown = false;
-        $scope.flag = true;
+        $scope.flag = false;
         $scope.signupButtonText = "";
         $scope.loginButtonText = "";
+        $scope.loginErrorText = "";
         $scope.isLogining = false;
         $scope.isSigningup = false;
         $scope.isSendingEmail = false;
         $scope.isSendingEmailHasError = false;
-        $scope.loginErrorText = "";
         $scope.newUser = {
             Name: "",
             DisplayName: "",
@@ -382,10 +382,10 @@
             };
             $http.post(BaseUrl + '/verify-email', body).then(function (response) {
                 $scope.isSendingEmail = false;
-                if (response.status === 200 && response.data.Message !== "请勿短时间内重复索取验证码") {
+                if (response.status === 200) {
                     $scope.newUser.EmailVerifyCode = body.Code;
                     time();
-                } else if (response.status === 200 && response.data.Message === "请勿短时间内重复索取验证码") {
+                } else if (response.status === 400) {
                     $scope.sendButtonText = response.data.Message;
                     $scope.newUser.EmailVerifyCode = response.data.Code;
                 }
@@ -605,6 +605,10 @@
 
         $scope.searchKeyboard = function (ev) {
             if (ev.keyCode === 13) {
+                if (!authorizationService.permissionModel.isPermissionLoaded) {
+                    alertService.showAlert('请先登录');
+                    return;
+                }
                 $scope.showSearchPanel = true;
                 var body = {
                     Page: 1,
@@ -622,6 +626,10 @@
         };
 
         $scope.search = function () {
+            if (!authorizationService.permissionModel.isPermissionLoaded) {
+                alertService.showAlert('请先登录');
+                return;
+            }
             $scope.showSearchPanel = true;
             var body = {
                 Page: 1,
@@ -958,7 +966,6 @@
 							// 收到返回的视频url
 							$scope.isUploading = false;
 							appendVideoIntoEditor(response.data.Src);
-							// $scope.videoSrc = response.data.Src;
 						}, function (error) {
 							alertService.showAlert('更换头像失败，请联系管理员');
 						});
@@ -1110,7 +1117,8 @@
             Author: user.DisplayName,
             TargetID: target._id,
             TargetLink: window.location.href,
-            Category: null
+            Category: null,
+            TargetUserID: target.UserID
         };
         $scope.currentSelectedNode = null;
         $scope.unitTreeItems = addChildrenAttribute(Identities, null);
@@ -1467,7 +1475,7 @@
 
         function loadArticles() {
             $scope.isLoading = true;
-            $http.get(BaseUrl + '/articles/' + $scope.user._id).then(function (response) {
+            return $http.get(BaseUrl + '/articles/' + $scope.user._id).then(function (response) {
                 $scope.articles = response.data;
             }, function (error) {
                 $scope.isLoadingHasError = true;
@@ -1483,8 +1491,7 @@
             });
         }
 
-        loadArticles();
-        loadArticleDrafts();
+        loadArticles().then(loadArticleDrafts());
     }]);
 })();
 (function () {
@@ -2282,7 +2289,6 @@
 				$scope.isLoadingArticle = false;
 			});
 		}
-		// loadArticles(1, 'ALL', '', false);
 
 		/********************** 初始化加载帖子信息 ********************/
 		function loadTopics(pageNum, category, keyword, loadMoreSignal) {
@@ -2309,7 +2315,6 @@
 				$scope.isLoadingHasError = true;
 			});
 		}
-		// loadTopics(1, 'ALL', '', false); // 数据初始化，第一次加载
 
 		loadTopics(1, 'ALL', '', false).then(loadArticles(1, 'ALL', '', false).then(loadHotTopics().then(loadHotArticles())));
 	}]);
@@ -2567,6 +2572,7 @@
 			body.TargetLink = data.TargetLink;
 			body.TargetID = data.TargetID;
 			body.Type = signal;
+			body.TargetUserID = data.TargetUserID;
 			$http.post(BaseUrl + '/complaint-message/' + $scope.user._id, body).then(function (response) {
 				alertService.showAlert('举报成功，请耐心等待处理结果', ev);
 			}, function (error) {
@@ -2625,7 +2631,6 @@
   */
 		$scope.deleteTopic = function (ev) {
 			var confirm = $mdDialog.confirm().title('提示').textContent('确定删除这条帖子？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
-
 			$mdDialog.show(confirm).then(function () {
 				$scope.isDeleting = true;
 				$http.delete(BaseUrl + '/topic/' + $scope.topic._id).then(function (data) {
@@ -2644,7 +2649,6 @@
   */
 		$scope.deleteComment = function (comment, ev) {
 			var confirm = $mdDialog.confirm().title('提示').textContent('确定删除这条评论？').ariaLabel('').targetEvent(ev).ok('确定').cancel('取消');
-
 			$mdDialog.show(confirm).then(function () {
 				$http.delete(BaseUrl + '/comment/' + comment._id).then(function (response) {
 					$scope.commentList.splice($scope.commentList.indexOf(comment), 1);
@@ -2729,7 +2733,9 @@
 		}
 
 		function addTopicView() {
-			$http.put(BaseUrl + '/topic/' + topic_id).then(function (response) {}, function (error) {});
+			$http.put(BaseUrl + '/topic/' + topic_id).then(function (response) {
+				// 文章浏览加1
+			}, function (error) {});
 		}
 
 		/*
@@ -2851,7 +2857,7 @@
     }]).controller('userDetailCtrl', ['$scope', '$http', '$stateParams', 'localStorageService', 'BaseUrl', 'alertService', '$mdDialog', function ($scope, $http, $stateParams, localStorageService, BaseUrl, alertService, $mdDialog) {
         var user_id = $stateParams.id;
         var accessid = 'LTAILjmmB1fnhHlx';
-        var host = "http://thepowersoul2018.oss-cn-qingdao-internal.aliyuncs.com";
+        var host = "http://thepowersoul2018.oss-cn-qingdao.aliyuncs.com";
         var loggedUser = localStorageService.get('userInfo');
         var imageTypes = ['image/jpg', 'image/jpeg', 'image/png'];
         $scope.isLoading = false;
@@ -2863,11 +2869,14 @@
         $scope.profilePictureSrc = "";
         $scope.progressBarProgress = 0;
         $scope.showProgress = false;
-        $scope.profilePictureSrc = loggedUser.AvatarID;
+        $scope.profilePictureSrc = "";
+        $scope.isUploading = false;
+        $scope.uploadingProgress = 0;
 
         if (loggedUser._id === user_id) {
             // 进入当前页面的是登录用户本人
             $scope.user = loggedUser;
+            $scope.profilePictureSrc = loggedUser.AvatarID;
         } else {
             // 查看其它人的页面
             $scope.isLoading = true;
@@ -2877,6 +2886,7 @@
                 $scope.followButtonText = $scope.isFollowing ? "取消关注" : '关注';
                 $scope.user = response.data.Data;
                 $scope.isLoading = false;
+                $scope.profilePictureSrc = $scope.user.AvatarID;
             }, function (error) {
                 $scope.isLoading = false;
                 $scope.isLoadingHasError = true;
@@ -2922,7 +2932,7 @@
             url: host,
             init: {
                 PostInit: function () {
-                    //
+                    // 上传初始化操作
                 },
                 FilesAdded: function (up, files) {
                     var fileType = files[0].type;
@@ -2938,13 +2948,17 @@
                         return;
                     } else {
                         $http.get(BaseUrl + '/get-upload-policy').then(function (response) {
+                            $scope.isUploading = true;
                             set_upload_param(uploader, response.data);
                         }, function (error) {});
                     }
                 },
-                BeforeUpload: function (up, file) {},
+                BeforeUpload: function (up, file) {
+                    // 上传之前的操作
+                },
                 UploadProgress: function (up, file) {
-                    $scope.progressBarProgress = file.percent;
+                    $scope.uploadingProgress = file.percent;
+                    $scope.$apply();
                 },
                 FileUploaded: function (up, file, info) {
                     if (info.status == 200) {
@@ -2952,12 +2966,16 @@
                             Key: loggedUser._id + file.name
                         };
                         $http.put(BaseUrl + '/set-picture-public', body).then(function (response) {
+                            $scope.isUploading = false;
                             $scope.profilePictureSrc = response.data.Src;
                             saveImgSrcToUserProfile(response.data.Src);
                         }, function (error) {
-                            alertService.showAlert('更换头像失败，请联系管理员');
+                            alertService.showAlert('更换头像失败，请重试');
                         });
-                    } else {}
+                    } else {
+                        // 上传失败
+                        alertService.showAlert('更换头像失败，请重试');
+                    }
                     $scope.showProgress = false;
                 },
                 Error: function (up, err) {
