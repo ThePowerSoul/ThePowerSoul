@@ -122,18 +122,22 @@
 	.topic-detail-container .like-button-container {
 		margin-left: 8px;
 	}
+
 	.topic-detail-container .load-more-container {
-        width: 100%;
-        height: 24px;
-        margin-top: 16px;
-    }
-    .load-more-container .load-more-button {
-        color: rgba(0, 0, 0, 0.54);
+		width: 100%;
+		height: 24px;
+		margin-top: 16px;
+	}
+
+	.load-more-container .load-more-button {
+		color: rgba(0, 0, 0, 0.54);
 		outline: none;
-    }
+	}
+
 	.load-more-container .load-more-button:hover {
-        cursor: pointer;
-    }
+		cursor: pointer;
+	}
+
 	.topic-comment-panel .comment-panel-header {
 		margin-bottom: 16px;
 	}
@@ -229,9 +233,19 @@
 		color: lightblue;
 		cursor: pointer;
 	}
+
+	.topic-detail-container .page-loading-circle {
+		position: absolute;
+		top: 45%;
+		left: 50%;
+	}
 </style>
 <div class="topic-detail-container">
-	<div class="topic-description-container" layout="column">
+	<div class="uber-matte" ng-show="isReplyingComment" layout="row" layout-align="start center">
+		<span class="md-body-1 matte-text">正在操作，请稍等...</span>
+	</div>
+	<md-progress-circular class="page-loading-circle" ng-show="isLoadingComments || isLoading" md-mode="indeterminate"></md-progress-circular>
+	<div class="topic-description-container" layout="column" ng-show="!isLoading">
 		<div layout="row" layout="start center">
 			<div class="topic-title md-body-1" layout="row" layout-align="start center">{{topic.Title}}</div>
 			<div class="topic-author md-body-1" layout="row" layout-align="start center">{{topic.Author}}</div>
@@ -267,14 +281,14 @@
 			<span class="retract-button" ng-show="topic.Expand" ng-click="changeExpandState()">收起</span>
 		</div>
 	</div>
-	<div layout="row">
+	<div layout="row" ng-show="!isLoadingComments">
 		<div class="topic-comment-panel">
 			<div class="comment-panel-header">
 				<span>讨论区</span>
 			</div>
 			<div class="new-comment-input-container" layout="row" layout-align="start center">
-				<input class="new-comment-input" type="text" ng-model="newCommentContent" flex>
-				<md-button class="md-primary md-raised" ng-click="addNewCommentToTopic($event)">评论</md-button>
+				<input class="new-comment-input" type="text" ng-model="newCommentContent" ng-disabled="isPostingNewComment" flex>
+				<md-button class="md-primary md-raised" ng-click="addNewCommentToTopic($event)" ng-disabled="isPostingNewComment">评论</md-button>
 			</div>
 			<div class="comment-card" ng-repeat="comment in commentList">
 				<md-divider>
@@ -305,7 +319,7 @@
 						</div>
 						<div flex></div>
 						<div layout="row" layout-align="start center">
-							<span class="md-body-1 report-comment-button" ng-click="reportTheComment(comment, $event);">举报</span>
+							<span class="md-body-1 report-comment-button" ng-show="comment.UserID !== user._id" ng-click="reportTheComment(comment, $event);">举报</span>
 						</div>
 					</div>
 					<div class="comment-content-container">
@@ -320,6 +334,9 @@
 			</div>
 			<div class="load-more-container" layout="row" layout-align="center" ng-show="!disableLoadingMore">
 				<span class="load-more-button md-body-1" ng-click="loadMore()">加载更多</span>
+			</div>
+			<div class="load-more-container" layout="row" layout-align="center" ng-show="disableLoadingMore">
+				<span class="load-more-button md-body-1">已经加载到底了</span>
 			</div>
 		</div>
 		<div class="topic-author-description" flex>
@@ -340,7 +357,7 @@
 			</div>
 			<md-divider></md-divider>
 			<div class="author-operaiton" ng-hide="topic.UserID == user._id" layout="row" layout-align="start center">
-				<md-button class="md-raised md-primary" ng-click="followOperation($event)">{{followButtonText}}</md-button>
+				<md-button class="md-raised md-primary" ng-click="followOperation($event)" ng-disabled="isOperating">{{followButtonText}}</md-button>
 				<md-button class="md-raised md-primary" ng-click="sendPrivateMessage($event)">发私信</md-button>
 			</div>
 		</div>

@@ -43,6 +43,9 @@
 		font-size: 6px;
 		margin-right: 6px;
 	}
+	.message-item .item-name {
+		width: 100%;
+	}
 </style>
 <md-dialog class="dialog-content-container" layout="column">
 	<div layout="row" layout-align="start center">
@@ -56,7 +59,7 @@
 		<div class="message-container" ng-show="messagesShowed.length !== 0">
 			<div class="message-item" ng-repeat="message in messagesShowed" 
 			 ng-click="checkMessgeConversation(message, $event)" layout="column" layout-align="center start">
-				<div layout="row" layout-align="start center">
+				<div class="item-name" layout="row" layout-align="start center">
 					<i class="fa fa-circle new-message-reminder" ng-show="message.Status === '0' && message.TargetID === user._id" aria-hidden="true"></i>
 					<span class="md-body-1" flex="50">{{message.SenderName + ':'}}</span>
 				</div>

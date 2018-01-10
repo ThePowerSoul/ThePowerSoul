@@ -33,10 +33,9 @@
 				$scope.articleList = [];
 				$scope.hotTopics = [];
 				$scope.hotArticles = [];
+				$scope.isOperating = false;
 				$scope.isLoadingTopic = false;
 				$scope.isLoadingArticle = false;
-				$scope.isLoadingTopicHasError = false;
-				$scope.isLoadingArticleHasError = false;
 				$scope.disableLoadMore = false;
 				$scope.disableLoadMoreArticle = false;
 				$scope.showTopic = true;
@@ -50,12 +49,12 @@
 					$scope.switchButtonText = '看帖子';
 				};
 
-				$scope.goTopicDetail = function(topic) {
+				$scope.goTopicDetail = function (topic) {
 					var url = $state.href('topic-detail', { id: topic._id });
 					window.open(url, '_blank');
-				};	
+				};
 
-				$scope.goArticleDetail = function(article) {
+				$scope.goArticleDetail = function (article) {
 					var url = $state.href('article-detail', { id: article._id });
 					window.open(url, '_blank');
 				};
@@ -125,28 +124,28 @@
 				};
 
 				/********************** 删除帖子 ********************/
-				$scope.deleteTopic = function (topic, ev) {
-					var confirm = $mdDialog.confirm()
-						.title('提示')
-						.textContent('确定删除这条帖子？')
-						.ariaLabel('')
-						.targetEvent(ev)
-						.ok('确定')
-						.cancel('取消');
+				// $scope.deleteTopic = function (topic, ev) {
+				// 	var confirm = $mdDialog.confirm()
+				// 		.title('提示')
+				// 		.textContent('确定删除这条帖子？')
+				// 		.ariaLabel('')
+				// 		.targetEvent(ev)
+				// 		.ok('确定')
+				// 		.cancel('取消');
 
-					$mdDialog.show(confirm).then(function () {
-						$scope.isDeleting = true;
-						$http.delete(BaseUrl + '/topic/' + topic._id)
-							.then(function (data) {
-								alertService.showAlert('删除成功', ev);
-								$state.go('bbs');
-							}, function (error) {
-								alertService.showAlert('删除失败', ev);
-							});
-					}, function () {
-						// canceled
-					});
-				};
+				// 	$mdDialog.show(confirm).then(function () {
+				// 		$scope.isDeleting = true;
+				// 		$http.delete(BaseUrl + '/topic/' + topic._id)
+				// 			.then(function (data) {
+				// 				alertService.showAlert('删除成功', ev);
+				// 				$state.go('bbs');
+				// 			}, function (error) {
+				// 				alertService.showAlert('删除失败', ev);
+				// 			});
+				// 	}, function () {
+				// 		// canceled
+				// 	});
+				// };
 
 				/********************** 发表新帖 ********************/
 				$scope.addNewTopic = function (ev) {
@@ -161,18 +160,19 @@
 							fullscreen: false
 						})
 							.then(function (data) { // 发表新贴
-								$scope.isSubmittingTopic = false;
+								$scope.isOperating = true;
 								$http.post(BaseUrl + '/topic/' + user._id, {
 									Author: user.DisplayName,
+									Avatar: user.AvatarID,
 									Topic: data
 								})
 									.then(function (response) {
-										$scope.isSubmittingTopic = false;
-										loadTopics(1, $scope.selectedItem, $scope.searchContext, '');
+										$scope.isOperating = false;
+										loadTopics(1, $scope.selectedItem, "", false);
 										alertService.showAlert('发表帖子成功。', ev);
 									}, function (error) {
-										$scope.isSubmittingTopic = false;
-										alertService.showAlert('发表帖子失败，请重试。', ev);
+										$scope.isOperating = false;
+										alertService.showAlert('发表帖子失败，请重试。');
 									});
 							}, function () {
 								// dialog canceled
@@ -264,20 +264,24 @@
 				};
 
 				function loadHotTopics() {
+					$scope.isLoadingTopic = true;
 					return $http.get(BaseUrl + '/topic')
 						.then(function (response) {
 							$scope.hotTopics = response.data;
+							$scope.isLoadingTopic = false;
 						}, function (error) {
-
+							$scope.isLoadingTopic = false;
 						});
 				}
 
 				function loadHotArticles() {
+					$scope.isLoadingArticle = true;
 					$http.get(BaseUrl + '/article')
 						.then(function (response) {
+							$scope.isLoadingArticle = false;
 							$scope.hotArticles = response.data;
 						}, function (error) {
-
+							$scope.isLoadingArticle = false;
 						});
 				}
 
@@ -305,6 +309,7 @@
 							}
 						}, function (error) {
 							$scope.isLoadingArticle = false;
+							alertService.showAlert('加载文章失败，请重试。');
 						});
 				}
 
@@ -322,6 +327,7 @@
 					$scope.isLoadingTopic = true;
 					return $http.post(BaseUrl + "/topic", body)
 						.then(function (response) {
+							$scope.isLoadingTopic = false;
 							if (loadMoreSignal) {
 								$scope.topicList = $scope.topicList.concat(response.data);
 							} else {
@@ -331,7 +337,8 @@
 								$scope.disableLoadMore = true;
 							}
 						}, function (error) {
-							$scope.isLoadingHasError = true;
+							$scope.isLoadingTopic = false;
+							alertService.showAlert('加载帖子失败，请重试。');
 						});
 				}
 

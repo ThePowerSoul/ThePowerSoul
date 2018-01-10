@@ -246,6 +246,7 @@
                 $scope.emailKeyword = "";
                 $scope.users = [];
                 $scope.targetUser = null;
+                $scope.isSearching = false;
                 var user = localStorageService.get('userInfo');
 
                 function filterDataToRemoveCurrentUser(arr) {
@@ -260,15 +261,17 @@
 
                 $scope.searchForUsers = function (ev) {
                     if (ev.keyCode === 13) {
+                        $scope.isSearching = true;
                         $scope.users = [];
                         var body = {
                             EmailKeyword: $scope.emailKeyword
                         }
                         $http.post(BaseUrl + '/users', body)
                             .then(function (response) {
+                                $scope.isSearching = false;
                                 $scope.users = filterDataToRemoveCurrentUser(response.data);
                             }, function (error) {
-
+                                $scope.isSearching = false;
                             });
                     }
                 };
@@ -288,6 +291,7 @@
                 };
 
                 $scope.submit = function (ev) {
+                    $scope.isOperating = true;
                     var body = {
                         Content: $scope.newMessage,
                         UserName: user.DisplayName,
@@ -295,10 +299,12 @@
                     }
                     $http.post(BaseUrl + '/private-message/' + user._id + '/' + $scope.targetUser._id, body)
                         .then(function (data) {
-                            alertService.showAlert('发送私信成功', ev);
+                            $scope.isOperating = false;
+                            alertService.showAlert('发送私信成功');
                             $mdDialog.cancel();
                         }, function (error) {
-                            alertService.showAlert('发送私信失败', ev);
+                            $scope.isOperating = false;
+                            alertService.showAlert('发送私信失败');
                             $mdDialog.cancel();
                         });
                 };
@@ -381,7 +387,6 @@
                     $mdDialog.cancel();
                 };
             }])
-
 
         .controller('loginOrSignupCtrl', ['$scope', '$http', '$mdDialog', '$state', 'BaseUrl', 'localStorageService', 'alertService',
             '$timeout',
@@ -688,6 +693,11 @@
                             alertService.showAlert('请先登录');
                             return;
                         }
+                        if ($scope.searchKeyword === '') {
+                            $scope.topicSearchResults = [];
+                            $scope.articleSearchResults = [];
+                            return;
+                        }
                         $scope.showSearchPanel = true;
                         var body = {
                             Page: 1,
@@ -713,6 +723,11 @@
                 $scope.search = function () {
                     if (!authorizationService.permissionModel.isPermissionLoaded) {
                         alertService.showAlert('请先登录');
+                        return;
+                    }
+                    if ($scope.searchKeyword === '') {
+                        $scope.topicSearchResults = [];
+                        $scope.articleSearchResults = [];
                         return;
                     }
                     $scope.showSearchPanel = true;

@@ -6,6 +6,7 @@
         function($scope, $stateParams, $http, $state, $mdDialog, BaseUrl, alertService) {
             var user_id = $stateParams.id;
             $scope.messages = [];
+            $scope.isLoading = false;
 
             $scope.postNewMessage = function(ev) {
                 $mdDialog.show({ 
@@ -66,7 +67,6 @@
                         $scope.isLoading = false;
                         $scope.messages = response.data.MostRecentConversation;
                     }, function(error) {
-                        $scope.isLoadingHasError = true;
                         $scope.isLoading = false;
                     });
             }

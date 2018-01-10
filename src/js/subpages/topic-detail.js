@@ -86,19 +86,6 @@
 				$scope.followButtonText = "";
 				$scope.isFollowing = false;
 				$scope.disableLoadingMore = false;
-				var pageNum = 1;
-
-				/*
-				loading state
-				*/
-				$scope.isPostingNewComment = false;
-				$scope.isReplyingComment = false;
-				$scope.isLoading = false;
-				$scope.isLoadingHasError = false;
-				$scope.isLoadingComments = false;
-				$scope.isLoadingCommentsHasError = false;
-				$scope.isChangingLikeStauts = false;
-				$scope.isChangingTopicLikeStauts = false;
 				$scope.topic = {};
 				$scope.topicAuthor = {
 					ID: '',
@@ -107,7 +94,18 @@
 				};
 				$scope.commentList = [];
 				$scope.newCommentContent = "";
+				var pageNum = 1;
 				var topic_id = $stateParams.id;
+
+				/*
+				loading state
+				*/
+				$scope.isPostingNewComment = false;
+				$scope.isReplyingComment = false;
+				$scope.isLoading = false;
+				$scope.isLoadingComments = false;
+				$scope.isChangingLikeStauts = false;
+				$scope.isChangingTopicLikeStauts = false;
 
 				/*
 					评论帖子 
@@ -208,7 +206,7 @@
 						}
 					})
 						.then(function (data) {
-							postNewReportMessage(data, 'Topic', ev);
+							postNewReportMessage(data, 'TOPIC', ev);
 						}, function () {
 							// canceled
 						});
@@ -227,7 +225,7 @@
 						}
 					})
 						.then(function (data) {
-							postNewReportMessage(data, 'Comment', ev);
+							postNewReportMessage(data, 'COMMENT', ev);
 						}, function () {
 							// canceled
 						});
@@ -274,11 +272,18 @@
 					body.TargetID = data.TargetID;
 					body.Type = signal;
 					body.TargetUserID = data.TargetUserID;
+					$scope.isPosting = true;
 					$http.post(BaseUrl + '/complaint-message/' + $scope.user._id, body)
 						.then(function (response) {
-							alertService.showAlert('举报成功，请耐心等待处理结果', ev);
+							$scope.isPosting = false;
+							alertService.showAlert('举报成功，请耐心等待处理结果');
 						}, function (error) {
-							alertService.showAlert('举报失败，请重试', ev);
+							$scope.isPosting = false;
+							if (error.status === 400) {
+								alertService.showAlert('您已举报过该内容，请勿重复举报');
+							} else {
+								alertService.showAlert('举报失败，请重试');
+							}
 						});
 				}
 
@@ -440,32 +445,11 @@
 					loadTopicComments(++pageNum, true);
 				};
 
-				function loadTopicDetail() {
-					$scope.isLoading = true;
-					return $http.get(BaseUrl + '/topic/' + $scope.user._id + '/' + topic_id)
-						.then(function (response) {
-							$scope.isLoading = false;
-							angular.extend($scope.topic, response.data);
-							getTopicAuthorInfo();
-						}, function (error) {
-							$scope.isLoading = false;
-							$scope.isLoadingHasError = true;
-						});
-				}
-
-				function addTopicView() {
-					$http.put(BaseUrl + '/topic/' + topic_id)
-						.then(function (response) {
-							// 文章浏览加1
-						}, function (error) {
-
-						});
-				}
-
 				/*
 					回复评论
 				*/
 				function sendCommentReply(comment, newComment, ev) {
+					$scope.isReplyingComment = true;
 					$http.post(BaseUrl + '/comment/' + $scope.user._id + '/' + topic_id,
 						{
 							Comment: newComment,
@@ -476,35 +460,10 @@
 						})
 						.then(function (response) {
 							$scope.commentList.push(response.data);
+							$scope.isReplyingComment = false;
 						}, function (error) {
 							alertService.showAlert('回复评论失败，请重试', ev);
-						});
-				}
-
-				function getTopicAuthorInfo() {
-					$scope.isLoadingUserInfo = true;
-					return $http.get(BaseUrl + '/get-publish-number/' + $scope.topic.UserID)
-						.then(function (response) {
-							$scope.isLoadingUserInfo = false;
-							$scope.topicAuthor.ID = $scope.topic.UserID;
-							$scope.topicAuthor.TopicNumber = response.data.TopicNumber;
-							$scope.topicAuthor.ArticleNumber = response.data.ArticleNumber;
-							checkFollowingState();
-						}, function (error) {
-							$scope.isLoadingUserInfo = false;
-							$scope.isLoadingUserInfoHasError = true;
-						});
-				}
-
-				function checkFollowingState() {
-					$http.get(BaseUrl + '/user-detail/' + $scope.user._id + '/' + $scope.topic.UserID)
-						.then(function (response) {
-							$scope.isLoading = false;
-							$scope.isFollowing = response.data.IsFollowing;
-							$scope.followButtonText = $scope.isFollowing ? "取消关注" : '关注';
-						}, function (error) {
-							$scope.isLoading = false;
-							$scope.isLoadingHasError = true;
+							$scope.isReplyingComment = false;
 						});
 				}
 
@@ -533,6 +492,55 @@
 					}
 				};
 
+				function getTopicAuthorInfo() {
+					$scope.isLoadingUserInfo = true;
+					return $http.get(BaseUrl + '/get-publish-number/' + $scope.topic.UserID)
+						.then(function (response) {
+							$scope.isLoadingUserInfo = false;
+							$scope.topicAuthor.ID = $scope.topic.UserID;
+							$scope.topicAuthor.TopicNumber = response.data.TopicNumber;
+							$scope.topicAuthor.ArticleNumber = response.data.ArticleNumber;
+							checkFollowingState();
+						}, function (error) {
+							$scope.isLoadingUserInfo = false;
+							$scope.isLoadingUserInfoHasError = true;
+						});
+				}
+
+				function checkFollowingState() {
+					$http.get(BaseUrl + '/user-detail/' + $scope.user._id + '/' + $scope.topic.UserID)
+						.then(function (response) {
+							$scope.isLoading = false;
+							$scope.isFollowing = response.data.IsFollowing;
+							$scope.followButtonText = $scope.isFollowing ? "取消关注" : '关注';
+						}, function (error) {
+							$scope.isLoading = false;
+							$scope.isLoadingHasError = true;
+						});
+				}
+
+				function addTopicView() {
+					$http.put(BaseUrl + '/topic/' + topic_id)
+						.then(function (response) {
+							// 文章浏览加1
+						}, function (error) {
+
+						});
+				}
+
+				function loadTopicDetail() {
+					$scope.isLoading = true;
+					return $http.get(BaseUrl + '/topic/' + $scope.user._id + '/' + topic_id)
+						.then(function (response) {
+							$scope.isLoading = false;
+							angular.extend($scope.topic, response.data);
+							getTopicAuthorInfo();
+						}, function (error) {
+							$scope.isLoading = false;
+							alertService.showAlert('加载帖子失败，请重试');
+						});
+				}
+
 				function loadTopicComments(pageNum, isLoadingMore) {
 					$scope.isLoadingComments = true;
 					var body = {
@@ -551,7 +559,7 @@
 							}
 						}, function (error) {
 							$scope.isLoadingComments = false;
-							$scope.isLoadingCommentsHasError = true;
+							alertService.showAlert('加载评论，请重试');
 						});
 				}
 

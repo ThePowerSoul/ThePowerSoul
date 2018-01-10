@@ -1,7 +1,7 @@
-(function() {   
+(function () {
     'use strict';
     angular.module('The.Power.Soul.Report', ['ngMaterial'])
-        .directive('unitTree', function() {
+        .directive('unitTree', function () {
             function link($scope, $element, $attrs) {
                 function addParent(arr, parentNode) {
                     for (var i = 0; i < arr.length; i++) {
@@ -16,27 +16,27 @@
                             addParent(arr[i].Children, arr[i]);
                         }
                     }
-                };   
+                };
 
-                addParent($scope.unitTreeItems); 
+                addParent($scope.unitTreeItems);
 
-                $scope.getNodePath = function(node) {
+                $scope.getNodePath = function (node) {
                     var arr = [];
-                    while(node.ParentNode !== null) {
+                    while (node.ParentNode !== null) {
                         arr.unshift(node.ParentNode.Title);
                         node = node.ParentNode;
                     }
                     return arr.join('/');
                 };
 
-                $scope.backToLastLayer = function(node) {
+                $scope.backToLastLayer = function (node) {
                     if (node.ParentNode) {
                         $scope.unitTreeItems = node.ParentNode.Belonging;
                     }
                     if ($scope.currentSelectedNode.ParentNode !== null) {
                         $scope.currentSelectedNode.Selected = false;
                         $scope.currentSelectedNode = $scope.currentSelectedNode.ParentNode;
-                        angular.forEach($scope.unitTreeItems, function(item) {
+                        angular.forEach($scope.unitTreeItems, function (item) {
                             if (item.ID === $scope.currentSelectedNode.ID) {
                                 item.Selected = true;
                             }
@@ -45,10 +45,10 @@
                     // $scope.currentSelectedNode = null;
                 };
 
-                $scope.showBackButton = function() {
+                $scope.showBackButton = function () {
                     var flag = true;
                     if ($scope.currentSelectedNode) {
-                        angular.forEach($scope.unitTreeItems, function(item) {
+                        angular.forEach($scope.unitTreeItems, function (item) {
                             if ($scope.currentSelectedNode.ID === item.ID && $scope.currentSelectedNode.ParentNode === null) {
                                 flag = false;
                             }
@@ -59,7 +59,7 @@
                     return flag;
                 };
 
-                $scope.expandUnit = function(node) {
+                $scope.expandUnit = function (node) {
                     if ($scope.currentSelectedNode !== null) {
                         $scope.currentSelectedNode.Selected = false;
                         $scope.currentSelectedNode = null;
@@ -67,7 +67,7 @@
                     if (node.Children.length !== 0) {
                         $scope.unitTreeItems = node.Children;
                     } else {
-                        
+
                     }
                     node.Selected = true;
                     $scope.currentSelectedNode = node;
@@ -147,69 +147,69 @@
             }
         ])
         .controller('addReportCtrl', ['$scope', '$mdDialog', 'localStorageService', 'Identities', 'target',
-        function($scope, $mdDialog, localStorageService, Identities, target) {
-            var user = localStorageService.get('userInfo');
-            $scope.reportObj = {
-                Content: '',
-                Author: user.DisplayName,
-                TargetID: target._id,
-                TargetLink: window.location.href,
-                Category: null,
-                TargetUserID: target.UserID
-            };
-            $scope.currentSelectedNode = null;
-            $scope.unitTreeItems = addChildrenAttribute(Identities, null);
+            function ($scope, $mdDialog, localStorageService, Identities, target) {
+                var user = localStorageService.get('userInfo');
+                $scope.reportObj = {
+                    Content: '',
+                    Author: user.DisplayName,
+                    TargetID: target._id,
+                    TargetLink: window.location.href,
+                    Category: null,
+                    TargetUserID: target.UserID
+                };
+                $scope.currentSelectedNode = null;
+                $scope.unitTreeItems = addChildrenAttribute(Identities, null);
 
-            function addChildrenAttribute(data, parentNode) {
-                for (var i = 0; i < data.length; i++) {
-                    data[i].ParentNode = parentNode;
-                    if (data[i].Children.length > 0) {
-                        addChildrenAttribute(data[i].Children, data[i]);
-                    }
-                }
-                return data;
-            }
-
-            $scope.getNewestPath = function() {
-                var flag = false;
-                var node = $scope.currentSelectedNode;
-                if (!node) {
-                    return "--";
-                } else {
-                    angular.forEach($scope.unitTreeItems, function(item) {
-                        if (item.ID === $scope.currentSelectedNode.ID) {
-                            flag = true;
-                        } 
-                    });
-                    var arr = [];
-                    if (node) {
-                        arr.push(node.Title);
-                        while(node && node.ParentNode !== null && node.ParentNode !== undefined) {
-                            arr.unshift(node.ParentNode.Title);
-                            node = node.ParentNode;
+                function addChildrenAttribute(data, parentNode) {
+                    for (var i = 0; i < data.length; i++) {
+                        data[i].ParentNode = parentNode;
+                        if (data[i].Children.length > 0) {
+                            addChildrenAttribute(data[i].Children, data[i]);
                         }
                     }
+                    return data;
                 }
-                if (flag) {
-                    return arr.join(' / ');
-                } else {
-                    return arr.join(' / ') + " / -- ";
-                }        
-            };
 
-            $scope.disableSubmitButtonOrNot = function() {
-                $scope.reportObj.Category = $scope.currentSelectedNode;
-                return $scope.reportObj.Content === '' || $scope.reportObj.Category.ParentNode === null;
-            };
+                $scope.getNewestPath = function () {
+                    var flag = false;
+                    var node = $scope.currentSelectedNode;
+                    if (!node) {
+                        return "--";
+                    } else {
+                        angular.forEach($scope.unitTreeItems, function (item) {
+                            if (item.ID === $scope.currentSelectedNode.ID) {
+                                flag = true;
+                            }
+                        });
+                        var arr = [];
+                        if (node) {
+                            arr.push(node.Title);
+                            while (node && node.ParentNode !== null && node.ParentNode !== undefined) {
+                                arr.unshift(node.ParentNode.Title);
+                                node = node.ParentNode;
+                            }
+                        }
+                    }
+                    if (flag) {
+                        return arr.join(' / ');
+                    } else {
+                        return arr.join(' / ') + " / -- ";
+                    }
+                };
 
-            $scope.closeDialog = function(ev) {
-                $mdDialog.cancel();
-            };
+                $scope.disableSubmitButtonOrNot = function () {
+                    $scope.reportObj.Category = $scope.currentSelectedNode;
+                    return $scope.reportObj.Content === '' || $scope.reportObj.Category.ParentNode === null;
+                };
 
-            $scope.submit = function() {
-                $scope.reportObj.Category = $scope.currentSelectedNode;
-                $mdDialog.hide($scope.reportObj);
-            };
+                $scope.closeDialog = function (ev) {
+                    $mdDialog.cancel();
+                };
 
-    	}])
+                $scope.submit = function () {
+                    $scope.reportObj.Category = $scope.currentSelectedNode;
+                    $mdDialog.hide($scope.reportObj);
+                };
+
+            }])
 }());
