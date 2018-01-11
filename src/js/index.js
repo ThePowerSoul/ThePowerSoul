@@ -431,6 +431,12 @@
                     }
                 }
 
+                document.onkeyup = function (e) {//按键信息对象以函数参数的形式传递进来了，就是那个e  
+                    if (e.keyCode == 13) {
+                        $scope.login(e);
+                    }
+                }
+
                 $scope.disableVerifyEmailButtonOrNot = function () {
                     return $scope.isSendingEmail || $scope.isCountingDown || $scope.newUser.EmailVerifyCode !== '';
                 };

@@ -2,9 +2,9 @@
 	'use strict';
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial'])
 		.controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems',
-			'$stateParams', 'randomString', '$mdDialog', 'alertService',
+			'$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval',
 			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString,
-				$mdDialog, alertService) {
+				$mdDialog, alertService, $interval) {
 				var accessid = 'LTAILjmmB1fnhHlx';
 				var host = "http://thepowersoul-richtexteditor.oss-cn-beijing.aliyuncs.com";
 				var params = {}
@@ -23,6 +23,7 @@
 				// 	}
 				// });
 
+				// 将图片文件上传到服务器
 				var editor = new Simditor({
 					textarea: $('#editor'),
 					upload: {
@@ -37,6 +38,7 @@
 					}
 				});
 
+				$scope.isLoading = false;
 				$scope.simditorContent = $('.simditor-body')[0].innerHTML;
 				$scope.isUploading = false;
 				$scope.uploadingProgress = 0;
@@ -68,6 +70,14 @@
 				$scope.saveAsDraft = function () {
 					saveDraft();
 				};
+
+				$scope.$on('destroy', function() {
+					$interval.cancel(timer);
+				});	
+
+				var timer = $interval(function() {
+					saveDraft();
+				}, 30000);
 
 				function removeBlankSpace() {
 					// 将文本中没有内容的标签去除
@@ -114,6 +124,7 @@
 				}
 
 				function loadArticleDraft() {
+					$scope.isLoading = true;
 					return $http.get(BaseUrl + '/article-draft/' + article_id)
 						.then(function (response) {
 							$scope.isLoading = false;
@@ -162,23 +173,22 @@
 						var selection = window.getSelection();
 						range = selection.getRangeAt(0).cloneRange();
 						// range为鼠标离开时所属的元素，可以直接根据元素的内容性质，判断是按照位置插入还是直接append到后面
-
 					});
 				});
 
 				function appendVideoIntoEditor(src) {
 					var newVideo = document.createElement('video');
+					var newPTag = document.createElement('p');
+					newPTag.append(newVideo);
 					newVideo.src = src;
-					newVideo.style.height = '200px';
-					newVideo.style.width = '300px';
-					newVideo.autoplay = 'false';
+					newVideo.style.height = '300px';
+					newVideo.style.width = '400px';
 					newVideo.controls = 'true';
-					$(newVideo).insertAfter($(range.startContainer));
-					$('<br/>').insertBefore($(newVideo));
+					$(newPTag).insertAfter($(range.startContainer));
 					var newRange = document.createRange();
 					var selection = window.getSelection();
-					newRange.setStartBefore(newVideo);
-					newRange.setEndAfter(newVideo);
+					newRange.setStartAfter(newPTag);
+					newRange.setEndAfter(newPTag);
 					selection.removeAllRanges();
 					selection.addRange(newRange);
 				}
@@ -218,15 +228,15 @@
 							}
 
 						},
-						BeforeUpload: function (up, file) {
-
+						BeforeUpload: function (up, file) { 
+							//
 						},
 						UploadProgress: function (up, file) {
 							$scope.uploadingProgress = file.percent;
 							$scope.$apply();
 						},
 						FileUploaded: function (up, file, info) {
-							if (info.status == 200) {
+							if (info.status === 200) {
 								var body = {
 									Key: randomKey + file.name
 								}
@@ -236,16 +246,16 @@
 										$scope.isUploading = false;
 										appendVideoIntoEditor(response.data.Src);
 									}, function (error) {
-										alertService.showAlert('更换头像失败，请联系管理员');
+										alertService.showAlert('上传视频失败，请联系管理员');
 									});
 							} else {
-
+								alertService.showAlert('上传视频异常，请联系管理员');
 							}
 							$scope.showProgress = false;
 						},
 						Error: function (up, err) {
 							$scope.isUploading = false;
-							console.log(err);
+							alertService.showAlert('上传视频失败，请重试');
 						}
 					}
 				});

@@ -7,7 +7,8 @@
             $scope.articleDrafts = [];
             $scope.isLoading = false;
             $scope.isLoadingDraft = false;
-            $scope.isLoadingHasError = false;
+            $scope.isDeleting = false;
+            $scope.isEditing = false;
             $scope.user = localStorageService.get('userInfo');
 
             $scope.goToEdit = function(article) {
@@ -20,10 +21,13 @@
 
             // 生成新草稿，内容为正文内容，成功后删除正文
             $scope.editArticle = function(article, ev) {
+                $scope.isEditing = true;
                 $http.post(BaseUrl + '/article-draft/' + $scope.user._id, article)
                     .then(function(response) {
+                        $scope.isEditing = false;
                         removeFromArticleList(article, response.data, ev);
                     }, function(error) {
+                        $scope.isEditing = false;
                         alertService.showAlert('生成编辑内容失败，请重试', ev);
                     });     
             };
@@ -38,10 +42,15 @@
 				.cancel('取消');
 		
 				$mdDialog.show(confirm).then(function() {
+                    $scope.isDeleting = true;
 					$http.delete(BaseUrl + '/article-draft/' + article._id)
                     .then(function(response) {
+                        $scope.isDeleting = false;
+                        var index = $scope.articleDrafts.indexOf(article);
+                        $scope.articleDrafts.splice(index, 1);
                         alertService.showAlert('删除文章草稿成功');
                     }, function(error) {
+                        $scope.isDeleting = false;
                         alertService.showAlert('删除文章草稿失败');
                     });
 				}, function() {
@@ -59,10 +68,15 @@
 				.cancel('取消');
 		
 				$mdDialog.show(confirm).then(function() {
+                    $scope.isDeleting = true;
 					$http.delete(BaseUrl + '/article/' + article._id)
                     .then(function(response) {
+                        $scope.isDeleting = false;
+                        var index = $scope.articles.indexOf(article);
+                        $scope.articles.splice(index, 1);
                         alertService.showAlert('删除文章成功');
                     }, function(error) {
+                        $scope.isDeleting = false;
                         alertService.showAlert('删除文章失败', ev);
                     });
 				}, function() {
@@ -71,10 +85,13 @@
             };
             
             function removeFromArticleList(article, data,  ev) {
+                $scope.isEditing = true;
                 $http.delete(BaseUrl + '/article/' + article._id)
                     .then(function(response) {
+                        $scope.isEditing = false;
                         $state.go('new-article', {id: data._id})
                     }, function(error) {
+                        $scope.isEditing = false;
                         alertService.showAlert('清楚文章失败', ev);
                     });
             }
@@ -83,9 +100,10 @@
                 $scope.isLoading = true;
                 return $http.get(BaseUrl + '/articles/' + $scope.user._id)
                     .then(function(response) {
+                        $scope.isLoading = false;
                         $scope.articles = response.data;
                     }, function(error) {
-                        $scope.isLoadingHasError = true;
+                        $scope.isLoading = false;
                     });
             }
 
@@ -94,8 +112,9 @@
                 $http.get(BaseUrl + '/article-drafts/' + $scope.user._id)
                     .then(function(response) {
                         $scope.articleDrafts = response.data;
+                        $scope.isLoadingDraft = false;
                     }, function(error) {
-                        $scope.isLoadingHasError = true;
+                        $scope.isLoadingDraft = false;
                     });
             }
 
