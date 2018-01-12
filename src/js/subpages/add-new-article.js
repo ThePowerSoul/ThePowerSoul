@@ -71,11 +71,11 @@
 					saveDraft();
 				};
 
-				$scope.$on('destroy', function() {
+				$scope.$on('destroy', function () {
 					$interval.cancel(timer);
-				});	
+				});
 
-				var timer = $interval(function() {
+				var timer = $interval(function () {
 					saveDraft();
 				}, 30000);
 
@@ -164,7 +164,7 @@
 					$scope.showProgress = true;
 				}
 
-				// 记录光标上次的位置、
+				// 记录光标上次的位置
 				var cursorPosition = -1;
 				var range;
 				$(document).ready(function () {
@@ -176,21 +176,35 @@
 					});
 				});
 
-				function appendVideoIntoEditor(src) {
+				function appendVideoIntoEditor(src, type) {
 					var newVideo = document.createElement('video');
+					var newSource = document.createElement('source');
 					var newPTag = document.createElement('p');
-					newPTag.append(newVideo);
-					newVideo.src = src;
+					var canvas = document.querySelector('#video-canvas');
+					var ctx = canvas.getContext('2d');
+					var newRange = document.createRange();
+					var selection = window.getSelection();
+					newSource.setAttribute("type", type);
+					newSource.setAttribute("src", src);
 					newVideo.style.height = '300px';
 					newVideo.style.width = '400px';
 					newVideo.controls = 'true';
+					newVideo.currentTime = "1";
+					newVideo.load();
+					newVideo.append(newSource);
+					newPTag.append(newVideo);
 					$(newPTag).insertAfter($(range.startContainer));
-					var newRange = document.createRange();
-					var selection = window.getSelection();
 					newRange.setStartAfter(newPTag);
 					newRange.setEndAfter(newPTag);
 					selection.removeAllRanges();
 					selection.addRange(newRange);
+					newVideo.addEventListener('loadedmetadata', function () {
+						canvas.width = newVideo.videoWidth;
+						canvas.height = newVideo.videoHeight;
+						var img = document.querySelector('#video-preview');
+						ctx.drawImage(newVideo, 0, 0, newVideo.videoWidth, newVideo.videoHeight);
+						img.setAttribute("src", canvas.toDataURL());
+					});
 				}
 
 				var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
@@ -208,7 +222,7 @@
 						FilesAdded: function (up, files) {
 							var fileType = files[0].type;
 							var fileSize = files[0].size;
-							$scope.progressBarProgress = 0;
+							$scope.uploadingProgress = 0;
 							if (videoTypes.indexOf(fileType) < 0) {
 								alertService.showAlert('目前只支持ogg, webm, mpeg4格式的视频');
 								videoUploader.stop();
@@ -226,9 +240,8 @@
 
 									});
 							}
-
 						},
-						BeforeUpload: function (up, file) { 
+						BeforeUpload: function (up, file) {
 							//
 						},
 						UploadProgress: function (up, file) {
@@ -244,7 +257,7 @@
 									.then(function (response) {
 										// 收到返回的视频url
 										$scope.isUploading = false;
-										appendVideoIntoEditor(response.data.Src);
+										appendVideoIntoEditor(response.data.Src, file.type);
 									}, function (error) {
 										alertService.showAlert('上传视频失败，请联系管理员');
 									});

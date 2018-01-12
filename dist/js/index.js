@@ -494,6 +494,48 @@
             loadMessages();
         }
 
+        /** 
+         * 处理浏览器类型问题，当前只支持chrome
+         */
+        function myBrowser() {
+            var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
+            var isOpera = userAgent.indexOf("Opera") > -1;
+            if (isOpera) {
+                return "Opera";
+            }; //判断是否Opera浏览器
+            if (userAgent.indexOf("Firefox") > -1) {
+                return "FF";
+            } //判断是否Firefox浏览器
+            if (userAgent.indexOf("Chrome") > -1) {
+                return "Chrome";
+            }
+            if (userAgent.indexOf("Safari") > -1) {
+                return "Safari";
+            } //判断是否Safari浏览器
+            if (userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1 && !isOpera) {
+                return "IE";
+            }; //判断是否IE浏览器
+        }
+        var mb = myBrowser();
+        // if ("IE" == mb) {
+        //     alert("请使用chrome浏览器访问本站");
+        // }
+        // if ("FF" == mb) {
+        //     alert("请使用chrome浏览器访问本站");
+        // }
+        if ("Chrome" == mb) {
+            // alert("我是 Chrome");
+        } else {
+            alert("请使用chrome浏览器访问本站");
+            window.location.href = "http://rj.baidu.com/soft/detail/14744.html?ald";
+        }
+        // if ("Opera" == mb) {
+
+        // }
+        // if ("Safari" == mb) {
+        //     alert("请使用chrome浏览器访问本站");
+        // }
+
         var sessionExpired = $rootScope.$on('$ONSESSIONEXPIRED', function () {
             $scope.loggedIn = false;
         });
@@ -873,7 +915,7 @@
 			$scope.showProgress = true;
 		}
 
-		// 记录光标上次的位置、
+		// 记录光标上次的位置
 		var cursorPosition = -1;
 		var range;
 		$(document).ready(function () {
@@ -885,21 +927,35 @@
 			});
 		});
 
-		function appendVideoIntoEditor(src) {
+		function appendVideoIntoEditor(src, type) {
 			var newVideo = document.createElement('video');
+			var newSource = document.createElement('source');
 			var newPTag = document.createElement('p');
-			newPTag.append(newVideo);
-			newVideo.src = src;
+			var canvas = document.querySelector('#video-canvas');
+			var ctx = canvas.getContext('2d');
+			var newRange = document.createRange();
+			var selection = window.getSelection();
+			newSource.setAttribute("type", type);
+			newSource.setAttribute("src", src);
 			newVideo.style.height = '300px';
 			newVideo.style.width = '400px';
 			newVideo.controls = 'true';
+			newVideo.currentTime = "1";
+			newVideo.load();
+			newVideo.append(newSource);
+			newPTag.append(newVideo);
 			$(newPTag).insertAfter($(range.startContainer));
-			var newRange = document.createRange();
-			var selection = window.getSelection();
 			newRange.setStartAfter(newPTag);
 			newRange.setEndAfter(newPTag);
 			selection.removeAllRanges();
 			selection.addRange(newRange);
+			newVideo.addEventListener('loadedmetadata', function () {
+				canvas.width = newVideo.videoWidth;
+				canvas.height = newVideo.videoHeight;
+				var img = document.querySelector('#video-preview');
+				ctx.drawImage(newVideo, 0, 0, newVideo.videoWidth, newVideo.videoHeight);
+				img.setAttribute("src", canvas.toDataURL());
+			});
 		}
 
 		var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
@@ -917,7 +973,7 @@
 				FilesAdded: function (up, files) {
 					var fileType = files[0].type;
 					var fileSize = files[0].size;
-					$scope.progressBarProgress = 0;
+					$scope.uploadingProgress = 0;
 					if (videoTypes.indexOf(fileType) < 0) {
 						alertService.showAlert('目前只支持ogg, webm, mpeg4格式的视频');
 						videoUploader.stop();
@@ -948,7 +1004,7 @@
 						$http.put(BaseUrl + '/set-video-public', body).then(function (response) {
 							// 收到返回的视频url
 							$scope.isUploading = false;
-							appendVideoIntoEditor(response.data.Src);
+							appendVideoIntoEditor(response.data.Src, file.type);
 						}, function (error) {
 							alertService.showAlert('上传视频失败，请联系管理员');
 						});
