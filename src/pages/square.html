@@ -94,6 +94,7 @@
     .topic-card .add-to-fav-button {
         margin-right: 24px;
         outline: none;
+        color: rgba(0, 0, 0, 0.54);
     }
 
     .topic-card .add-to-fav-button:hover {
@@ -267,7 +268,7 @@
                         </span>
                         <div class="md-body-1" layout="row" layout-align="start center">
                             <span>[&nbsp;</span>
-                            <span ng-bind="topic.Category | categoryFilter "></span>
+                            <span ng-bind="article.Category | categoryFilter "></span>
                             <span>&nbsp;]</span>
                         </div>
                     </md-card-title-text>

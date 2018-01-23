@@ -563,6 +563,9 @@
                 if (localStorageService.get('userInfo')) {
                     updateUserLoginState();
                     loadMessages();
+                } else {
+                    $scope.loggedIn = false;
+                    $state.go('introduction');
                 }
 
                 /** 
@@ -594,7 +597,7 @@
                 // if ("FF" == mb) {
                 //     alert("请使用chrome浏览器访问本站");
                 // }
-                if ("Chrome" == mb) {
+                if ("Chrome" === mb) {
                     // alert("我是 Chrome");
                 } else {
                     alert("请使用chrome浏览器访问本站");

@@ -327,7 +327,7 @@
 					</div>
 					<div class="comment-operation-container" layout="row" layout-align="start center">
 						<div layout="row" layout-align="start center">
-							<span class="reply-comment" ng-click="commentReply(comment, $event)">回复</span>
+							<span class="reply-comment" ng-click="commentReply(comment, $event)" ng-show="user._id !== comment.UserID">回复</span>
 							<span class="check-conversation-comment" ng-show="comment.TargetUserID !== ''" ng-click="seeConversation(comment, $event)">查看对话</span>
 						</div>
 					</div>

@@ -97,6 +97,27 @@
 					}
 				};
 
+				$scope.goArticleDetail = function (topic, ev) {
+					if (localStorageService.get('userInfo')) {
+						var url = $state.href('article-detail', { id: topic._id });
+						window.open(url, '_blank');
+					} else {
+						$mdDialog.show({
+							controller: 'loginOrSignupCtrl',
+							templateUrl: 'dist/pages/login-and-signup.html',
+							parent: angular.element(document.body),
+							targetEvent: ev,
+							clickOutsideToClose: false,
+							fullscreen: false
+						})
+							.then(function (data) {
+								$rootScope.$broadcast('$USERLOGGEDIN');
+							}, function () {
+								// canceled
+							});
+					}
+				};
+
 				/********************** 查看帖子详情 ********************/
 				$scope.goTopicDetail = function (topic, ev) {
 					if (localStorageService.get('userInfo')) {
@@ -152,7 +173,7 @@
 						});
 				}
 
-				$scope.loadMore = function() {
+				$scope.loadMore = function () {
 					loadTopics(++pageNum, true);
 				};
 

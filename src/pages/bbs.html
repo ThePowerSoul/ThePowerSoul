@@ -40,7 +40,7 @@
 
 	.topic-card {
 		min-height: 150px;
-		max-height: 200px;
+		max-height: 400px;
 	}
 
 	.topic-card .fa {
@@ -97,6 +97,10 @@
 		color: #8590a6;
 	}
 
+	.topic-card .topic-content-container-article {
+		overflow-y: auto;
+	}
+
 	.topic-content-container .topic-content {
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -117,10 +121,10 @@
 	}
 
 	.bbs-container .page-loading-circle {
-        position: absolute;
-        top: 45%;
-        left: 50%;
-    }
+		position: absolute;
+		top: 45%;
+		left: 50%;
+	}
 </style>
 <div class="bbs-container">
 	<div class="uber-matte" ng-show="isOperating" layout="row" layout-align="start center">
@@ -144,20 +148,24 @@
 		<md-card class="topic-card" ng-repeat="topic in list">
 			<md-card-title class="topic-title-container">
 				<md-card-title-text layout="row" layout-align="start center">
-					<img class="author-avatar" ng-src="{{topic.AvatarID}}" alt="">
+					<img class="author-avatar" ng-src="{{topic.AvatarID}}" ng-show="topic.AvatarID" alt="">
+					<img class="author-avatar" ng-src="../../images/default-picture.jpg" ng-show="!topic.AvatarID" alt="">
 					<span class="md-body-1">
 						{{topic.Author}}
 					</span>
 					<span class="md-body-1">发布了</span>
 					<span class="md-body-1" ng-show="topic.IsArticle">文章 </span>
-					<span class="md-body-1 topic-title" ng-click="goTopicDetail(topic, $event)" flex>
+					<span class="md-body-1 topic-title" ng-click="goArticleDetail(topic, $event)" flex>
 						{{topic.Title}}
 					</span>
 				</md-card-title-text>
 			</md-card-title>
-			<md-card-content class="topic-content-container">
-				<span class="topic-content" ng-click="goTopicDetail(topic)">
-					{{topic.Content}}
+			<md-card-content class="topic-content-container-article" ng-show="topic.IsArticle">
+				<span class="topic-content" ng-click="goTopicDetail(topic)" ng-bind-html="topic.Content | to_trusted_html">
+				</span>
+			</md-card-content>
+			<md-card-content class="topic-content-container" ng-show="!topic.IsArticle">
+				<span class="topic-content" ng-click="goTopicDetail(topic)" ng-bind="topic.Content">
 				</span>
 			</md-card-content>
 			<div class="topic-operation-container" layout="row" layout-align="start center">

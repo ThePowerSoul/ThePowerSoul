@@ -1,27 +1,131 @@
 <style>
+    .search-results-container {
+        width: 1032px;
+        margin: 0 auto;
+    }
+
+    .search-results-topic .search-results-item {
+        min-height: 150px;
+        max-height: 200px;
+        width: 586px;
+        margin: 24px 8px 24px 0px;
+        padding: 16px;
+        height: 65px;
+        background-color: rgb(255, 255, 255);
+        box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.2),
+        0px 1px 1px 0px rgba(0, 0, 0, 0.14),
+        0px 2px 1px -1px rgba(0, 0, 0, 0.12);
+    }
+
     .search-results-container .topic-title:hover {
         cursor: pointer;
         color: #8590a6;
     }
+
     .search-results-container .article-title:hover {
         cursor: pointer;
         color: #8590a6;
     }
+
+    .search-results-container .load-more-container {
+        width: 586px;
+        height: 24px;
+        margin-top: 16px;
+    }
+
+    .load-more-container .load-more-button {
+        color: rgba(0, 0, 0, 0.54);
+        outline: none;
+    }
+
+    .load-more-container .load-more-button:hover {
+        color: #8590a6;
+        cursor: pointer;
+    }
+
+    .search-results-container .search-result-operation-container {
+        margin-top: 24px;
+    }
+
+    .search-results-item .author-avatar {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+    }
+
+    .search-results-topic .topic-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        outline: none;
+        margin-right: 24px;
+        font-weight: bold;
+    }
+
+    .search-results-topic .topic-content {
+        padding: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        cursor: pointer;
+        line-height: 1.6;
+        outline: none;
+    }
 </style>
 <div class="search-results-container">
-    <md-button ng-click="switchPanel()" ng-bind="switchButtonText">
-    </md-button>
-    <span class="md-body-1">搜索结果：</span>
+    <div class="search-result-operation-container" layout="row" layout-align="start center">
+        <md-button class="md-raised" ng-click="switchPanel()" ng-bind="switchButtonText">
+        </md-button>
+        <span class="md-body-1">搜索结果：</span>
+    </div>
     <div class="search-results-topic" ng-show="showTopicPanel">
-        <div class="search-results-item" ng-repeat="topic in topics">
-            <span class="topic-title" ng-bind="topic.Title" ng-click="goToTopic(topic)"></span>
+        <div class="search-results-item" ng-repeat="topic in topics" layout="column">
+            <div layout="row" layout-align="start center">
+                <img class="author-avatar" ng-src="{{topic.AvatarID}}" alt="">
+                <span class="md-body-1">
+                    {{topic.Author}}
+                </span>
+                <span class="md-body-1">发布了：</span>
+                <span class="md-body-1 topic-title" ng-click="goToTopic(topic, $event)" flex>
+                    {{topic.Title}}
+                </span>
+            </div>
+            <span class="topic-content" ng-click="goToTopic(topic)" flex>
+                {{topic.Content}}
+            </span>
+            <div layout="row" layout-align="start center">
+                <div layout="row" layout-align="start center">
+                    <span class="md-body-1 like-number">{{'&nbsp;' + topic.LikeUser.length + '&nbsp;'}}</span>
+                    <span class="md-body-1">个赞</span>
+                </div>
+                <div layout="row" layout-align="start center">
+                    <span class="md-body-1 dislike-number">{{'&nbsp;' + topic.DislikeUser.length + '&nbsp;'}}</span>
+                    <span class="md-body-1">个踩</span>
+                </div>
+                <div class="topic-submit-time" layout="row">
+                    <span class="md-body-1">发表于&nbsp;</span>
+                    <span class="md-body-1">{{topic.CreatedAt | date:"MM/dd/yyyy '的' h:mma"}}</span>
+                </div>
+            </div>
         </div>
-        <span class="md-body-1" ng-click="loadMoreTopics()">加载更多</span>
+        <div class="load-more-container" layout="row" layout-align="center" ng-show="!disableLoadMoreTopic">
+            <span class="load-more-button md-body-1" ng-click="loadMoreTopics()">加载更多帖子</span>
+        </div>
+        <div class="load-more-container" layout="row" layout-align="center" ng-show="disableLoadMoreTopic">
+            <span class="load-more-button md-body-1">已经加载到底</span>
+        </div>
     </div>
     <div class="search-results-article" ng-show="!showTopicPanel">
         <div class="search-results-item" ng-repeat="article in articles">
-            <span class="article-title" ng-bind="article.Title" ng-click="goToArticle(article)"></span>
+            <span class="article-title" ng-bind="article.Title" ng-click="goToArticle(article, $event)"></span>
         </div>
-        <span class="md-body-1" ng-click="loadMoreArticles()">加载更多</span>
+        <div class="load-more-container" layout="row" layout-align="center" ng-show="!disableLoadMoreArticle">
+            <span class="load-more-button md-body-1" ng-click="loadMoreArticles()">加载更多文章</span>
+        </div>
+        <div class="load-more-container" layout="row" layout-align="center" ng-show="disableLoadMoreArticle">
+            <span class="load-more-button md-body-1">已经加载到底</span>
+        </div>
     </div>
 </div>

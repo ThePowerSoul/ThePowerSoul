@@ -177,34 +177,37 @@
 				});
 
 				function appendVideoIntoEditor(src, type) {
+					var scale = 0.25;
 					var newVideo = document.createElement('video');
 					var newSource = document.createElement('source');
-					var newPTag = document.createElement('p');
+					var newPTag = document.createElement('div');
 					var canvas = document.querySelector('#video-canvas');
 					var ctx = canvas.getContext('2d');
 					var newRange = document.createRange();
 					var selection = window.getSelection();
 					newSource.setAttribute("type", type);
 					newSource.setAttribute("src", src);
-					newVideo.style.height = '300px';
 					newVideo.style.width = '400px';
+					newVideo.style.height = '300px';
 					newVideo.controls = 'true';
 					newVideo.currentTime = "1";
-					newVideo.load();
 					newVideo.append(newSource);
 					newPTag.append(newVideo);
+					// newVideo.addEventListener('loadedmetadata', function () {
+					// canvas.width = newVideo.videoWidth * scale;
+					// canvas.height = newVideo.videoHeight * scale;
+					canvas.width = "400";
+					canvas.height = "300";
+					var img = document.querySelector('#video-preview');
+					ctx.drawImage(newVideo, 0, 0, canvas.width, canvas.heigh);
+					img.setAttribute("src", canvas.toDataURL());
+					// });
+
 					$(newPTag).insertAfter($(range.startContainer));
-					newRange.setStartAfter(newPTag);
-					newRange.setEndAfter(newPTag);
-					selection.removeAllRanges();
-					selection.addRange(newRange);
-					newVideo.addEventListener('loadedmetadata', function () {
-						canvas.width = newVideo.videoWidth;
-						canvas.height = newVideo.videoHeight;
-						var img = document.querySelector('#video-preview');
-						ctx.drawImage(newVideo, 0, 0, newVideo.videoWidth, newVideo.videoHeight);
-						img.setAttribute("src", canvas.toDataURL());
-					});
+					// newRange.setStartAfter(newPTag);
+					// newRange.setEndAfter(newPTag);
+					// selection.removeAllRanges();
+					// selection.addRange(newRange);
 				}
 
 				var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];

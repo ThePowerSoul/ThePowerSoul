@@ -492,6 +492,9 @@
         if (localStorageService.get('userInfo')) {
             updateUserLoginState();
             loadMessages();
+        } else {
+            $scope.loggedIn = false;
+            $state.go('introduction');
         }
 
         /** 
@@ -523,7 +526,7 @@
         // if ("FF" == mb) {
         //     alert("请使用chrome浏览器访问本站");
         // }
-        if ("Chrome" == mb) {
+        if ("Chrome" === mb) {
             // alert("我是 Chrome");
         } else {
             alert("请使用chrome浏览器访问本站");
@@ -765,6 +768,61 @@
     }]);
 })();
 (function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).filter('categoryFilter', function () {
+        return function (str) {
+            var result = "";
+            switch (str) {
+                case 'STRENGTH':
+                    result = "力量训练";
+                    break;
+                case 'YOGA':
+                    result = "瑜伽训练";
+                    break;
+                case 'FITNESS':
+                    result = "形体训练";
+                    break;
+                case 'RUNNING':
+                    result = "跑步训练";
+                    break;
+            }
+            return result;
+        };
+    }).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
+            }
+        };
+    }]).service('randomString', function () {
+        return {
+            getRandomString: function (len) {
+                len = len || 32;
+                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
+                var maxPos = chars.length;
+                var result = '';
+                for (var i = 0; i < len; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * maxPos));
+                }
+                return result;
+            }
+        };
+    });
+})();
+(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString, $mdDialog, alertService, $interval) {
@@ -928,34 +986,37 @@
 		});
 
 		function appendVideoIntoEditor(src, type) {
+			var scale = 0.25;
 			var newVideo = document.createElement('video');
 			var newSource = document.createElement('source');
-			var newPTag = document.createElement('p');
+			var newPTag = document.createElement('div');
 			var canvas = document.querySelector('#video-canvas');
 			var ctx = canvas.getContext('2d');
 			var newRange = document.createRange();
 			var selection = window.getSelection();
 			newSource.setAttribute("type", type);
 			newSource.setAttribute("src", src);
-			newVideo.style.height = '300px';
 			newVideo.style.width = '400px';
+			newVideo.style.height = '300px';
 			newVideo.controls = 'true';
 			newVideo.currentTime = "1";
-			newVideo.load();
 			newVideo.append(newSource);
 			newPTag.append(newVideo);
+			// newVideo.addEventListener('loadedmetadata', function () {
+			// canvas.width = newVideo.videoWidth * scale;
+			// canvas.height = newVideo.videoHeight * scale;
+			canvas.width = "400";
+			canvas.height = "300";
+			var img = document.querySelector('#video-preview');
+			ctx.drawImage(newVideo, 0, 0, canvas.width, canvas.heigh);
+			img.setAttribute("src", canvas.toDataURL());
+			// });
+
 			$(newPTag).insertAfter($(range.startContainer));
-			newRange.setStartAfter(newPTag);
-			newRange.setEndAfter(newPTag);
-			selection.removeAllRanges();
-			selection.addRange(newRange);
-			newVideo.addEventListener('loadedmetadata', function () {
-				canvas.width = newVideo.videoWidth;
-				canvas.height = newVideo.videoHeight;
-				var img = document.querySelector('#video-preview');
-				ctx.drawImage(newVideo, 0, 0, newVideo.videoWidth, newVideo.videoHeight);
-				img.setAttribute("src", canvas.toDataURL());
-			});
+			// newRange.setStartAfter(newPTag);
+			// newRange.setEndAfter(newPTag);
+			// selection.removeAllRanges();
+			// selection.addRange(newRange);
 		}
 
 		var videoTypes = ['video/mp4', 'video/ogg', 'video/webm', 'video/mpeg4'];
@@ -1646,6 +1707,26 @@
 			}
 		};
 
+		$scope.goArticleDetail = function (topic, ev) {
+			if (localStorageService.get('userInfo')) {
+				var url = $state.href('article-detail', { id: topic._id });
+				window.open(url, '_blank');
+			} else {
+				$mdDialog.show({
+					controller: 'loginOrSignupCtrl',
+					templateUrl: 'dist/pages/login-and-signup.html',
+					parent: angular.element(document.body),
+					targetEvent: ev,
+					clickOutsideToClose: false,
+					fullscreen: false
+				}).then(function (data) {
+					$rootScope.$broadcast('$USERLOGGEDIN');
+				}, function () {
+					// canceled
+				});
+			}
+		};
+
 		/********************** 查看帖子详情 ********************/
 		$scope.goTopicDetail = function (topic, ev) {
 			if (localStorageService.get('userInfo')) {
@@ -1981,7 +2062,7 @@
 (function () {
     'use strict';
 
-    angular.module('The.Power.Soul.Search.Results', ['ngMaterial']).controller('searchResultsCtrl', ['$scope', '$http', '$stateParams', 'BaseUrl', function ($scope, $http, $stateParams, BaseUrl) {
+    angular.module('The.Power.Soul.Search.Results', ['ngMaterial']).controller('searchResultsCtrl', ['$scope', '$http', '$state', '$stateParams', 'BaseUrl', function ($scope, $http, $state, $stateParams, BaseUrl) {
         $scope.topics = [];
         $scope.articles = [];
         var keyword = $stateParams.keyword;
@@ -2010,12 +2091,12 @@
             getArticleSearchResults(++articlePageNum, category, keyword, true);
         };
 
-        $scope.goToTopic = function (topic) {
+        $scope.goToTopic = function (topic, ev) {
             var url = $state.href('topic-detail', { id: topic._id });
             window.open(url, '_blank');
         };
 
-        $scope.goToArticle = function (article) {
+        $scope.goToArticle = function (article, ev) {
             var url = $state.href('article-detail', { id: article._id });
             window.open(url, '_blank');
         };
@@ -2025,9 +2106,9 @@
                 Page: pageNum,
                 Category: category,
                 Keyword: keyword,
-                LoadAll: false
+                LoadAll: true
             };
-            return $http.get(BaseUrl + '/topic', body).then(function (response) {
+            return $http.post(BaseUrl + '/topic', body).then(function (response) {
                 if (isLoadingMore) {
                     $scope.topics = $scope.topics.concat(response.data);
                     if (response.data.length < 5) {
@@ -2044,9 +2125,9 @@
                 Page: pageNum,
                 Category: category,
                 Keyword: keyword,
-                LoadAll: false
+                LoadAll: true
             };
-            $http.get(BaseUrl + '/article', body).then(function (response) {
+            $http.post(BaseUrl + '/articles', body).then(function (response) {
                 if (isLoadingMore) {
                     $scope.articles = $scope.articles.concat(response.data);
                     if (response.data.length < 5) {
@@ -3096,59 +3177,4 @@
             }
         };
     }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).filter('categoryFilter', function () {
-        return function (str) {
-            var result = "";
-            switch (str) {
-                case 'STRENGTH':
-                    result = "力量训练";
-                    break;
-                case 'YOGA':
-                    result = "瑜伽训练";
-                    break;
-                case 'FITNESS':
-                    result = "形体训练";
-                    break;
-                case 'RUNNING':
-                    result = "跑步训练";
-                    break;
-            }
-            return result;
-        };
-    }).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
-            }
-        };
-    }]).service('randomString', function () {
-        return {
-            getRandomString: function (len) {
-                len = len || 32;
-                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
-                var maxPos = chars.length;
-                var result = '';
-                for (var i = 0; i < len; i++) {
-                    result += chars.charAt(Math.floor(Math.random() * maxPos));
-                }
-                return result;
-            }
-        };
-    });
 })();
