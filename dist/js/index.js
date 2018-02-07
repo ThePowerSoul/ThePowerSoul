@@ -33,6 +33,7 @@
                         pointer.permissionModel.permission = response;
                         pointer.permissionModel.isPermissionLoaded = true;
                         pointer.getPermission(pointer.permissionModel, defer);
+                        $rootScope.$broadcast('$ONSESSIONAUTHED');
                     }, function (error) {
                         $state.go('introduction');
                         if (error.status === 400) {
@@ -488,14 +489,24 @@
         $scope.topicSearchResults = [];
         $scope.articleSearchResults = [];
         $scope.showSearchPanel = false;
-        // 检查当前是否有用户登录
-        if (localStorageService.get('userInfo')) {
+
+        if (authorizationService.permissionModel.isPermissionLoaded) {
+            $scope.loggedIn = true;
             updateUserLoginState();
             loadMessages();
+            return;
         } else {
-            $scope.loggedIn = false;
-            $state.go('introduction');
+            authorizationService.permissionCheck();
         }
+
+        // // 检查当前是否有用户登录
+        // if (localStorageService.get('userInfo')) {
+        //     updateUserLoginState();
+        //     loadMessages();
+        // } else {
+        //     $scope.loggedIn = false;
+        //     $state.go('introduction');
+        // }
 
         /** 
          * 处理浏览器类型问题，当前只支持chrome
@@ -539,6 +550,11 @@
         //     alert("请使用chrome浏览器访问本站");
         // }
 
+        var sessionAuthef = $rootScope.$on('$ONSESSIONAUTHED', function () {
+            $scope.loggedIn = true;
+            $scope.loggedInUser = localStorageService.get('userInfo');
+        });
+
         var sessionExpired = $rootScope.$on('$ONSESSIONEXPIRED', function () {
             $scope.loggedIn = false;
         });
@@ -549,6 +565,16 @@
 
         var showMessageEntrance = $rootScope.$on('$SHOWMESSAGEENTRANCE', function () {
             $scope.showMessageEntrance = true;
+        });
+
+        $(document).click(function (e) {
+            $scope.showSearchPanel = false;
+            $scope.searchKeyword = "";
+            $scope.$apply();
+        });
+
+        $('.search-result').click(function (e) {
+            e.stopPropagation();
         });
 
         // 有用户登录时更新页面状态
@@ -768,61 +794,6 @@
     }]);
 })();
 (function () {
-    'use strict';
-
-    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
-        Title: "力量训练",
-        Value: "STRENGTH"
-    }, {
-        Title: "瑜伽训练",
-        Value: "YOGA"
-    }, {
-        Title: "形体训练",
-        Value: "FITNESS"
-    }, {
-        Title: "跑步训练",
-        Value: "RUNNING"
-    }]).filter('categoryFilter', function () {
-        return function (str) {
-            var result = "";
-            switch (str) {
-                case 'STRENGTH':
-                    result = "力量训练";
-                    break;
-                case 'YOGA':
-                    result = "瑜伽训练";
-                    break;
-                case 'FITNESS':
-                    result = "形体训练";
-                    break;
-                case 'RUNNING':
-                    result = "跑步训练";
-                    break;
-            }
-            return result;
-        };
-    }).service('alertService', ['$mdDialog', function ($mdDialog) {
-        return {
-            showAlert: function (text, ev) {
-                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
-            }
-        };
-    }]).service('randomString', function () {
-        return {
-            getRandomString: function (len) {
-                len = len || 32;
-                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
-                var maxPos = chars.length;
-                var result = '';
-                for (var i = 0; i < len; i++) {
-                    result += chars.charAt(Math.floor(Math.random() * maxPos));
-                }
-                return result;
-            }
-        };
-    });
-})();
-(function () {
 	'use strict';
 
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString, $mdDialog, alertService, $interval) {
@@ -899,9 +870,8 @@
 			saveDraft();
 		}, 30000);
 
-		function removeBlankSpace() {
-			// 将文本中没有内容的标签去除
-		}
+		// 将文本中没有内容的标签去除
+		function removeBlankSpace() {}
 
 		function removeFromDraftList() {
 			$http.delete(BaseUrl + '/article-draft/' + $scope.article._id).then(function (response) {
@@ -1002,15 +972,13 @@
 			newVideo.currentTime = "1";
 			newVideo.append(newSource);
 			newPTag.append(newVideo);
-			// newVideo.addEventListener('loadedmetadata', function () {
-			// canvas.width = newVideo.videoWidth * scale;
-			// canvas.height = newVideo.videoHeight * scale;
-			canvas.width = "400";
-			canvas.height = "300";
-			var img = document.querySelector('#video-preview');
-			ctx.drawImage(newVideo, 0, 0, canvas.width, canvas.heigh);
-			img.setAttribute("src", canvas.toDataURL());
-			// });
+			newVideo.addEventListener('loadedmetadata', function () {
+				// canvas.width = newVideo.videoWidth * scale;
+				// canvas.height = newVideo.videoHeight * scale;
+				var img = document.querySelector('#video-preview');
+				ctx.drawImage(newVideo, 0, 0, newVideo.videoWidth, newVideo.videoHeight);
+				img.setAttribute("src", canvas.toDataURL());
+			});
 
 			$(newPTag).insertAfter($(range.startContainer));
 			// newRange.setStartAfter(newPTag);
@@ -1635,7 +1603,8 @@
 			$mdDialog.hide($scope.topic);
 		};
 	}]).controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService', 'localStorageService', '$http', 'BaseUrl', function ($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-		$scope.isLoadingTopic = false;
+		$scope.isLoading = false;
+		$scope.loadError = false;
 		$scope.isOperating = false;
 		$scope.disableLoadMore = false;
 		$scope.list = [];
@@ -1805,6 +1774,7 @@
 				}
 			}, function (error) {
 				$scope.isLoading = false;
+				$scope.loadError = true;
 				alertService.showAlert('加载失败，请重试。');
 			});
 		}
@@ -3177,4 +3147,59 @@
             }
         };
     }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('The.Power.Soul.Tools', []).constant('categoryItems', [{
+        Title: "力量训练",
+        Value: "STRENGTH"
+    }, {
+        Title: "瑜伽训练",
+        Value: "YOGA"
+    }, {
+        Title: "形体训练",
+        Value: "FITNESS"
+    }, {
+        Title: "跑步训练",
+        Value: "RUNNING"
+    }]).filter('categoryFilter', function () {
+        return function (str) {
+            var result = "";
+            switch (str) {
+                case 'STRENGTH':
+                    result = "力量训练";
+                    break;
+                case 'YOGA':
+                    result = "瑜伽训练";
+                    break;
+                case 'FITNESS':
+                    result = "形体训练";
+                    break;
+                case 'RUNNING':
+                    result = "跑步训练";
+                    break;
+            }
+            return result;
+        };
+    }).service('alertService', ['$mdDialog', function ($mdDialog) {
+        return {
+            showAlert: function (text, ev) {
+                $mdDialog.show($mdDialog.alert().parent(angular.element(document.querySelector('#popupContainer'))).clickOutsideToClose(true).title('提示').textContent(text).ariaLabel('Alert Dialog Demo').ok('好的').targetEvent());
+            }
+        };
+    }]).service('randomString', function () {
+        return {
+            getRandomString: function (len) {
+                len = len || 32;
+                var chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
+                var maxPos = chars.length;
+                var result = '';
+                for (var i = 0; i < len; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * maxPos));
+                }
+                return result;
+            }
+        };
+    });
 })();

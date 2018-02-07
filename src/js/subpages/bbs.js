@@ -22,7 +22,8 @@
 		.controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService',
 			'localStorageService', '$http', 'BaseUrl',
 			function ($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-				$scope.isLoadingTopic = false;
+				$scope.isLoading= false;
+				$scope.loadError = false;
 				$scope.isOperating = false;
 				$scope.disableLoadMore = false;
 				$scope.list = [];
@@ -200,6 +201,7 @@
 							}
 						}, function (error) {
 							$scope.isLoading = false;
+							$scope.loadError = true;
 							alertService.showAlert('加载失败，请重试。');
 						});
 				}

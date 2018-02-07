@@ -130,8 +130,13 @@
 	<div class="uber-matte" ng-show="isOperating" layout="row" layout-align="start center">
 		<span class="md-body-1 matte-text">正在操作，请稍等...</span>
 	</div>
+	<div ng-show="!isLoading && loadError">
+		<span class="md-body-1">
+			加载失败，请重试
+		</span>
+	</div>
 	<md-progress-circular class="page-loading-circle" ng-show="isLoading" md-mode="indeterminate"></md-progress-circular>
-	<div class="bbs-widget-container" layout="row" layout-align="start center">
+	<div class="bbs-widget-container" layout="row" layout-align="start center" ng-show="!isLoading">
 		<md-input-container>
 			<md-button class="md-raised" ng-click="addNewTopic($event)">
 				<i class="fa fa-sticky-note small" aria-hidden="true"></i>

@@ -79,8 +79,9 @@
 					saveDraft();
 				}, 30000);
 
+				// 将文本中没有内容的标签去除
 				function removeBlankSpace() {
-					// 将文本中没有内容的标签去除
+
 				}
 
 				function removeFromDraftList() {
@@ -193,15 +194,13 @@
 					newVideo.currentTime = "1";
 					newVideo.append(newSource);
 					newPTag.append(newVideo);
-					// newVideo.addEventListener('loadedmetadata', function () {
-					// canvas.width = newVideo.videoWidth * scale;
-					// canvas.height = newVideo.videoHeight * scale;
-					canvas.width = "400";
-					canvas.height = "300";
-					var img = document.querySelector('#video-preview');
-					ctx.drawImage(newVideo, 0, 0, canvas.width, canvas.heigh);
-					img.setAttribute("src", canvas.toDataURL());
-					// });
+					newVideo.addEventListener('loadedmetadata', function () {
+						// canvas.width = newVideo.videoWidth * scale;
+						// canvas.height = newVideo.videoHeight * scale;
+						var img = document.querySelector('#video-preview');
+						ctx.drawImage(newVideo, 0, 0, newVideo.videoWidth, newVideo.videoHeight);
+						img.setAttribute("src", canvas.toDataURL());
+					});
 
 					$(newPTag).insertAfter($(range.startContainer));
 					// newRange.setStartAfter(newPTag);

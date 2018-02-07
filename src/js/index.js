@@ -57,6 +57,7 @@
                                 pointer.permissionModel.permission = response;
                                 pointer.permissionModel.isPermissionLoaded = true;
                                 pointer.getPermission(pointer.permissionModel, defer);
+                                $rootScope.$broadcast('$ONSESSIONAUTHED');
                             }, function (error) {
                                 $state.go('introduction');
                                 if (error.status === 400) {
@@ -559,14 +560,24 @@
                 $scope.topicSearchResults = [];
                 $scope.articleSearchResults = [];
                 $scope.showSearchPanel = false;
-                // 检查当前是否有用户登录
-                if (localStorageService.get('userInfo')) {
+
+                if (authorizationService.permissionModel.isPermissionLoaded) {
+                    $scope.loggedIn = true;
                     updateUserLoginState();
                     loadMessages();
+                    return;
                 } else {
-                    $scope.loggedIn = false;
-                    $state.go('introduction');
+                    authorizationService.permissionCheck();
                 }
+
+                // // 检查当前是否有用户登录
+                // if (localStorageService.get('userInfo')) {
+                //     updateUserLoginState();
+                //     loadMessages();
+                // } else {
+                //     $scope.loggedIn = false;
+                //     $state.go('introduction');
+                // }
 
                 /** 
                  * 处理浏览器类型问题，当前只支持chrome
@@ -610,6 +621,11 @@
                 //     alert("请使用chrome浏览器访问本站");
                 // }
 
+                var sessionAuthef = $rootScope.$on('$ONSESSIONAUTHED', function () {
+                    $scope.loggedIn = true;
+                    $scope.loggedInUser = localStorageService.get('userInfo');
+                });
+
                 var sessionExpired = $rootScope.$on('$ONSESSIONEXPIRED', function () {
                     $scope.loggedIn = false;
                 });
@@ -620,6 +636,16 @@
 
                 var showMessageEntrance = $rootScope.$on('$SHOWMESSAGEENTRANCE', function () {
                     $scope.showMessageEntrance = true;
+                });
+
+                $(document).click(function (e) {
+                    $scope.showSearchPanel = false;
+                    $scope.searchKeyword = "";
+                    $scope.$apply();
+                });
+
+                $('.search-result').click(function (e) {
+                    e.stopPropagation();
                 });
 
                 // 有用户登录时更新页面状态
