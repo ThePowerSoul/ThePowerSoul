@@ -20,7 +20,7 @@
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router', 'ngSanitize'].concat(subModules))
-        .constant('BaseUrl', "http://localhost:3030")
+        .constant('BaseUrl', "http://47.104.23.80:3030/")
         .config(function (localStorageServiceProvider, $locationProvider) {
             localStorageServiceProvider
                 .setPrefix('thepowersoul');
