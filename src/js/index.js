@@ -20,7 +20,7 @@
         'LocalStorageModule'
     ];
     angular.module('The.Power.Soul', ['ngMaterial', 'ui.router', 'ngSanitize'].concat(subModules))
-        .constant('BaseUrl', "http://47.104.23.80:3030/")
+        .constant('BaseUrl', "http://47.104.23.80:3030")
         .config(function (localStorageServiceProvider, $locationProvider) {
             localStorageServiceProvider
                 .setPrefix('thepowersoul');
@@ -432,14 +432,14 @@
                     }
                 }
 
-                document.onkeyup = function (e) {//按键信息对象以函数参数的形式传递进来了，就是那个e  
+                document.onkeyup = function (e) {
                     if (e.keyCode == 13) {
                         $scope.login(e);
                     }
                 }
 
                 $scope.disableVerifyEmailButtonOrNot = function () {
-                    return $scope.isSendingEmail || $scope.isCountingDown || $scope.newUser.EmailVerifyCode !== '';
+                    return $scope.isSendingEmail || $scope.isCountingDown;
                 };
 
                 $scope.changePanel = function (signal) {
@@ -462,13 +462,15 @@
                             if (response.status === 200) {
                                 $scope.newUser.EmailVerifyCode = body.Code;
                                 time();
-                            } else if (response.status === 400) {
-                                $scope.sendButtonText = response.data.Message;
-                                $scope.newUser.EmailVerifyCode = response.data.Code;
                             }
-                        }, function (error) {
-                            $scope.isSendingEmail = false;
-                            $scope.isSendingEmailHasError = true;
+                        }, function (error) { // 短时间内重复发送验证码
+                            if (error.status === 400) {
+                                $scope.sendButtonText = error.data.Message;
+                                $scope.newUser.EmailVerifyCode = error.data.Code;
+                            } else {
+                                $scope.isSendingEmail = false;
+                                $scope.isSendingEmailHasError = true;
+                            }
                         })
                 };
 
@@ -602,24 +604,12 @@
                     }; //判断是否IE浏览器
                 }
                 var mb = myBrowser();
-                // if ("IE" == mb) {
-                //     alert("请使用chrome浏览器访问本站");
-                // }
-                // if ("FF" == mb) {
-                //     alert("请使用chrome浏览器访问本站");
-                // }
                 if ("Chrome" === mb) {
                     // alert("我是 Chrome");
                 } else {
                     alert("请使用chrome浏览器访问本站");
                     window.location.href = "http://rj.baidu.com/soft/detail/14744.html?ald";
                 }
-                // if ("Opera" == mb) {
-
-                // }
-                // if ("Safari" == mb) {
-                //     alert("请使用chrome浏览器访问本站");
-                // }
 
                 var sessionAuthef = $rootScope.$on('$ONSESSIONAUTHED', function () {
                     $scope.loggedIn = true;
