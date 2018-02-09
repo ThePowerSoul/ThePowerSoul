@@ -628,8 +628,6 @@
                     alert("mobile");
                 }
 
-
-
                 var sessionAuthef = $rootScope.$on('$ONSESSIONAUTHED', function () {
                     $scope.loggedIn = true;
                     $scope.loggedInUser = localStorageService.get('userInfo');

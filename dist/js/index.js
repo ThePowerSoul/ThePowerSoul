@@ -510,34 +510,52 @@
         //     $state.go('introduction');
         // }
 
-        /** 
-         * 处理浏览器类型问题，当前只支持chrome
-         */
-        function myBrowser() {
-            var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
-            var isOpera = userAgent.indexOf("Opera") > -1;
-            if (isOpera) {
-                return "Opera";
-            }; //判断是否Opera浏览器
-            if (userAgent.indexOf("Firefox") > -1) {
-                return "FF";
-            } //判断是否Firefox浏览器
-            if (userAgent.indexOf("Chrome") > -1) {
-                return "Chrome";
+        function isPC() {
+            var userAgentInfo = navigator.userAgent;
+            var Agents = ["Android", "iPhone", "SymbianOS", "Windows Phone", "iPad", "iPod"];
+            var flag = true;
+            for (var i = 0; i < Agents.length; i++) {
+                if (userAgentInfo.indexOf(Agents[i]) > 0) {
+                    flag = false;
+                    break;
+                }
             }
-            if (userAgent.indexOf("Safari") > -1) {
-                return "Safari";
-            } //判断是否Safari浏览器
-            if (userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1 && !isOpera) {
-                return "IE";
-            }; //判断是否IE浏览器
+            return flag;
         }
-        var mb = myBrowser();
-        if ("Chrome" === mb) {
-            // alert("我是 Chrome");
+
+        var flag = isPC();
+        if (flag) {
+            // pc
+            function myBrowser() {
+                // 处理浏览器类型问题，当前只支持chrome
+                var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
+                var isOpera = userAgent.indexOf("Opera") > -1;
+                if (isOpera) {
+                    return "Opera";
+                }; //判断是否Opera浏览器
+                if (userAgent.indexOf("Firefox") > -1) {
+                    return "FF";
+                } //判断是否Firefox浏览器
+                if (userAgent.indexOf("Chrome") > -1) {
+                    return "Chrome";
+                }
+                if (userAgent.indexOf("Safari") > -1) {
+                    return "Safari";
+                } //判断是否Safari浏览器
+                if (userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1 && !isOpera) {
+                    return "IE";
+                }; //判断是否IE浏览器
+            }
+            var mb = myBrowser();
+            if ("Chrome" === mb) {
+                // alert("我是 Chrome");
+            } else {
+                alert("请使用chrome浏览器访问本站");
+                window.location.href = "http://rj.baidu.com/soft/detail/14744.html?ald";
+            }
         } else {
-            alert("请使用chrome浏览器访问本站");
-            window.location.href = "http://rj.baidu.com/soft/detail/14744.html?ald";
+            // mobile
+            alert("mobile");
         }
 
         var sessionAuthef = $rootScope.$on('$ONSESSIONAUTHED', function () {
