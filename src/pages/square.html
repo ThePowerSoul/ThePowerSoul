@@ -214,7 +214,8 @@
             <md-card class="topic-card" ng-repeat="topic in topicList">
                 <md-card-title class="topic-title-container">
                     <md-card-title-text layout="row" layout-align="start center">
-                        <img class="author-avatar" ng-src="{{topic.AvatarID}}" alt="">
+                        <img class="author-avatar" ng-src="{{topic.AvatarID}}" ng-show="topic.AvatarID !== ''" alt="">
+                        <img class="author-avatar" ng-src="../../images/default-picture.jpg" ng-show="topic.AvatarID === ''" alt="">
                         <span class="md-body-1">
                             {{topic.Author}}
                         </span>

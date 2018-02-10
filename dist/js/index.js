@@ -501,15 +501,6 @@
             authorizationService.permissionCheck();
         }
 
-        // // 检查当前是否有用户登录
-        // if (localStorageService.get('userInfo')) {
-        //     updateUserLoginState();
-        //     loadMessages();
-        // } else {
-        //     $scope.loggedIn = false;
-        //     $state.go('introduction');
-        // }
-
         function isPC() {
             var userAgentInfo = navigator.userAgent;
             var Agents = ["Android", "iPhone", "SymbianOS", "Windows Phone", "iPad", "iPod"];
