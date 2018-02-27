@@ -2,11 +2,23 @@
 	'use strict';
 	angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource'])
 		.controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'categoryItems', function ($scope, $mdDialog, categoryItems) {
+			document.onpaste = function (event) {
+				if (window.event) { event = window.event; }
+				try {
+					var the = event.srcElement;
+					if (the.tagName == "INPUT" || the.tagName == "TEXTAREA") {
+						$scope.isPasting = true;
+					}
+				} catch (e) { return false; }
+			}
+
 			$scope.topic = {
 				Title: "",
 				Content: "",
 				Category: "",
 			};
+
+			$scope.isPasting = false;
 
 			$scope.closeDialog = function (ev) {
 				$mdDialog.cancel();
@@ -22,7 +34,7 @@
 		.controller('bbsCtrl', ['$scope', '$mdDialog', '$rootScope', 'selectorItems', '$state', 'alertService',
 			'localStorageService', '$http', 'BaseUrl',
 			function ($scope, $mdDialog, $rootScope, selectorItems, $state, alertService, localStorageService, $http, BaseUrl) {
-				$scope.isLoading= false;
+				$scope.isLoading = false;
 				$scope.loadError = false;
 				$scope.isOperating = false;
 				$scope.disableLoadMore = false;

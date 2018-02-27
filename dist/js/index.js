@@ -795,7 +795,23 @@
 (function () {
 	'use strict';
 
-	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString, $mdDialog, alertService, $interval) {
+	angular.module('The.Power.Soul.NewArticle', ['ngMaterial']).constant('ONPASTETAGNAME', ['DIV', 'BR', 'P', 'TEXTAREA', 'INPUT']).controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems', '$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval', 'ONPASTETAGNAME', function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString, $mdDialog, alertService, $interval, ONPASTETAGNAME) {
+		$scope.isPasting = false;
+		document.onpaste = function (event) {
+			if (window.event) {
+				event = window.event;
+			}
+			try {
+				var the = event.srcElement;
+				if (the.tagName) if (ONPASTETAGNAME.indexOf(the.tagName) >= 0) {
+					$scope.isPasting = true;
+					return false;
+				}
+			} catch (e) {
+				return false;
+			}
+		};
+
 		var accessid = 'LTAILjmmB1fnhHlx';
 		var host = "http://thepowersoul-richtexteditor.oss-cn-beijing.aliyuncs.com";
 		var params = {};
@@ -1586,11 +1602,27 @@
 	'use strict';
 
 	angular.module('The.Power.Soul.BBS', ['ngMaterial', 'The.Power.Soul.Tools', 'ngResource']).controller('addNewTopicCtrl', ['$scope', '$mdDialog', 'categoryItems', function ($scope, $mdDialog, categoryItems) {
+		document.onpaste = function (event) {
+			if (window.event) {
+				event = window.event;
+			}
+			try {
+				var the = event.srcElement;
+				if (the.tagName == "INPUT" || the.tagName == "TEXTAREA") {
+					$scope.isPasting = true;
+				}
+			} catch (e) {
+				return false;
+			}
+		};
+
 		$scope.topic = {
 			Title: "",
 			Content: "",
 			Category: ""
 		};
+
+		$scope.isPasting = false;
 
 		$scope.closeDialog = function (ev) {
 			$mdDialog.cancel();

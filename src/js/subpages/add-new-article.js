@@ -1,10 +1,26 @@
 (function () {
 	'use strict';
 	angular.module('The.Power.Soul.NewArticle', ['ngMaterial'])
+		.constant(
+			'ONPASTETAGNAME', ['DIV', 'BR', 'P', 'TEXTAREA', 'INPUT']
+		)
 		.controller('addNewArticleCtrl', ['$scope', '$http', '$mdToast', '$state', 'BaseUrl', 'localStorageService', 'categoryItems',
-			'$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval',
+			'$stateParams', 'randomString', '$mdDialog', 'alertService', '$interval', 'ONPASTETAGNAME',
 			function ($scope, $http, $mdToast, $state, BaseUrl, localStorageService, categoryItems, $stateParams, randomString,
-				$mdDialog, alertService, $interval) {
+				$mdDialog, alertService, $interval, ONPASTETAGNAME) {
+				$scope.isPasting = false;
+				document.onpaste = function (event) {
+					if (window.event) { event = window.event; }
+					try {
+						var the = event.srcElement;
+						if (the.tagName)
+							if (ONPASTETAGNAME.indexOf(the.tagName) >= 0) {
+								$scope.isPasting = true;
+								return false;
+							}
+					} catch (e) { return false; }
+				}
+
 				var accessid = 'LTAILjmmB1fnhHlx';
 				var host = "http://thepowersoul-richtexteditor.oss-cn-beijing.aliyuncs.com";
 				var params = {}

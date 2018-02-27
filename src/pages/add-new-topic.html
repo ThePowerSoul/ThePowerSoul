@@ -39,8 +39,9 @@
 				</md-option>
 			</md-select>
 		</md-input-container>
+		<span class="md-body-1 pastingRemider" ng-show="isPasting">鼓励原创，禁止黏贴。</span>
 		<input class="topic-title" type="text" ng-model="topic.Title" placeholder="请输入帖子标题">
-		<textarea class="topic-content" ng-model="topic.Content" placeholder="请输入帖子内容"></textarea>
+		<textarea class="topic-content" onpaste="return false;"  ng-model="topic.Content" placeholder="请输入帖子内容"></textarea>
 		<md-button class="md-raised md-primary" ng-click="submit()" 
 		ng-disabled="topic.Title === '' || topic.Content === '' || topic.Category === ''">提交</md-button>
 	</div>

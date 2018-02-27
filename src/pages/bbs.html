@@ -41,6 +41,7 @@
 	.topic-card {
 		min-height: 150px;
 		max-height: 400px;
+		padding: 8px;
 	}
 
 	.topic-card .fa {
@@ -99,6 +100,10 @@
 
 	.topic-card .topic-content-container-article {
 		overflow-y: auto;
+		max-height: 200px;
+		margin-bottom: 16px;
+		outline: none;
+		cursor: pointer;
 	}
 
 	.topic-content-container .topic-content {
@@ -124,6 +129,13 @@
 		position: absolute;
 		top: 45%;
 		left: 50%;
+	}
+	.load-more-container .load-more-button {
+		cursor: pointer;
+		outline: none;
+	}
+	p, span{
+		outline: none;
 	}
 </style>
 <div class="bbs-container">
@@ -159,14 +171,14 @@
 						{{topic.Author}}
 					</span>
 					<span class="md-body-1">发布了</span>
-					<span class="md-body-1" ng-show="topic.IsArticle">文章 </span>
+					<span class="md-body-1" ng-show="topic.IsArticle">文章&nbsp&nbsp&nbsp&nbsp</span>
 					<span class="md-body-1 topic-title" ng-click="goArticleDetail(topic, $event)" flex>
 						{{topic.Title}}
 					</span>
 				</md-card-title-text>
 			</md-card-title>
 			<md-card-content class="topic-content-container-article" ng-show="topic.IsArticle">
-				<span class="topic-content" ng-click="goTopicDetail(topic)" ng-bind-html="topic.Content | to_trusted_html">
+				<span class="topic-content" ng-click="goArticleDetail(topic)" ng-bind-html="topic.Content | to_trusted_html">
 				</span>
 			</md-card-content>
 			<md-card-content class="topic-content-container" ng-show="!topic.IsArticle">
